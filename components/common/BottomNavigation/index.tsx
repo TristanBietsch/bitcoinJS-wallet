@@ -1,26 +1,29 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { CreditCard, Home, Bitcoin, Clock } from 'lucide-react-native';
+import { Pressable, StyleSheet, View, Text } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Define tabs configuration for easier maintenance
+// Define tabs configuration
 const TABS = [
   {
-    name: 'waitlist',
+    path: '/waitlist',
     title: 'Card',
     icon: CreditCard,
   },
   {
-    name: 'index',
+    path: '/',
     title: 'Home',
     icon: Home,
   },
   {
-    name: 'price',
+    path: '/price',
     title: 'Price',
     icon: Bitcoin,
   },
   {
-    name: 'history',
+    path: '/history',
     title: 'History',
     icon: Clock,
   },
@@ -30,50 +33,80 @@ const TABS = [
 const HIDDEN_ROUTES = ['+not-found'];
 
 export function BottomNavigation() {
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarStyle: {
-          backgroundColor: 'black',
-          position: 'absolute',
-          bottom: 20,
-          marginLeft: 20,
-          marginRight: 20,
-          borderRadius: 30,
-          height: 60,
-          padding: 5,
-          elevation: 5,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-        },
-        tabBarActiveTintColor: 'white',
-        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
-        headerShown: false,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
-      }}
-    >
-      {/* Render visible tabs */}
-      {TABS.map(({ name, title, icon: Icon }) => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{
-            title,
-            tabBarIcon: ({ color }) => <Icon size={24} color={color} />,
-          }}
-        />
-      ))}
+  const router = useRouter();
+  const pathname = usePathname();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
 
-      {/* Hide routes that should not appear in the navigation */}
-      {HIDDEN_ROUTES.map(name => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{ href: null }}
-        />
-      ))}
-    </Tabs>
+  return (
+    <View style={styles.container}>
+      <View style={styles.tabBar}>
+        {TABS.map(({ path, title, icon: Icon }) => {
+          const isActive = pathname === path;
+          
+          return (
+            <Pressable
+              key={path}
+              style={styles.tabItem}
+              onPress={() => {
+                console.log('Navigating to:', path);
+                if (path === '/') router.navigate('/');
+                else if (path === '/waitlist') router.navigate('/waitlist');
+                else if (path === '/price') router.navigate('/price');
+                else if (path === '/history') router.navigate('/history');
+              }}
+            >
+              <View style={styles.tabContent}>
+                <Icon 
+                  size={24} 
+                  color={isActive ? 'white' : 'rgba(255, 255, 255, 0.5)'} 
+                />
+                <Text style={[
+                  styles.tabLabel,
+                  { color: isActive ? 'white' : 'rgba(255, 255, 255, 0.5)' }
+                ]}>
+                  {title}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: 'black',
+    borderRadius: 30,
+    height: 60,
+    padding: 5,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  tabItem: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+}); 

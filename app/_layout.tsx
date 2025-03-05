@@ -5,10 +5,11 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomNavigation } from '@/components/common/BottomNavigation';
+import { Slot } from 'expo-router';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -36,6 +37,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.container}>
       <GluestackUIProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <View style={styles.content}>
+            <Slot />
+          </View>
           <BottomNavigation />
           <StatusBar style="auto" />
         </ThemeProvider>
@@ -46,6 +50,9 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  content: {
     flex: 1,
   },
 });

@@ -65,3 +65,10 @@ TODO.md
 
 # Gitignore
 .gitignore
+
+# Android
+.android/
+
+# iOS
+.ios/
+
