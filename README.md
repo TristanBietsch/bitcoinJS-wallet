@@ -1,14 +1,15 @@
 # Nummus Wallet
 
-[![Discord](https://img.shields.io/discord/1234567890?color=7289DA&label=Discord&logo=discord&logoColor=white)](https://discord.gg/ESu8yjhuGn)
+[![Discord](https://img.shields.io/discord/1328209986324660264?color=7289DA&label=Discord&logo=discord&logoColor=white)](https://discord.gg/ESu8yjhuGn)
 [![Twitch Status](https://img.shields.io/twitch/status/tristanBietsch?style=social)](https://www.twitch.tv/tristanBietsch)
-[![YouTube Channel](https://img.shields.io/youtube/channel/subscribers/UC_placeholder?style=social)](https://www.youtube.com/@TristanBietsch)
+[![YouTube Channel](https://img.shields.io/youtube/channel/subscribers/UCV1axOOfemDa1PI-WgRkj7Q?style=social)](https://www.youtube.com/@TristanBietsch)
 [![Twitter Follow](https://img.shields.io/twitter/follow/NummusBTC?style=social)](https://twitter.com/NummusBTC)
-<!-- [![Version](https://img.shields.io/github/v/release/nummus/nummus-wallet?include_prereleases)](https://github.com/nummus/nummus-wallet/releases) -->
-[![License](https://img.shields.io/github/license/nummus/nummus-wallet)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/nummus/nummus-wallet)
+[![License](https://img.shields.io/github/license/NummusBTC/nummus-wallet)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/NummusBTC/nummus-wallet)
+[![GitHub issues](https://img.shields.io/github/issues/NummusBTC/nummus-wallet)](https://github.com/NummusBTC/nummus-wallet/issues)
+[![GitHub stars](https://img.shields.io/github/stars/NummusBTC/nummus-wallet)](https://github.com/NummusBTC/nummus-wallet/stargazers)
 
-Nummus is a modern, secure Bitcoin wallet with Lightning Network support, designed to make Bitcoin transactions simple and accessible for everyone.
+Nummus is a non-custodial MVP Wallet for Nummus, providing users with full control over their Bitcoin transactions and Lightning Network integration.
 
 ## Features
 
@@ -48,7 +49,7 @@ Nummus is built using the following technologies:
 
 1. Clone the repository:
 ```
-git clone https://github.com/nummus/nummus-wallet.git
+git clone https://github.com/nummusBtc/nummus-wallet.git
 cd nummus-wallet
 ```
 
@@ -90,13 +91,9 @@ When adding new features, please ensure you include appropriate tests to maintai
 
 We welcome contributions to Nummus Wallet! Please read our contribution guidelines before submitting a pull request.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
 - Twitter: [@NummusBTC](https://twitter.com/NummusBTC)
-- Discord: [Join our community](https://discord.gg/nummus)
 - Twitch: [tristanBietsch](https://www.twitch.tv/tristanBietsch)
 - YouTube: [Tristan Bietsch](https://www.youtube.com/@TristanBietsch)
