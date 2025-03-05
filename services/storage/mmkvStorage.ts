@@ -1,18 +1,15 @@
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { z } from 'zod';
 
-// Create the storage instance
-const storage = new MMKV();
-
 /**
- * Typed storage service using MMKV for high-performance persistence
+ * Typed storage service using AsyncStorage for persistence
  * Includes validation with Zod schemas to ensure type safety
  */
 export const mmkvStorage = {
   /**
    * Set a value in storage with optional schema validation
    */
-  set: <T>(key: string, value: T, schema?: z.ZodType<T>): boolean => {
+  set: async <T>(key: string, value: T, schema?: z.ZodType<T>): Promise<boolean> => {
     try {
       // Validate with schema if provided
       if (schema) {
@@ -20,7 +17,7 @@ export const mmkvStorage = {
       }
       
       const jsonValue = JSON.stringify(value);
-      storage.set(key, jsonValue);
+      await AsyncStorage.setItem(key, jsonValue);
       return true;
     } catch (error) {
       console.error(`Storage set error for key ${key}:`, error);
@@ -31,9 +28,9 @@ export const mmkvStorage = {
   /**
    * Get a value from storage with optional schema validation
    */
-  get: <T>(key: string, schema?: z.ZodType<T>): T | null => {
+  get: async <T>(key: string, schema?: z.ZodType<T>): Promise<T | null> => {
     try {
-      const value = storage.getString(key);
+      const value = await AsyncStorage.getItem(key);
       if (!value) return null;
       
       const parsedValue = JSON.parse(value);
@@ -53,28 +50,47 @@ export const mmkvStorage = {
   /**
    * Remove a value from storage
    */
-  delete: (key: string): void => {
-    storage.delete(key);
+  delete: async (key: string): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (error) {
+      console.error(`Storage delete error for key ${key}:`, error);
+    }
   },
   
   /**
    * Clear all storage
    */
-  clearAll: (): void => {
-    storage.clearAll();
+  clearAll: async (): Promise<void> => {
+    try {
+      await AsyncStorage.clear();
+    } catch (error) {
+      console.error('Storage clearAll error:', error);
+    }
   },
   
   /**
    * Check if a key exists in storage
    */
-  contains: (key: string): boolean => {
-    return storage.contains(key);
+  contains: async (key: string): Promise<boolean> => {
+    try {
+      const value = await AsyncStorage.getItem(key);
+      return value !== null;
+    } catch (error) {
+      console.error(`Storage contains error for key ${key}:`, error);
+      return false;
+    }
   },
   
   /**
    * Get all keys in storage
    */
-  getAllKeys: (): string[] => {
-    return storage.getAllKeys();
+  getAllKeys: async (): Promise<string[]> => {
+    try {
+      return await AsyncStorage.getAllKeys();
+    } catch (error) {
+      console.error('Storage getAllKeys error:', error);
+      return [];
+    }
   }
-}; 
+};

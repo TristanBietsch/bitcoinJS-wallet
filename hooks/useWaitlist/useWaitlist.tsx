@@ -2,7 +2,6 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { supabaseService } from '@/services/api/supabaseService';
 import { resendService } from '@/services/api/resendService';
-import { mmkvStorage } from '@/services/storage/mmkvStorage';
 import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { z } from 'zod';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,51 +28,21 @@ export interface WaitlistHook {
   validateEmail: (email: string) => boolean;
 }
 
-// Fallback storage for Expo Go which doesn't support MMKV
-const safeStorage = {
-  async get<T>(key: string): Promise<T | null> {
-    try {
-      const value = await AsyncStorage.getItem(key);
-      if (value !== null) {
-        return JSON.parse(value) as T;
-      }
-      return null;
-    } catch (error) {
-      console.error('AsyncStorage get error:', error);
-      return null;
-    }
-  },
-  
-  async set<T>(key: string, value: T): Promise<boolean> {
-    try {
-      await AsyncStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (error) {
-      console.error('AsyncStorage set error:', error);
-      return false;
-    }
-  }
-};
-
-// Use mmkvStorage if available, otherwise fallback to AsyncStorage
+// Storage service that uses AsyncStorage
 const storage = {
   async get<T>(key: string, schema?: z.ZodType<T>): Promise<T | null> {
     try {
-      // Try MMKV first
-      if (typeof mmkvStorage !== 'undefined' && mmkvStorage.get) {
-        const value = mmkvStorage.get<T>(key, schema);
-        return value;
-      }
+      const value = await AsyncStorage.getItem(key);
+      if (value === null) return null;
       
-      // Fallback to AsyncStorage
-      const value = await safeStorage.get<T>(key);
+      const parsedValue = JSON.parse(value) as T;
       
       // Validate with schema if provided
-      if (value && schema) {
-        return schema.parse(value);
+      if (schema) {
+        return schema.parse(parsedValue);
       }
       
-      return value;
+      return parsedValue;
     } catch (error) {
       console.error(`Storage get error for key ${key}:`, error);
       return null;
@@ -87,13 +56,9 @@ const storage = {
         schema.parse(value);
       }
       
-      // Try MMKV first
-      if (typeof mmkvStorage !== 'undefined' && mmkvStorage.set) {
-        return mmkvStorage.set(key, value, schema);
-      }
-      
-      // Fallback to AsyncStorage
-      return await safeStorage.set(key, value);
+      const jsonValue = JSON.stringify(value);
+      await AsyncStorage.setItem(key, jsonValue);
+      return true;
     } catch (error) {
       console.error(`Storage set error for key ${key}:`, error);
       return false;

@@ -1,6 +1,6 @@
-import { mmkvStorage } from '../storage/mmkvStorage';
-import { apiClient } from '../api/apiClient';
-import { API_ENDPOINTS } from '../api/apiEndpoints';
+import { mmkvStorage } from '@/services/storage/mmkvStorage';
+import { apiClient } from '@/services/api/apiClient';
+import { API_ENDPOINTS } from '@/services/api/apiEndpoints';
 import { z } from 'zod';
 import { useHaptics } from '@/hooks/useHaptics';
 
@@ -38,7 +38,7 @@ export const walletService = {
       };
       
       // Save wallet locally
-      mmkvStorage.set(WALLET_STORAGE_KEY, newWallet, walletSchema);
+      await mmkvStorage.set(WALLET_STORAGE_KEY, newWallet, walletSchema);
       
       return newWallet;
     } catch (error) {
@@ -50,8 +50,8 @@ export const walletService = {
   /**
    * Get wallet data from local storage
    */
-  getWallet: (): Wallet | null => {
-    return mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
+  getWallet: async (): Promise<Wallet | null> => {
+    return await mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
   },
   
   /**
@@ -59,7 +59,7 @@ export const walletService = {
    */
   getWalletBalance: async (): Promise<number | null> => {
     try {
-      const wallet = mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
+      const wallet = await mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
       if (!wallet) return null;
       
       const response = await apiClient.get(API_ENDPOINTS.WALLET_BALANCE);
@@ -72,7 +72,7 @@ export const walletService = {
         lastUpdated: new Date().toISOString()
       };
       
-      mmkvStorage.set(WALLET_STORAGE_KEY, updatedWallet, walletSchema);
+      await mmkvStorage.set(WALLET_STORAGE_KEY, updatedWallet, walletSchema);
       
       return balance;
     } catch (error) {
@@ -86,7 +86,7 @@ export const walletService = {
    */
   updateWalletName: async (name: string): Promise<boolean> => {
     try {
-      const wallet = mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
+      const wallet = await mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
       if (!wallet) return false;
       
       await apiClient.put(`${API_ENDPOINTS.WALLETS}/${wallet.id}`, { name });
@@ -97,7 +97,7 @@ export const walletService = {
         lastUpdated: new Date().toISOString()
       };
       
-      mmkvStorage.set(WALLET_STORAGE_KEY, updatedWallet, walletSchema);
+      await mmkvStorage.set(WALLET_STORAGE_KEY, updatedWallet, walletSchema);
       
       return true;
     } catch (error) {
@@ -111,12 +111,12 @@ export const walletService = {
    */
   deleteWallet: async (): Promise<boolean> => {
     try {
-      const wallet = mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
+      const wallet = await mmkvStorage.get<Wallet>(WALLET_STORAGE_KEY, walletSchema);
       if (!wallet) return false;
       
       await apiClient.delete(`${API_ENDPOINTS.WALLETS}/${wallet.id}`);
       
-      mmkvStorage.delete(WALLET_STORAGE_KEY);
+      await mmkvStorage.delete(WALLET_STORAGE_KEY);
       
       // Trigger haptic feedback for important action
       const { triggerNotification } = useHaptics();
