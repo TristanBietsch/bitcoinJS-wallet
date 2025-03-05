@@ -1,5 +1,5 @@
 /**
- * Hook for fetching and managing Bitcoin price data
+ * Custom hook for fetching and managing Bitcoin price data
  */
 import { useState, useEffect, useCallback } from 'react';
 import { fetchCurrentPrice, fetchHistoricalPrices } from '@/services/api/price';
@@ -8,70 +8,65 @@ import { calculatePriceChange } from '@/utils/helpers/price';
 import { TimeframePeriod, PriceData } from '@/types/price.types';
 import { TIME_PERIODS, AUTO_REFRESH_INTERVAL } from '@/config/price';
 
-const initialPriceData: PriceData = {
-  currentPrice: null,
-  previousPrice: null,
-  priceChangePercent: null,
-  chartData: [],
-  timestamps: [],
-  labels: [],
-  isLoading: true,
-  error: null
-};
-
 export const useBitcoinPrice = () => {
-  const [priceData, setPriceData] = useState<PriceData>(initialPriceData);
-  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframePeriod>(TIME_PERIODS[0]);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [priceData, setPriceData] = useState<PriceData | null>(null);
+  const [timeframe, setTimeframe] = useState<TimeframePeriod>('24h');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [priceChange, setPriceChange] = useState<number>(0);
 
   const fetchPriceData = useCallback(async () => {
     try {
-      setPriceData(prev => ({ ...prev, isLoading: true, error: null }));
+      setLoading(true);
+      setError(null);
       
       // Fetch current price
-      const currentPrice = await fetchCurrentPrice();
+      const price = await fetchCurrentPrice();
+      setCurrentPrice(price);
       
-      // Fetch historical data
-      const historicalData = await fetchHistoricalPrices(selectedTimeframe);
-      const { prices, timestamps, labels } = formatChartData(historicalData, selectedTimeframe);
+      // Fetch historical prices based on selected timeframe
+      const historicalData = await fetchHistoricalPrices(timeframe);
+      
+      // Format chart data
+      const formattedData = formatChartData(historicalData);
+      setPriceData(formattedData);
       
       // Calculate price change
-      const priceChangePercent = calculatePriceChange(currentPrice, prices);
+      const change = calculatePriceChange(historicalData);
+      setPriceChange(change);
       
-      setPriceData(prev => ({
-        currentPrice,
-        previousPrice: prev.currentPrice,
-        priceChangePercent,
-        chartData: prices,
-        timestamps,
-        labels,
-        isLoading: false,
-        error: null
-      }));
-    } catch (error) {
-      setPriceData(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch price data'
-      }));
+    } catch (err) {
+      setError('Failed to fetch Bitcoin price data');
+      console.error('Error fetching price data:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [selectedTimeframe]);
+  }, [timeframe]);
 
-  // Initial data fetch
+  // Initial fetch
   useEffect(() => {
     fetchPriceData();
   }, [fetchPriceData]);
 
-  // Auto-refresh price data
+  // Auto-refresh
   useEffect(() => {
-    const intervalId = setInterval(fetchPriceData, AUTO_REFRESH_INTERVAL);
-    return () => clearInterval(intervalId);
+    const refreshInterval = setInterval(() => {
+      fetchPriceData();
+    }, AUTO_REFRESH_INTERVAL);
+
+    return () => clearInterval(refreshInterval);
   }, [fetchPriceData]);
 
   return {
-    ...priceData,
+    currentPrice,
+    priceData,
+    timeframe,
+    setTimeframe,
+    loading,
+    error,
+    priceChange,
     refresh: fetchPriceData,
-    timeframe: selectedTimeframe,
-    setTimeframe: setSelectedTimeframe,
-    timeframes: TIME_PERIODS
+    availableTimeframes: TIME_PERIODS
   };
 }; 
