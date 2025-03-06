@@ -1,3 +1,6 @@
+// Import regenerator-runtime to make async/await work
+import 'regenerator-runtime/runtime';
+
 // Mock the expo modules
 jest.mock('expo-font', () => ({
   useFonts: () => [true]

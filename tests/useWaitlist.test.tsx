@@ -1,33 +1,38 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react-hooks';
 import { useWaitlist } from '@/hooks/useWaitlist';
+import { setupTestEnv } from './utils/testConfig';
+import { clearWaitlistTestData, generateTestEmail } from './utils/testUtils';
 
-// Create mocks for the dependencies
-const mockSetEmail = jest.fn();
-const mockSubmitToWaitlist = jest.fn().mockResolvedValue(true);
-const mockValidateEmail = jest.fn((email) => email.includes('@'));
+// Setup test environment
+setupTestEnv();
 
-// Mock the entire hook to test the interface without React state issues
-jest.mock('@/hooks/useWaitlist', () => ({
-  useWaitlist: jest.fn().mockImplementation(() => ({
-    email: '',
-    setEmail: mockSetEmail,
-    isLoading: false,
-    isRegistered: false,
-    registeredEmail: undefined,
-    submitToWaitlist: mockSubmitToWaitlist,
-    validateEmail: mockValidateEmail,
-  })),
-}));
+// Create a provider wrapper to handle toast dependencies
+const wrapper = ({ children }: { children: React.ReactNode }) => {
+  // Mock the toast context or any other context needed by the hook
+  return <>{children}</>;
+};
 
-describe('useWaitlist hook', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+// Don't mock the hook - we want to test the actual implementation
+jest.unmock('@/hooks/useWaitlist');
+
+describe('useWaitlist hook integration', () => {
+  // Use a unique email for each test to avoid conflicts
+  const testEmail = generateTestEmail('hook');
+  
+  // Clean up before and after tests
+  beforeAll(async () => {
+    await clearWaitlistTestData(testEmail);
   });
-
+  
+  afterAll(async () => {
+    await clearWaitlistTestData(testEmail);
+  });
+  
   it('should initialize with default values', () => {
-    const { result } = renderHook(() => useWaitlist());
+    // When: Hook is rendered
+    const { result } = renderHook(() => useWaitlist(), { wrapper });
     
-    // Verify that the hook interface has the expected properties
+    // Then: Should have expected properties
     expect(result.current).toHaveProperty('email');
     expect(result.current).toHaveProperty('setEmail');
     expect(result.current).toHaveProperty('isLoading');
@@ -35,29 +40,61 @@ describe('useWaitlist hook', () => {
     expect(result.current).toHaveProperty('registeredEmail');
     expect(result.current).toHaveProperty('submitToWaitlist');
     expect(result.current).toHaveProperty('validateEmail');
+    
+    // And: Default values should be set correctly
+    expect(result.current.email).toBe('');
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isRegistered).toBe(false);
+    expect(result.current.registeredEmail).toBeUndefined();
   });
 
-  it('should call setEmail when triggered', () => {
-    const { result } = renderHook(() => useWaitlist());
+  it('should update email state when setEmail is called', () => {
+    // Given: Hook is rendered
+    const { result } = renderHook(() => useWaitlist(), { wrapper });
     
-    result.current.setEmail('test@example.com');
-    expect(mockSetEmail).toHaveBeenCalledWith('test@example.com');
+    // When: Setting email
+    act(() => {
+      result.current.setEmail(testEmail);
+    });
+    
+    // Then: Email state should be updated
+    expect(result.current.email).toBe(testEmail);
   });
 
-  it('should validate email correctly', () => {
-    const { result } = renderHook(() => useWaitlist());
+  it('should validate email format correctly', () => {
+    // Given: Hook is rendered
+    const { result } = renderHook(() => useWaitlist(), { wrapper });
     
-    result.current.validateEmail('invalid-email');
-    expect(mockValidateEmail).toHaveBeenCalledWith('invalid-email');
+    // When/Then: Valid email format
+    expect(result.current.validateEmail('valid@example.com')).toBe(true);
     
-    result.current.validateEmail('test@example.com');
-    expect(mockValidateEmail).toHaveBeenCalledWith('test@example.com');
+    // When/Then: Invalid email format
+    expect(result.current.validateEmail('invalid-email')).toBe(false);
   });
 
-  it('should call submitToWaitlist when triggered', async () => {
-    const { result } = renderHook(() => useWaitlist());
+  it('should submit email to waitlist and update state accordingly', async () => {
+    // Given: Hook is rendered with a valid email
+    const { result, waitForNextUpdate } = renderHook(() => useWaitlist(), { wrapper });
     
-    await result.current.submitToWaitlist();
-    expect(mockSubmitToWaitlist).toHaveBeenCalled();
+    // When: Setting email and submitting
+    act(() => {
+      result.current.setEmail(testEmail);
+    });
+    
+    // Then: Submit the email
+    let submitResult: boolean | undefined;
+    await act(async () => {
+      submitResult = await result.current.submitToWaitlist();
+      // Wait for state updates to complete
+      await waitForNextUpdate();
+    });
+    
+    // Then: Submission should succeed
+    expect(submitResult).toBe(true);
+    
+    // And: State should be updated
+    expect(result.current.isRegistered).toBe(true);
+    expect(result.current.registeredEmail).toBe(testEmail);
+    expect(result.current.isLoading).toBe(false);
   });
 }); 

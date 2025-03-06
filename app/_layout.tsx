@@ -1,3 +1,7 @@
+// Import regeneratorRuntime polyfill
+import '../regeneratorRuntime';
+
+import React from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/common/Provider";

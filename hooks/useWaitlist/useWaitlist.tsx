@@ -1,7 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { supabaseService } from '@/services/api/supabaseService';
-import { resendService } from '@/services/api/resendService';
 import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { z } from 'zod';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,7 +23,8 @@ export interface WaitlistHook {
   isLoading: boolean;
   isRegistered: boolean;
   registeredEmail?: string;
-  submitToWaitlist: () => Promise<boolean>;
+  error?: string;
+  submitToWaitlist: () => Promise<void>;
   validateEmail: (email: string) => boolean;
 }
 
@@ -71,6 +71,7 @@ export const useWaitlist = (): WaitlistHook => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
   const toast = useToast();
 
   // Load waitlist status from storage on mount
@@ -104,90 +105,45 @@ export const useWaitlist = (): WaitlistHook => {
 
   // Validate email format
   const validateEmail = (email: string): boolean => {
-    try {
-      z.string().email().parse(email);
-      return true;
-    } catch (error) {
-      return false;
-    }
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
   };
 
   // Submit email to waitlist
-  const submitToWaitlist = async (): Promise<boolean> => {
+  const submitToWaitlist = async () => {
     if (!validateEmail(email)) {
-      toast.show({
-        render: ({ id }) => (
-          <Toast action="error">
-            <ToastTitle>Invalid Email</ToastTitle>
-            <ToastDescription>Please enter a valid email address.</ToastDescription>
-          </Toast>
-        ),
-      });
-      return false;
+      setError('Please enter a valid email address');
+      return;
     }
 
     setIsLoading(true);
+    setError(undefined);
 
     try {
-      // Add to Supabase waitlist
-      const { success, error } = await supabaseService.addToWaitlist(email);
+      // Add to waitlist
+      const { success, error: waitlistError } = await supabaseService.addToWaitlist(email);
       
       if (!success) {
-        toast.show({
-          render: ({ id }) => (
-            <Toast action="error">
-              <ToastTitle>Error</ToastTitle>
-              <ToastDescription>{error || 'Failed to join waitlist'}</ToastDescription>
-            </Toast>
-          ),
-        });
+        if (waitlistError === 'Email already registered') {
+          setIsRegistered(true);
+          setRegisteredEmail(email);
+        } else {
+          setError(waitlistError || 'Failed to add to waitlist');
+        }
         setIsLoading(false);
-        return false;
+        return;
       }
-
-      // Send confirmation email
-      const emailResult = await resendService.sendWaitlistConfirmation(email);
       
-      if (!emailResult.success) {
-        console.error('Failed to send confirmation email:', emailResult.error);
-        // We don't show an error toast here since the user is already added to the waitlist
-      }
-
-      // Update state and save to storage
+      // No need to send confirmation email - removed resendService code
+      
+      // Success
       setIsRegistered(true);
       setRegisteredEmail(email);
-      await saveWaitlistStatus({
-        isRegistered: true,
-        email,
-        registeredAt: new Date().toISOString(),
-      });
-
-      // Show success toast
-      toast.show({
-        render: ({ id }) => (
-          <Toast action="success">
-            <ToastTitle>Success!</ToastTitle>
-            <ToastDescription>You've been added to the waitlist.</ToastDescription>
-          </Toast>
-        ),
-      });
-
-      setIsLoading(false);
-      return true;
     } catch (error) {
+      setError('An unexpected error occurred');
       console.error('Waitlist submission error:', error);
-      
-      toast.show({
-        render: ({ id }) => (
-          <Toast action="error">
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>An unexpected error occurred. Please try again.</ToastDescription>
-          </Toast>
-        ),
-      });
-      
+    } finally {
       setIsLoading(false);
-      return false;
     }
   };
 
@@ -197,6 +153,7 @@ export const useWaitlist = (): WaitlistHook => {
     isLoading,
     isRegistered,
     registeredEmail,
+    error,
     submitToWaitlist,
     validateEmail,
   };
