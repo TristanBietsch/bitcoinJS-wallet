@@ -1,5 +1,6 @@
-// Load environment variables from .env file
-require('dotenv').config();
+// Load environment variables from tests/.env.test file
+require('dotenv').config({ path: './tests/.env.test' });
+console.log('Loading environment variables from tests/.env.test for Expo config');
 
 module.exports = {
   name: "Nummus Wallet",

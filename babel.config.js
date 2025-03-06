@@ -32,6 +32,7 @@ module.exports = function(api) {
                     "tailwind.config": "./tailwind.config.js"
                 }
             }],
+            // Temporarily removed react-native-config transformer due to module resolution issues
             ["@babel/plugin-transform-runtime", {
                 "regenerator": true,
                 "helpers": true

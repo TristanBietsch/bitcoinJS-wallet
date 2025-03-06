@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { z } from 'zod';
-import ENV from '../../config/env';
+import Constants from 'expo-constants';
 
 // Schema for validating email
 export const EmailSchema = z.string().email('Invalid email format');
@@ -87,24 +87,27 @@ class MockSupabaseService {
 class SupabaseService {
   private apiUrl: string;
   private apiKey: string;
-  private tableName: string = 'waitlist';
+  private tableName: string = 'email-testing';
   private mockService: MockSupabaseService;
   private useRealService: boolean;
 
   constructor() {
-    this.apiUrl = ENV.SUPABASE_URL || '';
-    this.apiKey = ENV.SUPABASE_KEY || '';
+    // Load environment variables from expo-constants (populated from app.config.js)
+    const extra = Constants.expoConfig?.extra || {};
+    this.apiUrl = extra.supabaseUrl || '';
+    this.apiKey = extra.supabaseKey || '';
+    
     this.mockService = new MockSupabaseService();
     
-    // Determine if we should use the real service
+    // Always use the real service for email-testing if we have credentials
     this.useRealService = !!(this.apiUrl && this.apiKey);
     
     console.log(`Initializing Supabase Service with:`);
     console.log(`- API URL: ${this.apiUrl ? this.apiUrl.substring(0, 20) + '...' : 'Not set'}`);
     console.log(`- API Key: ${this.apiKey ? 'Set (hidden)' : 'Not set'}`);
     console.log(`- Table: ${this.tableName}`);
-    console.log(`- Environment: ${ENV.NODE_ENV}`);
-    console.log(`- Using: ${this.useRealService ? 'Real Supabase API' : 'Mock Service'}`);
+    console.log(`- Environment: ${extra.nodeEnv || 'development'}`);
+    console.log(`- Using: ${this.useRealService ? 'Real Supabase API' : 'Mock Service'} with email-testing table`);
   }
 
   /**
@@ -132,11 +135,14 @@ class SupabaseService {
         return { success: false, error: 'Email already registered' };
       }
 
-      // Add email to waitlist
+      // Add email to waitlist with current timestamp
       console.log(`Making API call to add email to waitlist: ${email}`);
       const response = await axios.post(
         `${this.apiUrl}/rest/v1/${this.tableName}`,
-        { email },
+        { 
+          email,
+          created_at: new Date().toISOString() 
+        },
         {
           headers: {
             'apikey': this.apiKey,
@@ -158,19 +164,16 @@ class SupabaseService {
         console.error(`API Error: ${error.response.status}`, error.response.data);
         
         // Handle specific error cases
-        if (error.response.status === 404) {
-          console.log('Falling back to mock service due to 404 error (table might not exist)');
-          return this.mockService.addToWaitlist(email);
-        }
-        
         if (error.response.status === 409) {
           return { success: false, error: 'Email already registered' };
         }
       }
       
-      // Handle network errors by falling back to mock service
-      console.log('Falling back to mock service due to API error');
-      return this.mockService.addToWaitlist(email);
+      // Don't fall back to mock service - return the actual error
+      return { 
+        success: false, 
+        error: error.response?.data?.message || error.message || 'Failed to add email to waitlist'
+      };
     }
   }
 
@@ -216,17 +219,13 @@ class SupabaseService {
       
       if (error.response) {
         console.error(`API Error: ${error.response.status}`, error.response.data);
-        
-        // Handle specific error cases
-        if (error.response.status === 404) {
-          console.log('Falling back to mock service due to 404 error (table might not exist)');
-          return this.mockService.checkWaitlist(email);
-        }
       }
       
-      // Handle network errors by falling back to mock service
-      console.log('Falling back to mock service due to API error');
-      return this.mockService.checkWaitlist(email);
+      // Don't fall back to mock service - return the actual error
+      return { 
+        exists: false, 
+        error: error.response?.data?.message || error.message || 'Failed to check waitlist'
+      };
     }
   }
 }
