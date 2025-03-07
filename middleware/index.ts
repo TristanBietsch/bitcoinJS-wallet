@@ -7,6 +7,5 @@ export * from './network/cacheMiddleware';
 export * from './logging/analyticsMiddleware';
 export * from './logging/errorLoggingMiddleware';
 export * from './logging/performanceMiddleware';
-export * from './lightning/nodeConnectionMiddleware';
-export * from './lightning/invoiceValidationMiddleware';
-export * from './lightning/channelManagementMiddleware';
+// Bitcoin base layer middleware
+export * from './bitcoin/transactionMiddleware';

@@ -70,7 +70,6 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
-    "lnd-grpc": "^0.5.4",
     "lottie-react-native": "^7.2.2",
     "lucide-react-native": "^0.477.0",
     "morgan": "^1.10.0",
@@ -94,7 +93,8 @@
     "sentry-expo": "^7.2.0",
     "tailwindcss": "^3.4.17",
     "zeego": "^2.0.4",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "react-native-qrcode-svg": "^6.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
