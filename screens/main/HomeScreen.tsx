@@ -1,12 +1,88 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Platform, Text } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
+import { formatCurrency } from '@/utils/dummyWalletData';
+import { useWalletBalance } from '@/hooks/wallet/useWalletBalance';
+import Dropdown from '@/components/common/Dropdown';
+import IOSDropdown from '@/components/common/IOSDropdown';
+
+// Currency options for the dropdown
+const CURRENCY_OPTIONS = [
+  { label: 'USD', value: 'USD' },
+  { label: 'BTC', value: 'BTC' },
+  { label: 'SATS', value: 'SATS' },
+];
+
+// Currency type definition
+type CurrencyType = 'USD' | 'BTC' | 'SATS';
 
 const HomeScreen = () => {
-  const [currency, setCurrency] = useState('USD');
+  // State for selected currency format
+  const [currency, setCurrency] = useState<CurrencyType>('BTC');
   
-  const toggleCurrency = () => {
-    setCurrency(currency === 'USD' ? 'BTC' : 'USD');
+  // Use wallet balance hook
+  const { btcAmount, usdAmount, satsAmount, isLoading, error, refetch } = useWalletBalance();
+  
+  // Animated value for fade effect
+  const fadeAnim = useState(new Animated.Value(1))[0];
+  
+  // Handle currency change with animation
+  const handleCurrencyChange = (value: string) => {
+    // Fade out
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      // Change currency
+      setCurrency(value as CurrencyType);
+      
+      // Fade back in
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
+  
+  // Get the appropriate amount based on selected currency
+  const getAmountForCurrency = () => {
+    switch(currency) {
+      case 'USD':
+        return usdAmount;
+      case 'BTC':
+        return btcAmount;
+      case 'SATS':
+        return satsAmount;
+      default:
+        return usdAmount;
+    }
+  };
+  
+  // Format the balance based on selected currency
+  const formattedBalance = formatCurrency(getAmountForCurrency(), currency);
+
+  // Render the balance display
+  const renderBalanceDisplay = () => {
+    if (currency === 'SATS') {
+      return (
+        <View style={styles.balanceRow}>
+          <ThemedText style={styles.balanceAmount}>
+            {formattedBalance}
+          </ThemedText>
+          <ThemedText style={styles.satsLabel}>
+            Sats
+          </ThemedText>
+        </View>
+      );
+    } else {
+      return (
+        <ThemedText style={styles.balanceAmount}>
+          {formattedBalance}
+        </ThemedText>
+      );
+    }
   };
 
   return (
@@ -19,19 +95,44 @@ const HomeScreen = () => {
         <ThemedText type="default" style={styles.balanceLabel}>
           Current Balance:
         </ThemedText>
-        <ThemedText style={styles.balanceAmount}>
-          $100,000
-        </ThemedText>
         
-        {/* Currency Selector */}
-        <Pressable 
-          style={styles.currencySelector}
-          onPress={toggleCurrency}
-        >
-          <ThemedText style={styles.currencySelectorText}>
-            {currency} ▼
-          </ThemedText>
-        </Pressable>
+        {isLoading ? (
+          <ActivityIndicator size="large" color="red" style={styles.loader} />
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+            <TouchableOpacity onPress={refetch} style={styles.retryButton}>
+              <ThemedText style={styles.retryText}>Retry</ThemedText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Animated.View style={[styles.balanceDisplayContainer, { opacity: fadeAnim }]}>
+            {renderBalanceDisplay()}
+          </Animated.View>
+        )}
+        
+        {/* Currency Selector - Platform specific */}
+        <View style={styles.dropdownContainer}>
+          {Platform.OS === 'ios' ? (
+            <IOSDropdown
+              options={CURRENCY_OPTIONS}
+              selectedValue={currency}
+              onSelect={handleCurrencyChange}
+              title="Select Currency"
+              cancelButtonLabel="Cancel"
+              backgroundColor="red"
+              disabled={isLoading || !!error}
+            />
+          ) : (
+            <Dropdown
+              options={CURRENCY_OPTIONS}
+              selectedValue={currency}
+              onSelect={handleCurrencyChange}
+              placeholder="Select Currency"
+              backgroundColor="red"
+            />
+          )}
+        </View>
       </View>
       
       {/* Action Buttons */}
@@ -77,24 +178,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
-  currencySelector: {
-    backgroundColor: 'red',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 24,
+  balanceRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'baseline',
   },
-  currencySelectorText: {
-    color: 'white',
-    fontWeight: 'bold',
-    marginRight: 4,
+  satsLabel: {
+    fontSize: 24,
+    fontWeight: 'normal',
+    marginLeft: 6,
+  },
+  dropdownContainer: {
+    marginVertical: 16,
+    zIndex: 10,
   },
   actionButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 40,
+    marginBottom: 80,
   },
   actionButton: {
     backgroundColor: 'red',
@@ -107,6 +207,32 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 18,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  errorContainer: {
+    alignItems: 'center', 
+    marginBottom: 16,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 8,
+  },
+  retryButton: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+  },
+  retryText: {
+    color: 'black',
+  },
+  balanceDisplayContainer: {
+    opacity: 1,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
