@@ -3,20 +3,14 @@ module.exports = function(api) {
 
     return {
         presets: [
-            "babel-preset-expo",
-            ["@babel/preset-env", {
-                "targets": {
-                    "node": "current"
-                }
-            }],
-            "@babel/preset-react",
-            "@babel/preset-typescript"
+            ["babel-preset-expo", {
+                "runtime": "automatic",
+                "jsxRuntime": "automatic"
+            }]
         ],
-
         plugins: [
             ["module-resolver", {
                 root: ["./"],
-
                 alias: {
                     "@": "./",
                     "@components": "./components",
@@ -32,15 +26,12 @@ module.exports = function(api) {
                     "tailwind.config": "./tailwind.config.js"
                 }
             }],
-            // Temporarily removed react-native-config transformer due to module resolution issues
             ["@babel/plugin-transform-runtime", {
                 "regenerator": true,
-                "helpers": true
+                "helpers": true,
+                "useESModules": false
             }],
-            ["@babel/plugin-transform-class-properties", { "loose": true }],
-            ["@babel/plugin-transform-private-methods", { "loose": true }],
-            ["@babel/plugin-transform-private-property-in-object", { "loose": true }],
-            "./babel-inject-react.js"
+            "react-native-reanimated/plugin"
         ]
     };
 };
