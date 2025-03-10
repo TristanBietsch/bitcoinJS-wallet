@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ActivityGroup } from '@/components/domain/Transaction/ActivityGroup';
 import { Transaction, mockTransactions } from '@/tests/mockData/transactionData';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { fonts } from '@/constants/fonts';
 
 // Helper function to get the start of a date
@@ -40,7 +40,7 @@ const SectionDivider = () => (
 );
 
 export default function ActivityScreen() {
-  const navigation = useNavigation();
+  const router = useRouter();
   
   // Group transactions by time periods
   const groupedTransactions = useMemo(() => {
@@ -78,9 +78,8 @@ export default function ActivityScreen() {
   }, []);
   
   const handlePressTransaction = (transaction: Transaction) => {
-    // Navigate to transaction details screen
-    // navigation.navigate('TransactionDetails', { transactionId: transaction.id });
-    console.log('Pressed transaction:', transaction.id);
+    // Navigate to transaction details screen using Expo Router
+    router.push(`/transaction/${transaction.id}`);
   };
   
   return (
