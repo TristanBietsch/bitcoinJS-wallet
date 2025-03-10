@@ -1,15 +1,25 @@
-import * as Sentry from 'sentry-expo';
+import * as Sentry from '@sentry/react-native';
 
 /**
  * Initialize Sentry for error tracking
  * Should be called early in the app lifecycle
  */
 export const initSentry = () => {
+  if (__DEV__) {
+    return; // Don't initialize Sentry in development
+  }
+
   Sentry.init({
     dsn: 'YOUR_DSN_HERE', // Replace with your actual DSN
-    enableInExpoDevelopment: false,
-    debug: __DEV__,
+    debug: false,
     tracesSampleRate: 1.0,
+    beforeSend(event) {
+      // Don't send events in development
+      if (__DEV__) {
+        return null;
+      }
+      return event;
+    },
   });
 };
 
@@ -20,9 +30,11 @@ export const logError = (
   error: Error, 
   context?: Record<string, any>
 ) => {
-  Sentry.Native.captureException(error, {
-    extra: context
-  });
+  if (!__DEV__) {
+    Sentry.captureException(error, {
+      extra: context
+    });
+  }
 };
 
 /**
@@ -32,9 +44,11 @@ export const logMessage = (
   message: string, 
   level: 'info' | 'warning' | 'error' = 'info'
 ) => {
-  Sentry.Native.captureMessage(message, {
-    level: Sentry.Native.Severity[level.toUpperCase() as 'INFO' | 'WARNING' | 'ERROR'],
-  });
+  if (!__DEV__) {
+    Sentry.captureMessage(message, {
+      level: level,
+    });
+  }
 };
 
 /**
@@ -47,9 +61,11 @@ export const setUserContext = (
     username?: string;
   } | null
 ) => {
-  if (user) {
-    Sentry.Native.setUser(user);
-  } else {
-    Sentry.Native.setUser(null);
+  if (!__DEV__) {
+    if (user) {
+      Sentry.setUser(user);
+    } else {
+      Sentry.setUser(null);
+    }
   }
 }; 
