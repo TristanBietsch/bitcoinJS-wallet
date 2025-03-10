@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Transaction } from '@/tests/mockData/transactionData';
+import { fonts } from '@/constants/fonts';
 
 // Helper function to truncate blockchain addresses
 const truncateAddress = (address: string): string => {
@@ -83,10 +84,13 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: 2,
+    fontFamily: fonts.semibold,
   },
   address: {
     fontSize: 14,
-    opacity: 0.7,
+    opacity: 0.8,
+    fontFamily: fonts.monospace,
+    letterSpacing: -0.5,
   },
   amountContainer: {
     justifyContent: 'center',
@@ -94,6 +98,7 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontSize: 16,
+    fontFamily: fonts.semibold,
   },
   receiveAmount: {
     color: '#4CAF50', // Green color for received amounts

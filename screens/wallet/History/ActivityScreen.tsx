@@ -4,6 +4,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ActivityGroup } from '@/components/domain/Transaction/ActivityGroup';
 import { Transaction, mockTransactions } from '@/tests/mockData/transactionData';
 import { useNavigation } from '@react-navigation/native';
+import { fonts } from '@/constants/fonts';
 
 // Helper function to get the start of a date
 const getStartOfDay = (date: Date): number => {
@@ -149,6 +150,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
+    fontFamily: fonts.bold,
     textAlign: 'center',
   },
   scrollView: {

@@ -1,8 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { COLORS } from '../../types/colors';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
+import { COLORS } from '@/types/colors';
+import { Button, Card } from '@gluestack-ui/themed';
+import { fonts } from '@/constants/fonts';
+
+// Extend COLORS with warningLight if missing
+const extendedColors = {
+  ...COLORS,
+  warningLight: '#FFF8E1' // Light amber color for warnings
+};
 
 interface Transaction {
   id: string;
@@ -82,14 +88,14 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
           {type === 'send' && recipient && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Recipient</Text>
-              <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="middle">{recipient}</Text>
+              <Text style={styles.addressValue} numberOfLines={1} ellipsizeMode="middle">{recipient}</Text>
             </View>
           )}
           
           {type === 'receive' && sender && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Sender</Text>
-              <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="middle">{sender}</Text>
+              <Text style={styles.addressValue} numberOfLines={1} ellipsizeMode="middle">{sender}</Text>
             </View>
           )}
           
@@ -110,7 +116,7 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
           {txid && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Transaction ID</Text>
-              <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="middle">{txid}</Text>
+              <Text style={styles.addressValue} numberOfLines={1} ellipsizeMode="middle">{txid}</Text>
             </View>
           )}
         </View>
@@ -164,7 +170,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.successLight,
   },
   pending: {
-    backgroundColor: COLORS.warningLight,
+    backgroundColor: extendedColors.warningLight,
   },
   failed: {
     backgroundColor: COLORS.errorLight,
@@ -212,6 +218,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text,
     textAlign: 'right',
+  },
+  addressValue: {
+    flex: 2,
+    fontSize: 14,
+    color: COLORS.text,
+    textAlign: 'right',
+    fontFamily: fonts.monospace,
   },
   buttonContainer: {
     marginTop: 8,

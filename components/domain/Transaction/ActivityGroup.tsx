@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ActivityItem } from './ActivityItem';
 import { Transaction } from '@/tests/mockData/transactionData';
+import { fonts } from '@/constants/fonts';
 
 interface ActivityGroupProps {
   title: string;
@@ -45,6 +46,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
+    fontFamily: fonts.semibold,
     marginBottom: 8,
     paddingHorizontal: 16,
   },
