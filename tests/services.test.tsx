@@ -1,38 +1,49 @@
-// Mock the external services directly
-jest.mock('@/services/api/supabaseService', () => ({
-  supabaseService: {
-    addToWaitlist: jest.fn().mockResolvedValue({ success: true }),
-    checkWaitlist: jest.fn().mockResolvedValue({ exists: false })
-  }
-}));
-
-jest.mock('@/services/api/resendService', () => ({
-  resendService: {
-    sendWaitlistConfirmation: jest.fn().mockResolvedValue({ success: true })
-  }
-}));
-
-// Import the mocked services
 import { supabaseService } from '@/services/api/supabaseService';
-import { resendService } from '@/services/api/resendService';
+import { setupTestEnv } from './utils/testConfig';
 
-describe('API Services', () => {
-  describe('supabaseService', () => {
-    it('addToWaitlist should add an email to the waitlist', async () => {
-      const result = await supabaseService.addToWaitlist('test@example.com');
-      expect(result.success).toBe(true);
+// Set up the test environment
+setupTestEnv();
+
+describe('supabaseService', () => {
+  // Generate unique emails for each test case to prevent conflicts
+  const generateTestEmail = () => `test.${Date.now()}.${Math.floor(Math.random() * 10000)}@example.com`;
+  const invalidEmail = 'invalid-email';
+  
+  describe('email validation', () => {
+    it('should reject invalid email formats', async () => {
+      const { success, error } = await supabaseService.addToWaitlist(invalidEmail);
+      expect(success).toBe(false);
+      expect(error).toBe('Invalid email format');
     });
-
-    it('checkWaitlist should check if an email exists in the waitlist', async () => {
-      const result = await supabaseService.checkWaitlist('test@example.com');
-      expect(result).toHaveProperty('exists');
+    
+    it('should accept valid email formats', async () => {
+      const email = generateTestEmail();
+      const { success } = await supabaseService.addToWaitlist(email);
+      expect(success).toBe(true);
     });
   });
-
-  describe('resendService', () => {
-    it('sendWaitlistConfirmation should send a confirmation email', async () => {
-      const result = await resendService.sendWaitlistConfirmation('test@example.com');
-      expect(result.success).toBe(true);
+  
+  describe('waitlist operations', () => {
+    it('should add an email to the waitlist', async () => {
+      const email = generateTestEmail();
+      const { success } = await supabaseService.addToWaitlist(email);
+      expect(success).toBe(true);
+      
+      const { exists } = await supabaseService.checkWaitlist(email);
+      expect(exists).toBe(true);
+    });
+    
+    it('should detect duplicate emails', async () => {
+      // Generate a unique email for this test
+      const email = generateTestEmail();
+      
+      // First add the email
+      await supabaseService.addToWaitlist(email);
+      
+      // Try adding it again
+      const { success, error } = await supabaseService.addToWaitlist(email);
+      expect(success).toBe(false);
+      expect(error).toBe('Email already registered');
     });
   });
 }); 

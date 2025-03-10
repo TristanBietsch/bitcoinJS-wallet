@@ -3,16 +3,14 @@ module.exports = function(api) {
 
     return {
         presets: [
-            "babel-preset-expo",
-            "@babel/preset-env",
-            "@babel/preset-react",
-            "@babel/preset-typescript"
+            ["babel-preset-expo", {
+                "runtime": "automatic",
+                "jsxRuntime": "automatic"
+            }]
         ],
-
         plugins: [
             ["module-resolver", {
                 root: ["./"],
-
                 alias: {
                     "@": "./",
                     "@components": "./components",
@@ -28,9 +26,12 @@ module.exports = function(api) {
                     "tailwind.config": "./tailwind.config.js"
                 }
             }],
-            ["@babel/plugin-transform-class-properties", { "loose": true }],
-            ["@babel/plugin-transform-private-methods", { "loose": true }],
-            ["@babel/plugin-transform-private-property-in-object", { "loose": true }]
+            ["@babel/plugin-transform-runtime", {
+                "regenerator": true,
+                "helpers": true,
+                "useESModules": false
+            }],
+            "react-native-reanimated/plugin"
         ]
     };
 };

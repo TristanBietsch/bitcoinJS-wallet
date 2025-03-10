@@ -1,100 +1,89 @@
 import React from 'react';
-import { useWaitlist } from '@/hooks/useWaitlist';
-import type { WaitlistHook } from '@/hooks/useWaitlist';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import CardWaitlistScreen from '@/screens/main/CardWaitlistScreen';
+import { setupTestEnv } from './utils/testConfig';
+import { clearWaitlistTestData, generateTestEmail } from './utils/testUtils';
 
-// Mock the necessary modules
-jest.mock('@/hooks/useWaitlist');
-jest.mock('@/components/ui/toast', () => ({
-  useToast: () => ({ show: jest.fn() }),
-  Toast: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ToastTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ToastDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+// Setup test environment
+setupTestEnv();
+
+// Don't mock the useWaitlist hook - we want to test with real implementation
+jest.unmock('@/hooks/useWaitlist');
+
+// Create minimal mock for components that might cause issues in tests
+jest.mock('expo-image', () => ({
+  Image: 'Image'
 }));
 
-// Create a simplified test component
-const SimpleWaitlistTest = () => {
-  const {
-    email,
-    setEmail,
-    isLoading,
-    isRegistered,
-    registeredEmail,
-    submitToWaitlist,
-  } = useWaitlist();
+jest.mock('@/components/domain/Card/FeatureChips', () => ({
+  FeatureChips: () => null
+}));
 
-  const handleSubmit = () => {
-    submitToWaitlist();
-  };
+// Toast mock
+jest.mock('@/components/ui/toast', () => ({
+  useToast: () => ({
+    show: jest.fn()
+  }),
+  Toast: ({ children }: { children: React.ReactNode }) => children,
+  ToastTitle: ({ children }: { children: React.ReactNode }) => children,
+  ToastDescription: ({ children }: { children: React.ReactNode }) => children
+}));
 
-  if (isRegistered) {
-    return (
-      <div>
-        <h1>You're on the list!</h1>
-        <p>We'll notify {registeredEmail} when your card is ready.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <h1>Join the Waitlist</h1>
-      <input
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email Address"
-      />
-      <button onClick={handleSubmit} disabled={isLoading}>
-        {isLoading ? 'Loading...' : 'Join Now'}
-      </button>
-    </div>
-  );
-};
-
-describe('Waitlist Functionality', () => {
-  let mockWaitlistHook: WaitlistHook;
+describe('CardWaitlistScreen Component', () => {
+  // Use a unique email for testing
+  const testEmail = generateTestEmail('component');
   
-  beforeEach(() => {
-    mockWaitlistHook = {
-      email: '',
-      setEmail: jest.fn(),
-      isLoading: false,
-      isRegistered: false,
-      registeredEmail: undefined,
-      submitToWaitlist: jest.fn().mockResolvedValue(true),
-      validateEmail: jest.fn().mockReturnValue(true),
-    };
-    
-    (useWaitlist as jest.Mock).mockImplementation(() => mockWaitlistHook);
+  // Clean up before and after tests
+  beforeAll(async () => {
+    await clearWaitlistTestData(testEmail);
   });
-
-  it('should call submitToWaitlist when form is submitted', () => {
-    // This test just verifies that the hook works correctly
-    mockWaitlistHook.submitToWaitlist();
-    expect(mockWaitlistHook.submitToWaitlist).toHaveBeenCalled();
+  
+  afterAll(async () => {
+    await clearWaitlistTestData(testEmail);
   });
-
-  it('should set email when changed', () => {
-    // This test verifies the email setter functionality
-    mockWaitlistHook.setEmail('test@example.com');
-    expect(mockWaitlistHook.setEmail).toHaveBeenCalledWith('test@example.com');
+  
+  it('should render the join waitlist form initially', () => {
+    // When: Component is rendered
+    const { getByPlaceholderText, getByText } = render(<CardWaitlistScreen />);
+    
+    // Then: Should show the form elements
+    expect(getByPlaceholderText('Email Address')).toBeTruthy();
+    expect(getByText('Join Now')).toBeTruthy();
   });
-
-  it('should display correct UI based on registration status', () => {
-    // Test the registered state
-    (useWaitlist as jest.Mock).mockImplementation(() => ({
-      ...mockWaitlistHook,
-      isRegistered: true,
-      registeredEmail: 'test@example.com',
-    }));
+  
+  it('should update email input when typed', () => {
+    // Given: Component is rendered
+    const { getByPlaceholderText } = render(<CardWaitlistScreen />);
+    const emailInput = getByPlaceholderText('Email Address');
     
-    // This would check the UI in a real component test
-    expect(mockWaitlistHook.isRegistered).toBe(false);
+    // When: Typing in the email input
+    fireEvent.changeText(emailInput, testEmail);
     
-    // Update the mock to test the registered state
-    mockWaitlistHook.isRegistered = true;
-    mockWaitlistHook.registeredEmail = 'test@example.com';
+    // Then: Input value should be updated
+    expect(emailInput.props.value).toBe(testEmail);
+  });
+  
+  it('should submit the form and show success state', async () => {
+    // Given: Component is rendered with email
+    const { getByPlaceholderText, getByText, queryByText } = render(<CardWaitlistScreen />);
     
-    expect(mockWaitlistHook.isRegistered).toBe(true);
-    expect(mockWaitlistHook.registeredEmail).toBe('test@example.com');
+    // When: Entering email and submitting form
+    const emailInput = getByPlaceholderText('Email Address');
+    fireEvent.changeText(emailInput, testEmail);
+    
+    const submitButton = getByText('Join Now');
+    fireEvent.press(submitButton);
+    
+    // Then: Success message should appear after submission (may take a moment)
+    await waitFor(() => {
+      const successElement = queryByText(/You're on the list!/i);
+      expect(successElement).toBeTruthy();
+    }, { timeout: 3000 });
+    
+    // And: Should show the registered email
+    await waitFor(() => {
+      const emailConfirmation = queryByText(new RegExp(`We'll notify ${testEmail}`, 'i'));
+      expect(emailConfirmation).toBeTruthy();
+    }, { timeout: 1000 });
   });
 }); 

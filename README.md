@@ -9,12 +9,12 @@
 [![GitHub issues](https://img.shields.io/github/issues/NummusBTC/nummus-wallet)](https://github.com/NummusBTC/nummus-wallet/issues)
 [![GitHub stars](https://img.shields.io/github/stars/NummusBTC/nummus-wallet)](https://github.com/NummusBTC/nummus-wallet/stargazers)
 
-Nummus is a non-custodial MVP Wallet for Nummus, providing users with full control over their Bitcoin transactions and Lightning Network integration.
+Nummus is a non-custodial Bitcoin wallet focused on providing users with full control over their Bitcoin transactions on the base layer. Our primary goal is to create a secure, user-friendly, and fully non-custodial wallet for managing Bitcoin.
 
 ## Features
 
 - Bitcoin transaction management
-- Lightning Network integration
+- Secure non-custodial architecture
 - Real-time price tracking
 - Secure wallet creation and backup
 - Transaction history
@@ -33,7 +33,7 @@ Nummus is built using the following technologies:
 - **Gluestack UI** - UI component library
 - **Supabase** - Backend as a service platform
 - **Mempool.space API** - Bitcoin mempool data and fee estimation
-- **LND** - An SDK for integrating Lightning Network functionality
+- **Bitcoin Development Kit (BDK)** - For Bitcoin wallet functionality
 - **Secure storage** - For sensitive wallet data
 - **Jest** - Testing framework
 
