@@ -12,10 +12,11 @@ const TimeSelector: React.FC<TimeSelectorProps> = ({
   onSelectPeriod 
 }) => {
   return (
-    <View style={styles.timeSelectorContainer}>
+    <View style={styles.timeSelectorContainer} testID="time-selector">
       {periods.map((period) => (
         <TouchableOpacity
           key={period.label}
+          testID={`time-option-${period.label}`}
           style={[
             styles.timeButton,
             selectedPeriod.label === period.label && styles.selectedTimeButton

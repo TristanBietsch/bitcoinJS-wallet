@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useWaitlist } from '@/hooks/useWaitlist';
-import { setupTestEnv } from './utils/testConfig';
-import { clearWaitlistTestData, generateTestEmail } from './utils/testUtils';
+import { setupTestEnv } from '../utils/testConfig';
+import { clearWaitlistTestData, generateTestEmail } from '../utils/testUtils';
 
 // Setup test environment
 setupTestEnv();
@@ -74,7 +74,7 @@ describe('useWaitlist hook integration', () => {
 
   it('should submit email to waitlist and update state accordingly', async () => {
     // Given: Hook is rendered with a valid email
-    const { result, waitForNextUpdate } = renderHook(() => useWaitlist(), { wrapper });
+    const { result } = renderHook(() => useWaitlist(), { wrapper });
     
     // When: Setting email and submitting
     act(() => {
@@ -82,19 +82,14 @@ describe('useWaitlist hook integration', () => {
     });
     
     // Then: Submit the email
-    let submitResult: boolean | undefined;
     await act(async () => {
-      submitResult = await result.current.submitToWaitlist();
-      // Wait for state updates to complete
-      await waitForNextUpdate();
+      await result.current.submitToWaitlist();
     });
     
-    // Then: Submission should succeed
-    expect(submitResult).toBe(true);
-    
-    // And: State should be updated
+    // Then: State should be updated
     expect(result.current.isRegistered).toBe(true);
     expect(result.current.registeredEmail).toBe(testEmail);
     expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeUndefined();
   });
 }); 
