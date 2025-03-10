@@ -33,7 +33,7 @@ describe('ActivityItem', () => {
     );
     
     expect(getByText('Received Bitcoin')).toBeTruthy();
-    expect(getByText('bc1q7...3u6')).toBeTruthy();
+    expect(getByText('bc1q7...c3u6')).toBeTruthy();
     expect(getByText('$25.00')).toBeTruthy();
   });
   
@@ -43,7 +43,7 @@ describe('ActivityItem', () => {
     );
     
     expect(getByText('Sent Bitcoin')).toBeTruthy();
-    expect(getByText('bc1qx...wlh')).toBeTruthy();
+    expect(getByText('bc1qx...0wlh')).toBeTruthy();
     expect(getByText('-$15.75')).toBeTruthy();
   });
   

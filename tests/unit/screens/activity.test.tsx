@@ -2,7 +2,6 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import ActivityScreen from '@/screens/wallet/History/ActivityScreen';
 import { Transaction } from '@/tests/mockData/transactionData';
-import * as TransactionData from '@/tests/mockData/transactionData';
 
 // Mock the navigation
 jest.mock('@react-navigation/native', () => {
@@ -54,11 +53,18 @@ const createMockTransactions = (): Transaction[] => {
   ];
 };
 
+// Mock the transactionData module
+jest.mock('@/tests/mockData/transactionData', () => {
+  const mockTransactions = createMockTransactions();
+  return {
+    Transaction: jest.requireActual('@/tests/mockData/transactionData').Transaction,
+    mockTransactions: mockTransactions
+  };
+});
+
 describe('ActivityScreen', () => {
   beforeEach(() => {
-    // Mock the transactionData module
-    const mockTransactions = createMockTransactions();
-    jest.spyOn(TransactionData, 'mockTransactions', 'get').mockReturnValue(mockTransactions);
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
