@@ -97,7 +97,7 @@ const HomeScreen = () => {
         </ThemedText>
         
         {isLoading ? (
-          <ActivityIndicator size="large" color="red" style={styles.loader} />
+          <ActivityIndicator testID="activity-indicator" size="large" color="red" style={styles.loader} />
         ) : error ? (
           <View style={styles.errorContainer}>
             <ThemedText style={styles.errorText}>{error}</ThemedText>

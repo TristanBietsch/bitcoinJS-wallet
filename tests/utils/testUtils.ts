@@ -1,32 +1,65 @@
-import { supabaseService } from '@/services/api/supabaseService';
+/**
+ * Test utilities for React Native components
+ */
 
-// Clear test data before/after tests
-export const clearWaitlistTestData = async (email: string): Promise<void> => {
-  try {
-    // Remove test email from waitlist if it exists
-    const checkResult = await supabaseService.checkWaitlist(email);
-    if (checkResult.exists) {
-      // For testing purposes only - this would be a direct API call in a real implementation
-      await fetch(`${process.env.SUPABASE_URL}/rest/v1/waitlist?email=eq.${encodeURIComponent(email)}`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': process.env.SUPABASE_KEY || '',
-          'Content-Type': 'application/json',
-        },
-      });
-    }
-  } catch (error) {
-    console.error('Error clearing test data:', error);
+// Avoid JSX in this file since it's causing parsing issues
+
+/**
+ * Creates a mock component for testing
+ * @param displayName Name of the component
+ */
+export const createMockComponent = (displayName: string) => {
+  const component = (props: any) => {
+    return props.children || null;
+  };
+  component.displayName = displayName;
+  return component;
+};
+
+/**
+ * Mock error handler for testing error boundaries
+ */
+export const mockErrorHandler = () => {
+  const originalConsoleError = console.error;
+  console.error = jest.fn();
+  
+  return () => {
+    console.error = originalConsoleError;
+  };
+};
+
+/**
+ * Helper to wait for all animations and timers to complete
+ */
+export const flushMicroTasks = () => new Promise(resolve => setTimeout(resolve, 0));
+
+/**
+ * Helper to set up component test with standard mocks
+ */
+export const setupComponentTest = () => {
+  // Use fake timers
+  jest.useFakeTimers();
+  
+  // Reset mocks before each test
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  // Restore real timers after tests
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+};
+
+/**
+ * Format currency values for display in tests
+ */
+export const formatTestCurrency = (amount: number, currency: string): string => {
+  if (currency === 'USD') {
+    return `$${amount.toLocaleString()}`;
+  } else if (currency === 'BTC') {
+    return `₿${amount.toLocaleString()}`;
+  } else {
+    return amount.toLocaleString();
   }
 };
-
-// Generate a unique test email to avoid conflicts
-export const generateTestEmail = (prefix = 'test'): string => {
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 1000);
-  return `${prefix}.${timestamp}.${random}@example.com`;
-};
-
-// Wait for a specified time (useful for async operations)
-export const wait = (ms: number): Promise<void> => 
-  new Promise(resolve => setTimeout(resolve, ms)); 

@@ -9,27 +9,8 @@
     "ios": "DARK_MODE=media DARK_MODE=media expo start --ios",
     "web": "DARK_MODE=media DARK_MODE=media expo start --web",
     "test": "jest --watchAll",
-    "test:waitlist": "node ./tests/runWaitlistTests.js",
+    "test:waitlist": "node ./tests/scripts/runWaitlistTests.js",
     "lint": "expo lint"
-  },
-  "jest": {
-    "preset": "jest-expo",
-    "transform": {
-      "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
-    },
-    "transformIgnorePatterns": [
-      "node_modules/(?!(jest-)?react-native|@react-native|react-clone-referenced-element|@react-navigation|@expo|expo|@expo-google-fonts|@gluestack-ui|expo-router|@unimodules|unimodules|sentry-expo|react-navigation|@react-native-async-storage)"
-    ],
-    "setupFiles": [
-      "<rootDir>/tests/jest-setup.js"
-    ],
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/$1"
-    },
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "/node_modules/"
-    ]
   },
   "dependencies": {
     "@babel/runtime": "^7.26.9",

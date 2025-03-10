@@ -42,6 +42,7 @@ build/
 .env
 .env.test
 .env.development
+tests/.env.test
 
 # Logs
 logs/
@@ -63,3 +64,6 @@ TODO.md
 
 # Gitignore
 .gitignore
+
+# Test coverage
+coverage/

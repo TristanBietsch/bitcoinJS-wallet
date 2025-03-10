@@ -1,5 +1,5 @@
 import { supabaseService } from '@/services/api/supabaseService';
-import { setupTestEnv } from './utils/testConfig';
+import { setupTestEnv } from '../utils/testConfig';
 
 // Set up the test environment
 setupTestEnv();
