@@ -1,47 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
+import { OnboardingScreenProps } from '@/types/onboarding';
+import WelcomeStep, { welcomeStepConfig } from './WelcomeStep';
+import SecurityStep, { securityStepConfig } from './SecurityStep';
+import UsageStep, { usageStepConfig } from './UsageStep';
 
 const { width } = Dimensions.get('window');
 
-interface OnboardingScreenProps {
-  onComplete: () => void;
-}
+const ONBOARDING_STEPS = [
+  welcomeStepConfig,
+  securityStepConfig,
+  usageStepConfig,
+];
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const slides = [
-    {
-      title: 'Welcome to Nummus Wallet',
-      description: 'Your secure Bitcoin wallet for everyday transactions',
-    },
-    {
-      title: 'Safe & Secure',
-      description: 'Your keys, your coins. We never store your private keys',
-    },
-    {
-      title: 'Easy to Use',
-      description: 'Send and receive Bitcoin with just a few taps',
-    },
-  ];
-
   const goToNextSlide = () => {
-    if (currentSlide < slides.length - 1) {
+    if (currentSlide < ONBOARDING_STEPS.length - 1) {
       setCurrentSlide(currentSlide + 1);
     } else {
       onComplete();
     }
   };
 
+  const currentStep = ONBOARDING_STEPS[currentSlide];
+  const StepComponent = currentStep.Component;
+
   return (
     <View style={styles.container}>
       <View style={styles.slideContainer}>
-        <Text style={styles.title}>{slides[currentSlide].title}</Text>
-        <Text style={styles.description}>{slides[currentSlide].description}</Text>
+        <StepComponent onNext={goToNextSlide} />
       </View>
 
       <View style={styles.pagination}>
-        {slides.map((_, index) => (
+        {ONBOARDING_STEPS.map((_, index) => (
           <View
             key={index}
             style={[
@@ -54,7 +47,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
       <TouchableOpacity style={styles.button} onPress={goToNextSlide}>
         <Text style={styles.buttonText}>
-          {currentSlide === slides.length - 1 ? 'Get Started' : 'Next'}
+          {currentSlide === ONBOARDING_STEPS.length - 1 ? 'Get Started' : 'Next'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -70,20 +63,6 @@ const styles = StyleSheet.create({
   },
   slideContainer: {
     width: width - 40,
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#666',
-    paddingHorizontal: 20,
   },
   pagination: {
     flexDirection: 'row',
