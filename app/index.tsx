@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import HomeScreen from '@/screens/main/HomeScreen';
 import Onboarding from './components/Onboarding';
-import { isOnboardingComplete, setOnboardingComplete } from './utils/storage';
+import { isOnboardingComplete, setOnboardingComplete, resetOnboardingStatus } from './utils/storage';
+import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import Constants from 'expo-constants';
 
 export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -22,13 +24,55 @@ export default function Home() {
     setShowOnboarding(false);
   };
 
+  const handleResetOnboarding = async () => {
+    await resetOnboardingStatus();
+    setShowOnboarding(true);
+  };
+
   if (isLoading) {
     return null; // Or return a loading spinner
   }
 
-  return showOnboarding ? (
+  const content = showOnboarding ? (
     <Onboarding onComplete={handleOnboardingComplete} />
   ) : (
     <HomeScreen />
   );
-} 
+
+  // Only show reset button in development
+  const isDevelopment = Constants.appOwnership === 'expo' || __DEV__;
+
+  return (
+    <View style={styles.container}>
+      {content}
+      {isDevelopment && !showOnboarding && (
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={handleResetOnboarding}
+        >
+          <Text style={styles.resetButtonText}>Reset Onboarding</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    marginBottom: 100,
+  },
+  resetButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#FF0000',
+    padding: 10,
+    borderRadius: 8,
+    opacity: 0.8,
+  },
+  resetButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+}); 

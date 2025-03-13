@@ -87,8 +87,6 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Gray square in top-right for profile or menu */}
-      <View style={styles.topRightIcon} />
       
       {/* Balance Display Section */}
       <View style={styles.balanceContainer}>

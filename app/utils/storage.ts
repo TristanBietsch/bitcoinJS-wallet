@@ -18,4 +18,12 @@ export const isOnboardingComplete = async () => {
     console.error('Error reading onboarding status:', error);
     return false;
   }
+};
+
+export const resetOnboardingStatus = async () => {
+  try {
+    await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+  } catch (error) {
+    console.error('Error resetting onboarding status:', error);
+  }
 }; 
