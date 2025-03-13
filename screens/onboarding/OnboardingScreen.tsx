@@ -1,92 +1,80 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { OnboardingScreenProps } from '@/types/onboarding';
-import WelcomeStep, { welcomeStepConfig } from './WelcomeStep';
-import SecurityStep, { securityStepConfig } from './SecurityStep';
-import UsageStep, { usageStepConfig } from './UsageStep';
+import WelcomeScreen from './WelcomeScreen';
+import WalletChoiceScreen from './WalletChoiceScreen';
+import SeedPhraseWarningScreen from './SeedPhraseWarningScreen';
+import ConfirmSeedWordsScreen from './ConfirmSeedWordsScreen';
+import ImportWalletScreen from './ImportWalletScreen';
+import SuccessScreen from './SuccessScreen';
+import ErrorScreen from './ErrorScreen';
 
-const { width } = Dimensions.get('window');
-
-const ONBOARDING_STEPS = [
-  welcomeStepConfig,
-  securityStepConfig,
-  usageStepConfig,
-];
+type WalletStep = 'welcome' | 'choice' | 'warning' | 'confirm-seed' | 'import' | 'success' | 'error';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentStep, setCurrentStep] = useState<WalletStep>('welcome');
+  const [error, setError] = useState<string | null>(null);
 
-  const goToNextSlide = () => {
-    if (currentSlide < ONBOARDING_STEPS.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    } else {
-      onComplete();
-    }
+  const handleGetStarted = () => {
+    setCurrentStep('choice');
   };
 
-  const currentStep = ONBOARDING_STEPS[currentSlide];
-  const StepComponent = currentStep.Component;
+  const handleCreateWallet = () => {
+    setCurrentStep('warning');
+  };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.slideContainer}>
-        <StepComponent onNext={goToNextSlide} />
-      </View>
+  const handleImportWallet = () => {
+    setCurrentStep('import');
+  };
 
-      <View style={styles.pagination}>
-        {ONBOARDING_STEPS.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.paginationDot,
-              index === currentSlide && styles.paginationDotActive,
-            ]}
-          />
-        ))}
-      </View>
+  const handleWarningComplete = () => {
+    setCurrentStep('confirm-seed');
+  };
 
-      <TouchableOpacity style={styles.button} onPress={goToNextSlide}>
-        <Text style={styles.buttonText}>
-          {currentSlide === ONBOARDING_STEPS.length - 1 ? 'Get Started' : 'Next'}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+  const handleConfirmSeedComplete = () => {
+    setCurrentStep('success');
+  };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  slideContainer: {
-    width: width - 40,
-  },
-  pagination: {
-    flexDirection: 'row',
-    marginBottom: 40,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ccc',
-    marginHorizontal: 4,
-  },
-  paginationDotActive: {
-    backgroundColor: '#000',
-  },
-  button: {
-    backgroundColor: '#000',
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 25,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-}); 
+  const handleImportComplete = () => {
+    setCurrentStep('success');
+  };
+
+  const handleError = (message: string) => {
+    setError(message);
+    setCurrentStep('error');
+  };
+
+  const handleRetry = () => {
+    setCurrentStep('choice');
+    setError(null);
+  };
+
+  const handleSuccess = () => {
+    onComplete();
+  };
+
+  // Render wallet setup flow
+  switch (currentStep) {
+    case 'welcome':
+      return <WelcomeScreen onGetStarted={handleGetStarted} />;
+    case 'choice':
+      return (
+        <WalletChoiceScreen
+          onCreateWallet={handleCreateWallet}
+          onImportWallet={handleImportWallet}
+        />
+      );
+    case 'warning':
+      return <SeedPhraseWarningScreen onComplete={handleWarningComplete} />;
+    case 'confirm-seed':
+      return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} />;
+    case 'import':
+      return <ImportWalletScreen onComplete={handleImportComplete} />;
+    case 'success':
+      return <SuccessScreen onComplete={handleSuccess} />;
+    case 'error':
+      return <ErrorScreen onRetry={handleRetry} message={error || undefined} />;
+    default:
+      return null;
+  }
+} 
