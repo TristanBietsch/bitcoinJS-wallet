@@ -3,11 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-nati
 
 const { width } = Dimensions.get('window');
 
-interface OnboardingProps {
+interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
-export default function Onboarding({ onComplete }: OnboardingProps) {
+export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = [

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import HomeScreen from '@/screens/main/HomeScreen';
-import Onboarding from './components/Onboarding';
-import { isOnboardingComplete, setOnboardingComplete, resetOnboardingStatus } from './utils/storage';
+import Onboarding from '@/screens/onboarding/OnboardingScreen';
+import { isOnboardingComplete, setOnboardingComplete, resetOnboardingStatus } from '@/utils/storage';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 
