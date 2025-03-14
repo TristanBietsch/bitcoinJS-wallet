@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Platform, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { formatCurrency } from '@/utils/dummyWalletData';
 import { useWalletBalance } from '@/hooks/wallet/useWalletBalance';
@@ -17,6 +18,7 @@ const CURRENCY_OPTIONS = [
 type CurrencyType = 'USD' | 'BTC' | 'SATS';
 
 const HomeScreen = () => {
+  const router = useRouter();
   // State for selected currency format
   const [currency, setCurrency] = useState<CurrencyType>('BTC');
   
@@ -135,11 +137,17 @@ const HomeScreen = () => {
       
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => router.push('payment/send')}
+        >
           <ThemedText style={styles.actionButtonText}>Send</ThemedText>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => router.push('payment/receive')}
+        >
           <ThemedText style={styles.actionButtonText}>Receive</ThemedText>
         </TouchableOpacity>
       </View>
