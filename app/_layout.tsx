@@ -13,7 +13,7 @@ import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomNavigation } from '@/components/common/BottomNavigation';
-import { Slot } from 'expo-router';
+import { Slot, usePathname } from 'expo-router';
 import { initSentry } from '@/services/logging/sentryService';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -21,8 +21,15 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
+// Routes where bottom navigation should be hidden
+const HIDDEN_NAV_ROUTES = ['/payment/send', '/payment/receive'];
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const pathname = usePathname();
+  
+  // Check if bottom navigation should be hidden for current route
+  const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.includes(route));
   
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -56,7 +63,7 @@ export default function RootLayout() {
           <View style={styles.content}>
             <Slot />
           </View>
-          <BottomNavigation />
+          {!shouldHideNav && <BottomNavigation />}
           <StatusBar style="auto" />
         </ThemeProvider>
       </GluestackUIProvider>
