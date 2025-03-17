@@ -67,3 +67,6 @@ TODO.md
 
 # Test coverage
 coverage/
+
+# Jest
+.jest/
