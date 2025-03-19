@@ -145,6 +145,16 @@ export default function ReceiveScreen() {
     router.push('/');
   };
   
+  const handleGenerateQR = () => {
+    router.push({
+      pathname: '/payment/invoice',
+      params: {
+        amount,
+        currency
+      }
+    });
+  };
+  
   // Render number key
   const renderNumberKey = (value: string) => (
     <TouchableOpacity 
@@ -226,7 +236,10 @@ export default function ReceiveScreen() {
       
       <View style={styles.footerContainer}>
         {/* Generate QR Button */}
-        <TouchableOpacity style={styles.continueButton}>
+        <TouchableOpacity 
+          style={styles.continueButton} 
+          onPress={handleGenerateQR}
+        >
           <ThemedText style={styles.continueButtonText}>Generate QR Code</ThemedText>
         </TouchableOpacity>
         

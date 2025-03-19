@@ -22,14 +22,14 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 SplashScreen.preventAutoHideAsync();
 
 // Routes where bottom navigation should be hidden
-const HIDDEN_NAV_ROUTES = ['/payment/send', '/payment/receive'];
+const HIDDEN_NAV_ROUTES = ['/payment', '/receive'];
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const pathname = usePathname();
   
   // Check if bottom navigation should be hidden for current route
-  const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.includes(route));
+  const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.startsWith(route));
   
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
