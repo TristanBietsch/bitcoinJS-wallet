@@ -28,7 +28,7 @@ jest.mock('lucide-react-native', () => ({
 // Set up mocks for testing interactions
 const mockBack = jest.fn();
 const mockShare = jest.fn(() => Promise.resolve({ action: 'shared' }));
-const mockSetStringAsync = jest.fn(() => Promise.resolve(true));
+const mockSetStringAsync = jest.fn();
 
 // Mock clipboard functionality
 jest.mock('expo-clipboard', () => ({
@@ -50,32 +50,29 @@ jest.mock('expo-router', () => ({
   }
 }));
 
-// Mock React Native's Share
-jest.mock('react-native', () => {
-  return {
-    View: 'View',
-    StyleSheet: {
-      create: jest.fn(styles => styles)
-    },
-    TouchableOpacity: 'TouchableOpacity',
-    Share: {
-      share: mockShare
-    },
-    Platform: {
-      OS: 'ios',
-      select: jest.fn(obj => obj.ios)
-    }
-  };
-});
-
 // Import testing utilities
 import { render } from '@testing-library/react-native';
+
+// Define types for our mock component
+interface MockElement {
+  props: {
+    testID: string;
+    onPress?: () => void;
+  };
+  type: string;
+  children?: MockElement[];
+}
+
+interface MockComponent {
+  props: Record<string, unknown>;
+  type: string;
+  children: MockElement[];
+}
 
 // Instead of mocking the component, create a simplified version
 // that allows us to simulate the real component's behavior
 class MockedInvoiceScreen {
-  // This function simulates a renderer that provides testable elements
-  render() {
+  render(): MockComponent {
     return {
       props: {},
       type: 'div',
@@ -98,7 +95,7 @@ class MockedInvoiceScreen {
         {
           props: { 
             testID: 'copy-button', 
-            onPress: () => mockSetStringAsync('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh')
+            onPress: () => { mockSetStringAsync('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'); }
           },
           type: 'button',
         }
@@ -107,22 +104,37 @@ class MockedInvoiceScreen {
   }
 }
 
+interface TestElement {
+  testID: string;
+  press?: () => void;
+}
+
+type ElementsMap = {
+  [key: string]: TestElement;
+}
+
 // Mock the actual component import
 jest.mock('@/screens/payment/InvoiceScreen', () => {
   return {
     __esModule: true,
     default: function() {
-      // Return a structure with getByTestId to simulate testing-library behavior
+      const elements: ElementsMap = {
+        'back-button': { testID: 'back-button', press: mockBack },
+        'qr-container': { testID: 'qr-container' },
+        'qr-code': { testID: 'qr-code' },
+        'share-button': { testID: 'share-button', press: mockShare },
+        'copy-button': { 
+          testID: 'copy-button', 
+          press: () => { mockSetStringAsync('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'); }
+        }
+      };
       return {
-        getByTestId: (id: string) => {
-          const elements = {
-            'back-button': { testID: 'back-button', press: mockBack },
-            'qr-container': { testID: 'qr-container' },
-            'qr-code': { testID: 'qr-code' },
-            'share-button': { testID: 'share-button', press: mockShare },
-            'copy-button': { testID: 'copy-button', press: () => mockSetStringAsync('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh') }
-          };
-          return elements[id];
+        getByTestId: (id: string): TestElement => {
+          const element = elements[id];
+          if (!element) {
+            throw new Error(`TestID "${id}" not found`);
+          }
+          return element;
         }
       };
     }
@@ -142,30 +154,44 @@ describe('InvoiceScreen', () => {
   });
 
   test('simulates rendering with key elements', () => {
-    // This directly simulates the testing-library output without rendering
     const mockedComponent = new MockedInvoiceScreen().render();
     
-    expect(mockedComponent.children[0].props.testID).toBe('back-button');
-    expect(mockedComponent.children[1].props.testID).toBe('qr-container');
-    expect(mockedComponent.children[1].children[0].props.testID).toBe('qr-code');
-    expect(mockedComponent.children[2].props.testID).toBe('share-button');
-    expect(mockedComponent.children[3].props.testID).toBe('copy-button');
+    // Add null checks to satisfy TypeScript
+    const child0 = mockedComponent.children[0];
+    const child1 = mockedComponent.children[1];
+    const child2 = mockedComponent.children[2];
+    const child3 = mockedComponent.children[3];
+    
+    expect(child0?.props.testID).toBe('back-button');
+    expect(child1?.props.testID).toBe('qr-container');
+    expect(child1?.children?.[0]?.props.testID).toBe('qr-code');
+    expect(child2?.props.testID).toBe('share-button');
+    expect(child3?.props.testID).toBe('copy-button');
   });
   
   test('simulates back button press', () => {
     const element = new MockedInvoiceScreen().render().children[0];
+    if (!element?.props.onPress) {
+      throw new Error('Back button onPress handler not found');
+    }
     element.props.onPress();
     expect(mockBack).toHaveBeenCalled();
   });
   
   test('simulates share button press', () => {
     const element = new MockedInvoiceScreen().render().children[2];
+    if (!element?.props.onPress) {
+      throw new Error('Share button onPress handler not found');
+    }
     element.props.onPress();
     expect(mockShare).toHaveBeenCalled();
   });
   
   test('simulates copy button press', () => {
     const element = new MockedInvoiceScreen().render().children[3];
+    if (!element?.props.onPress) {
+      throw new Error('Copy button onPress handler not found');
+    }
     element.props.onPress();
     expect(mockSetStringAsync).toHaveBeenCalledWith('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh');
   });
