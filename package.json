@@ -10,6 +10,7 @@
     "web": "DARK_MODE=media DARK_MODE=media expo start --web",
     "test": "jest --watchAll",
     "test:waitlist": "node ./tests/scripts/runWaitlistTests.js",
+    "test:single": "jest --verbose --no-cache --watchAll=false",
     "lint": "expo lint"
   },
   "dependencies": {

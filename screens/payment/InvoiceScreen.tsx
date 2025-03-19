@@ -116,7 +116,11 @@ export default function InvoiceScreen() {
       />
 
       {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={handleBackPress}
+        testID="back-button"
+      >
         <ChevronLeft size={24} color="black" />
       </TouchableOpacity>
 
@@ -133,7 +137,7 @@ export default function InvoiceScreen() {
         </View>
 
         {/* QR Code */}
-        <View style={styles.qrContainer}>
+        <View style={styles.qrContainer} testID="qr-container">
           <QRCode
             value={MOCK_BITCOIN_ADDRESS}
             size={240}
@@ -152,16 +156,24 @@ export default function InvoiceScreen() {
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.actionButton, styles.shareButton]} onPress={handleShare}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.shareButton]} 
+            onPress={handleShare}
+            testID="share-button"
+          >
             <Share2 size={24} color="white" />
             <ThemedText style={styles.buttonText}>Share</ThemedText>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.actionButton, styles.copyButton]} onPress={handleCopy}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.copyButton]} 
+            onPress={handleCopy}
+            testID="copy-button"
+          >
             {copied ? (
-              <Check size={24} color="white" />
+              <Check size={24} color="white" testID="check-icon" />
             ) : (
-              <Copy size={24} color="white" />
+              <Copy size={24} color="white" testID="copy-icon" />
             )}
           </TouchableOpacity>
         </View>
