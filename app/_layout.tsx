@@ -4,7 +4,7 @@ import '../regeneratorRuntime';
 import React from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import "@/global.css";
-import { GluestackUIProvider } from "@/components/common/Provider";
+import { GluestackUIProvider } from "@/src/components/common/Provider";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +12,7 @@ import { useEffect, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomNavigation } from '@/components/common/BottomNavigation';
+import { BottomNavigation } from '@/src/components/common/BottomNavigation';
 import { Slot, usePathname } from 'expo-router';
 import { initSentry } from '@/src/services/logging/sentryService';
 

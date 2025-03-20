@@ -1,6 +1,6 @@
 import React from 'react';
  import { render, fireEvent, waitFor } from '@testing-library/react-native';
- import PriceScreen from '@/src/screens/main/PriceScreen';
+ import PriceScreen from '@/src/screens/main/price/PriceScreen';
  import { useBitcoinPriceData } from '@/src/hooks/wallet/useBitcoinPriceData';
  import { TIME_PERIODS } from '@/src/config/price';
  import { TimeframePeriod } from '@/src/types/price.types';

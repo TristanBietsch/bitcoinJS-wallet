@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import HomeScreen from '@/src/screens/home/HomeScreen';
+import HomeScreen from '@/src/screens/main/home/HomeScreen';
 import Onboarding from '@/src/screens/onboarding/OnboardingScreen';
 import { isOnboardingComplete, setOnboardingComplete, resetOnboardingStatus } from '@/src/utils/storage';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';

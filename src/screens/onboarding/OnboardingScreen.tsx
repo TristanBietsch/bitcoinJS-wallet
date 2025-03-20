@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
 import { OnboardingScreenProps } from '@/src/types/onboarding';
-import WelcomeScreen from './WelcomeScreen';
-import WalletChoiceScreen from './WalletChoiceScreen';
-import SeedPhraseWarningScreen from './SeedPhraseWarningScreen';
-import ConfirmSeedWordsScreen from './ConfirmSeedWordsScreen';
-import ImportWalletScreen from './ImportWalletScreen';
-import SuccessScreen from './SuccessScreen';
-import ErrorScreen from './ErrorScreen';
+import WelcomeScreen from './start/WelcomeScreen';
+import WalletChoiceScreen from './start/WalletChoiceScreen';
+import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen';
+import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen';
+import ImportWalletScreen from './import/ImportWalletScreen';
+import SuccessScreen from './status/SuccessScreen';
+import ErrorScreen from './status/ErrorScreen';
 
 type WalletStep = 'welcome' | 'choice' | 'warning' | 'confirm-seed' | 'import' | 'success' | 'error';
 

@@ -1,8 +1,8 @@
 export { default as OnboardingScreen } from './OnboardingScreen';
-export { default as WelcomeScreen } from './WelcomeScreen';
-export { default as WalletChoiceScreen } from './WalletChoiceScreen';
-export { default as SeedPhraseWarningScreen } from './SeedPhraseWarningScreen';
-export { default as ConfirmSeedWordsScreen } from './ConfirmSeedWordsScreen';
-export { default as ImportWalletScreen } from './ImportWalletScreen';
-export { default as SuccessScreen } from './SuccessScreen';
-export { default as ErrorScreen } from './ErrorScreen'; 
+export { default as WelcomeScreen } from './start/WelcomeScreen';
+export { default as WalletChoiceScreen } from './start/WalletChoiceScreen';
+export { default as SeedPhraseWarningScreen } from './create/warning/SeedPhraseWarningScreen';
+export { default as ConfirmSeedWordsScreen } from './create/confirm/ConfirmSeedWordsScreen';
+export { default as ImportWalletScreen } from './import/ImportWalletScreen';
+export { default as SuccessScreen } from './status/SuccessScreen';
+export { default as ErrorScreen } from './status/ErrorScreen'; 

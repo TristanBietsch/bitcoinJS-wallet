@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import CardWaitlistScreen from '@/src/screens/waitlist/CardWaitlistScreen';
+import CardWaitlistScreen from '@/src/screens/main/waitlist/CardWaitlistScreen';
 import { setupTestEnv } from '../utils/testConfig';
 import { clearWaitlistTestData, generateTestEmail } from '../utils/testUtils';
 

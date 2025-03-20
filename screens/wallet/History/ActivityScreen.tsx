@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ActivityGroup } from '@/components/domain/Transaction/ActivityGroup';
+import { ThemedText } from '@/src/components/ThemedText';
+import { ActivityGroup } from '@/src/components/domain/Transaction/ActivityGroup';
 import { Transaction, mockTransactions } from '@/tests/mockData/transactionData';
 import { useRouter } from 'expo-router';
 import { fonts } from '@/src/constants/fonts';

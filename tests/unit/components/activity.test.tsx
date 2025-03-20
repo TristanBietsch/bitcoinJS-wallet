@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { ActivityItem } from '@/components/domain/Transaction/ActivityItem';
-import { ActivityGroup } from '@/components/domain/Transaction/ActivityGroup';
+import { ActivityItem } from '@/src/components/domain/Transaction/ActivityItem';
+import { ActivityGroup } from '@/src/components/domain/Transaction/ActivityGroup';
 import { Transaction } from '@/tests/mockData/transactionData';
 
 // Mock the transaction data for testing

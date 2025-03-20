@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/src/components/ThemedText';
+import { ThemedView } from '@/src/components/ThemedView';
 
 // Mock data - this will be replaced with real data later
 const mockTransaction = {
