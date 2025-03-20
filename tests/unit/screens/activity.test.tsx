@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import ActivityScreen from '@/screens/wallet/History/ActivityScreen';
+import ActivityScreen from '@/src/screens/main/ActivityScreen';
 import { Transaction } from '@/tests/mockData/transactionData';
 
 // Mock the navigation

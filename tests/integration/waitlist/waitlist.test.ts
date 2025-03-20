@@ -5,7 +5,7 @@
  * It directly tests the supabaseService interactions.
  */
 
-import { supabaseService } from '@/services/api/supabaseService';
+import { supabaseService } from '@/src/services/api/supabaseService';
 import { setupTestEnv } from '@/tests/utils/testConfig';
 
 // Set up test environment

@@ -1,5 +1,5 @@
 import React from 'react';
-import CardWaitlistScreen from '@/screens/main/CardWaitlistScreen';
+import CardWaitlistScreen from '@/src/screens/waitlist/CardWaitlistScreen';
 
 export default function Waitlist() {
   return <CardWaitlistScreen />;

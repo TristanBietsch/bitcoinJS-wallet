@@ -14,9 +14,9 @@ import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomNavigation } from '@/components/common/BottomNavigation';
 import { Slot, usePathname } from 'expo-router';
-import { initSentry } from '@/services/logging/sentryService';
+import { initSentry } from '@/src/services/logging/sentryService';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/src/hooks/useColorScheme';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();

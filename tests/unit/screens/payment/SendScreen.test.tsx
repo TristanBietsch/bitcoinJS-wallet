@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import SendScreen from '@/screens/payment/SendScreen';
+import SendScreen from '@/src/screens/send/SendScreen';
 import { setupTestEnv } from '../../utils/testConfig';
 
 // Mock environment variables

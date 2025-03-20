@@ -1,5 +1,5 @@
 import React from 'react';
-import PriceScreen from '@/screens/main/PriceScreen';
+import PriceScreen from '@/src/screens/main/PriceScreen';
 
 export default function Price() {
   return <PriceScreen />;

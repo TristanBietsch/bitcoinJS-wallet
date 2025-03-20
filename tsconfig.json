@@ -12,31 +12,31 @@
         "components/*"
       ],
       "@screens/*": [
-        "screens/*"
+        "src/screens/*"
       ],
       "@navigation/*": [
-        "navigation/*"
+        "src/navigation/*"
       ],
       "@services/*": [
-        "services/*"
+        "src/services/*"
       ],
       "@hooks/*": [
-        "hooks/*"
+        "src/hooks/*"
       ],
       "@state/*": [
         "state/*"
       ],
       "@utils/*": [
-        "utils/*"
+        "src/utils/*"
       ],
       "@config/*": [
-        "config/*"
+        "src/config/*"
       ],
       "@assets/*": [
         "assets/*"
       ],
       "@types/*": [
-        "types/*"
+        "src/types/*"
       ],
       "tailwind.config": [
         "./tailwind.config.js"
@@ -47,6 +47,6 @@
     "**/*.ts",
     "**/*.tsx",
     "nativewind-env.d.ts",
-    "types/env.d.ts"
+    "src/types/env.d.ts"
   ]
 }

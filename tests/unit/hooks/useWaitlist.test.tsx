@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-hooks';
-import { useWaitlist } from '@/hooks/useWaitlist';
+import { useWaitlist } from '@/src/hooks/useWaitlist';
 import { setupTestEnv } from '../utils/testConfig';
 import { clearWaitlistTestData, generateTestEmail } from '../utils/testUtils';
 

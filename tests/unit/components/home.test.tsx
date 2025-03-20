@@ -1,9 +1,9 @@
 import React from 'react';
  import { render, fireEvent, waitFor } from '@testing-library/react-native';
- import PriceScreen from '@/screens/main/PriceScreen';
- import { useBitcoinPriceData } from '@/hooks/wallet/useBitcoinPriceData';
- import { TIME_PERIODS } from '@/config/price';
- import { TimeframePeriod } from '@/types/price.types';
+ import PriceScreen from '@/src/screens/main/PriceScreen';
+ import { useBitcoinPriceData } from '@/src/hooks/wallet/useBitcoinPriceData';
+ import { TIME_PERIODS } from '@/src/config/price';
+ import { TimeframePeriod } from '@/src/types/price.types';
  
  // Mock the hooks
  jest.mock('@/hooks/wallet/useBitcoinPriceData');

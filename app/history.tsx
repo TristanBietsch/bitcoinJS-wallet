@@ -1,5 +1,5 @@
 import React from 'react';
-import ActivityScreen from '@/screens/wallet/History/ActivityScreen';
+import ActivityScreen from '@/src/screens/main/ActivityScreen';
 
 export default function History() {
   return <ActivityScreen />;

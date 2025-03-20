@@ -1,5 +1,5 @@
 import React from 'react';
-import OnboardingScreen from '@/screens/onboarding/OnboardingScreen';
+import OnboardingScreen from '@/src/screens/onboarding/OnboardingScreen';
 
 interface OnboardingProps {
   onComplete: () => void;

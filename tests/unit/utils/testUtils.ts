@@ -1,4 +1,4 @@
-import { supabaseService } from '@/services/api/supabaseService';
+import { supabaseService } from '@/src/services/api/supabaseService';
 
 /**
  * Generates a unique test email with timestamp

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import ReceiveScreen from '@/screens/wallet/Receive/ReceiveScreen';
+import ReceiveScreen from '@/src/screens/wallet/Receive/ReceiveScreen';
 import { setupTestEnv } from '../../utils/testConfig';
 
 // Mock environment variables
