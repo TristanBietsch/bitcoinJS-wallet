@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { supabaseService } from '@/src/services/api/supabaseService';
-import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/src/components/ui/toast';
 import { z } from 'zod';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

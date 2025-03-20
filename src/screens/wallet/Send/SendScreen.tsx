@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { ThemedText } from '@/components/ThemedText';
-import Dropdown from '@/components/common/Dropdown';
-import IOSDropdown from '@/components/common/IOSDropdown';
+import { ThemedText } from '@/src/components/ThemedText';
+import Dropdown from '@/src/components/common/Dropdown';
+import IOSDropdown from '@/src/components/common/IOSDropdown';
 import { ChevronLeft } from 'lucide-react-native';
 
 // Currency options for the dropdown

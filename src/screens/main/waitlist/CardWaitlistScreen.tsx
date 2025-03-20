@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { ArrowRight } from 'lucide-react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { FeatureChips } from '@/components/domain/Card/FeatureChips';
+import { ThemedText } from '@/src/components/ThemedText';
+import { ThemedView } from '@/src/components/ThemedView';
+import { FeatureChips } from '@/src/components/domain/Card/FeatureChips';
 import { useWaitlist } from '@/src/hooks/useWaitlist';
 import { Colors } from '@/src/constants/Colors';
 import { useColorScheme } from '@/src/hooks/useColorScheme';

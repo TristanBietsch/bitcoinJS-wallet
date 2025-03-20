@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/src/components/ThemedText';
 import { formatCurrency } from '@/src/utils/dummyWalletData';
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance';
-import Dropdown from '@/components/common/Dropdown';
-import IOSDropdown from '@/components/common/IOSDropdown';
+import Dropdown from '@/src/components/common/Dropdown';
+import IOSDropdown from '@/src/components/common/IOSDropdown';
 
 // Currency options for the dropdown
 const CURRENCY_OPTIONS = [

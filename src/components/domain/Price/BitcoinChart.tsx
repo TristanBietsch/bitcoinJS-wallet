@@ -7,9 +7,9 @@ import { View, Text, StyleSheet, Animated as RNAnimated, Dimensions, PanResponde
 import { LineChart } from 'react-native-chart-kit';
 import { BitcoinChartProps } from '@/src/types/price.types';
 import { formatDate, formatCurrency } from '@/src/utils/formatting/price';
-import { CHART_HEIGHT, SCREEN_WIDTH } from '@/src/config/price';
-import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
-import ErrorIcon from '@/components/ui/icons/ErrorIcon';
+import { CHART_HEIGHT, SCREEN_WIDTH } from '@/src/config/price';      
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/src/components/ui/toast';
+import ErrorIcon from '@/src/components/ui/icons/ErrorIcon';
 
 // Get the actual screen dimensions
 const screenWidth = Dimensions.get('window').width;
