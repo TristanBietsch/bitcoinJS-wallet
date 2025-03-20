@@ -20,17 +20,14 @@ import { useBitcoinPrice } from '@/hooks/useBitcoinPrice';
 export default function PriceScreen() {
   const {
     currentPrice,
-    previousPrice,
-    priceChangePercent,
-    chartData,
-    timestamps,
-    labels,
-    isLoading,
-    error,
-    refresh,
+    priceData,
     timeframe,
     setTimeframe,
-    timeframes
+    loading,
+    error,
+    priceChange,
+    refresh,
+    availableTimeframes
   } = useBitcoinPrice();
 
   return (
@@ -39,7 +36,7 @@ export default function PriceScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refresh} />
+          <RefreshControl refreshing={loading} onRefresh={refresh} />
         }
       >
         <View style={styles.header}>
@@ -47,15 +44,15 @@ export default function PriceScreen() {
         </View>
 
         <View style={styles.priceContainer}>
-          <AnimatedPrice price={currentPrice} previousPrice={previousPrice} />
+          <AnimatedPrice price={currentPrice} previousPrice={currentPrice} />
           <PriceChange 
-            changePercent={priceChangePercent} 
+            changePercent={priceChange} 
             timeframe={timeframe} 
           />
         </View>
 
         <TimeSelector 
-          periods={timeframes} 
+          periods={availableTimeframes} 
           selectedPeriod={timeframe} 
           onSelectPeriod={setTimeframe} 
         />
@@ -64,9 +61,9 @@ export default function PriceScreen() {
           <ThemedText style={styles.error}>{error}</ThemedText>
         ) : (
           <BitcoinChart 
-            data={chartData} 
-            timestamps={timestamps} 
-            labels={labels}
+            data={priceData?.chartData || []} 
+            timestamps={priceData?.timestamps || []} 
+            labels={priceData?.labels || []}
             timeframe={timeframe}
             error={!!error}
           />

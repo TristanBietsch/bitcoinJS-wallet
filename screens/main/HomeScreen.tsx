@@ -139,14 +139,14 @@ const HomeScreen = () => {
       <View style={styles.actionButtonsContainer}>
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => router.push('payment/send')}
+          onPress={() => router.push('/send/send')}
         >
           <ThemedText style={styles.actionButtonText}>Send</ThemedText>
         </TouchableOpacity>
         
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => router.push('payment/receive')}
+          onPress={() => router.push('/receive/receive')}
         >
           <ThemedText style={styles.actionButtonText}>Receive</ThemedText>
         </TouchableOpacity>
