@@ -1,11 +1,11 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import "@/global.css";
-import { GluestackUIProvider } from "@/components/common/Provider";
+import { GluestackUIProvider } from "@/src/components/common/Provider";
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomNavigation } from '@/components/common/BottomNavigation';
+import { BottomNavigation } from '@/src/components/common/BottomNavigation';
 
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 

@@ -23,8 +23,8 @@ const TABS = [
     icon: Bitcoin,
   },
   {
-    path: '/history',
-    title: 'History',
+    path: '/activity',
+    title: 'Activity',
     icon: Clock,
   },
 ];
@@ -53,7 +53,7 @@ export function BottomNavigation() {
                 if (path === '/') router.navigate('/');
                 else if (path === '/waitlist') router.navigate('/waitlist');
                 else if (path === '/price') router.navigate('/price');
-                else if (path === '/history') router.navigate('/history');
+                else if (path === '/activity') router.navigate('/activity');
               }}
             >
               <View style={styles.tabContent}>
