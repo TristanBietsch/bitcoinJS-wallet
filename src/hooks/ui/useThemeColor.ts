@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 const useThemeColor = () => {
-    const [themeColor, setThemeColor] = useState('#ffffff');
+    const [ themeColor, _setThemeColor ] = useState('#ffffff')
 
     useEffect(() => {
         // Logic to determine theme color
-    }, []);
+    }, [])
 
-    return { themeColor };
-};
+    return { themeColor }
+}
 
-export default useThemeColor; 
+export default useThemeColor 

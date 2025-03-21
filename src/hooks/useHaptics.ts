@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import * as Haptics from 'expo-haptics'
 
 /**
  * Hook for handling haptic feedback throughout the app
@@ -6,32 +6,32 @@ import * as Haptics from 'expo-haptics';
  */
 export const useHaptics = () => {
   const lightImpact = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  }
 
   const mediumImpact = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  };
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+  }
 
   const heavyImpact = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  };
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+  }
 
   const selectionImpact = () => {
-    Haptics.selectionAsync();
-  };
+    Haptics.selectionAsync()
+  }
 
   const notificationSuccess = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+  }
 
   const notificationWarning = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  };
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+  }
 
   const notificationError = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  };
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+  }
 
   return {
     lightImpact,
@@ -41,5 +41,5 @@ export const useHaptics = () => {
     notificationSuccess,
     notificationWarning,
     notificationError,
-  };
-}; 
+  }
+} 

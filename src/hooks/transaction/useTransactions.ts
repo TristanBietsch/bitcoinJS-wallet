@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 const useTransactions = () => {
-    const [transactions, setTransactions] = useState([]);
+    const [ transactions, _setTransactions ] = useState([])
 
     useEffect(() => {
         // Fetch transactions
-    }, []);
+    }, [])
 
-    return { transactions };
-};
+    return { transactions }
+}
 
-export default useTransactions; 
+export default useTransactions 

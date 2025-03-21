@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 interface Credentials {
     username: string;
@@ -6,21 +6,21 @@ interface Credentials {
 }
 
 const useAuth = () => {
-    const [user, setUser] = useState(null);
+    const [ user, _setUser ] = useState(null)
 
     useEffect(() => {
         // Logic to check user authentication status
-    }, []);
+    }, [])
 
-    const login = (credentials: Credentials) => {
+    const login = (_credentials: Credentials) => {
         // Logic to log in the user
-    };
+    }
 
     const logout = () => {
         // Logic to log out the user
-    };
+    }
 
-    return { user, login, logout };
-};
+    return { user, login, logout }
+}
 
-export default useAuth; 
+export default useAuth 

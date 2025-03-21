@@ -1,7 +1,7 @@
-import React from 'react';
-import { FlatList, Text, View, StyleSheet } from 'react-native';
-import { COLORS } from '../../types/colors';
-import TransactionItem from './TransactionItem';
+import React from 'react'
+import { FlatList, Text, View, StyleSheet } from 'react-native'
+import { COLORS } from '../../types/colors'
+import TransactionItem from './TransactionItem'
 
 interface Transaction {
   id: string;
@@ -32,7 +32,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyMessage}>Loading transactions...</Text>
       </View>
-    );
+    )
   }
 
   if (transactions.length === 0) {
@@ -40,7 +40,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyMessage}>{emptyMessage}</Text>
       </View>
-    );
+    )
   }
 
   return (
@@ -55,25 +55,25 @@ const TransactionList: React.FC<TransactionListProps> = ({
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContainer}
     />
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+  listContainer : {
+    paddingHorizontal : 16,
+    paddingBottom     : 16,
   },
-  emptyContainer: {
-    flex: 1,
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+  emptyContainer : {
+    flex           : 1,
+    padding        : 24,
+    alignItems     : 'center',
+    justifyContent : 'center',
   },
-  emptyMessage: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
+  emptyMessage : {
+    fontSize  : 16,
+    color     : COLORS.textSecondary,
+    textAlign : 'center',
   },
-});
+})
 
-export default TransactionList; 
+export default TransactionList 

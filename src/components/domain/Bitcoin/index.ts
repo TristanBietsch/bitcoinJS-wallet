@@ -3,5 +3,5 @@
  * Exports all Bitcoin-related components
  */
 
-export { default as AddressDisplay } from './AddressDisplay';
-export { default as TransactionList } from './TransactionList'; 
+export { default as AddressDisplay } from './AddressDisplay'
+export { default as TransactionList } from './TransactionList' 

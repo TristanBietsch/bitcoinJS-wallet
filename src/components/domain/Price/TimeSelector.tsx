@@ -2,9 +2,9 @@
  * Time period selector component
  * Allows users to select different timeframes for viewing Bitcoin price data
  */
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { TimeSelectorProps } from '@/src/types/price.types';
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { TimeSelectorProps } from '@/src/types/price.types'
 
 const TimeSelector: React.FC<TimeSelectorProps> = ({ 
   periods, 
@@ -34,34 +34,34 @@ const TimeSelector: React.FC<TimeSelectorProps> = ({
         </TouchableOpacity>
       ))}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  timeSelectorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#EFEFEF',
+  timeSelectorContainer : {
+    flexDirection   : 'row',
+    justifyContent  : 'space-around',
+    paddingVertical : 20,
+    borderTopWidth  : 1,
+    borderTopColor  : '#EFEFEF',
   },
-  timeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+  timeButton : {
+    paddingVertical   : 8,
+    paddingHorizontal : 16,
+    borderRadius      : 20,
   },
-  selectedTimeButton: {
-    backgroundColor: '#F5F5F5',
+  selectedTimeButton : {
+    backgroundColor : '#F5F5F5',
   },
-  timeButtonText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
-    color: '#666666',
+  timeButtonText : {
+    fontFamily : 'Inter-Medium',
+    fontSize   : 14,
+    color      : '#666666',
   },
-  selectedTimeButtonText: {
-    color: '#000000',
-    fontWeight: '500',
+  selectedTimeButtonText : {
+    color      : '#000000',
+    fontWeight : '500',
   },
-});
+})
 
-export default TimeSelector; 
+export default TimeSelector 

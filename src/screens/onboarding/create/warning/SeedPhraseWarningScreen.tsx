@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { ThemedText } from '@/src/components/ThemedText';
-import { ThemedView } from '@/src/components/ThemedView';
+import React, { useState } from 'react'
+import { View, StyleSheet } from 'react-native'
+import { TouchableOpacity } from 'react-native-gesture-handler'
+import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedView } from '@/src/components/ThemedView'
 
 interface SeedPhraseWarningScreenProps {
   onComplete: () => void;
 }
 
 export default function SeedPhraseWarningScreen({ onComplete }: SeedPhraseWarningScreenProps) {
-  const [hasConfirmed, setHasConfirmed] = useState(false);
+  const [ hasConfirmed, setHasConfirmed ] = useState(false)
 
   return (
     <ThemedView style={styles.container}>
@@ -40,7 +40,7 @@ export default function SeedPhraseWarningScreen({ onComplete }: SeedPhraseWarnin
           onPress={() => setHasConfirmed(!hasConfirmed)}
         >
           <View style={styles.checkboxContainer}>
-            <View style={[styles.checkbox, hasConfirmed && styles.checkboxChecked]} />
+            <View style={[ styles.checkbox, hasConfirmed && styles.checkboxChecked ]} />
             <ThemedText type="default" style={styles.checkboxText}>
               I understand that if I lose my seed phrase, I will lose access to my funds
             </ThemedText>
@@ -49,7 +49,7 @@ export default function SeedPhraseWarningScreen({ onComplete }: SeedPhraseWarnin
       </View>
 
       <TouchableOpacity 
-        style={[styles.button, !hasConfirmed && styles.buttonDisabled]} 
+        style={[ styles.button, !hasConfirmed && styles.buttonDisabled ]} 
         onPress={onComplete}
         disabled={!hasConfirmed}
       >
@@ -58,73 +58,73 @@ export default function SeedPhraseWarningScreen({ onComplete }: SeedPhraseWarnin
         </ThemedText>
       </TouchableOpacity>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
+  container : {
+    flex    : 1,
+    padding : 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
+  title : {
+    fontSize     : 28,
+    fontWeight   : 'bold',
+    marginBottom : 10,
+    textAlign    : 'center',
   },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: 40,
-    opacity: 0.7,
+  subtitle : {
+    textAlign    : 'center',
+    marginBottom : 40,
+    opacity      : 0.7,
   },
-  warningContainer: {
-    gap: 20,
-    marginBottom: 40,
+  warningContainer : {
+    gap          : 20,
+    marginBottom : 40,
   },
-  warningItem: {
-    padding: 16,
-    backgroundColor: '#fff3f3',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ffcdd2',
+  warningItem : {
+    padding         : 16,
+    backgroundColor : '#fff3f3',
+    borderRadius    : 12,
+    borderWidth     : 1,
+    borderColor     : '#ffcdd2',
   },
-  warningDescription: {
-    opacity: 0.7,
-    marginTop: 4,
+  warningDescription : {
+    opacity   : 0.7,
+    marginTop : 4,
   },
-  confirmButton: {
-    marginTop: 20,
+  confirmButton : {
+    marginTop : 20,
   },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  checkboxContainer : {
+    flexDirection : 'row',
+    alignItems    : 'center',
+    gap           : 12,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#000',
+  checkbox : {
+    width        : 24,
+    height       : 24,
+    borderRadius : 6,
+    borderWidth  : 2,
+    borderColor  : '#000',
   },
-  checkboxChecked: {
-    backgroundColor: '#000',
+  checkboxChecked : {
+    backgroundColor : '#000',
   },
-  checkboxText: {
-    flex: 1,
+  checkboxText : {
+    flex : 1,
   },
-  button: {
-    backgroundColor: '#000',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 'auto',
+  button : {
+    backgroundColor : '#000',
+    padding         : 16,
+    borderRadius    : 12,
+    alignItems      : 'center',
+    marginTop       : 'auto',
   },
-  buttonDisabled: {
-    opacity: 0.5,
+  buttonDisabled : {
+    opacity : 0.5,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
+  buttonText : {
+    color    : '#fff',
+    fontSize : 16,
   },
-}); 
+}) 

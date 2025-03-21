@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import Button from '../ui/Button';
+import React from 'react'
+import { View, StyleSheet } from 'react-native'
+import Button from '../ui/Button'
 
 interface WalletActionsProps {
   onSend: () => void;
@@ -67,25 +67,25 @@ const WalletActions: React.FC<WalletActionsProps> = ({
         </View>
       )}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
+  container : {
+    padding : 16,
   },
-  mainActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+  mainActionsRow : {
+    flexDirection  : 'row',
+    justifyContent : 'space-between',
+    marginBottom   : 16,
   },
-  buttonContainer: {
-    flex: 1,
-    marginHorizontal: 4,
+  buttonContainer : {
+    flex             : 1,
+    marginHorizontal : 4,
   },
-  secondaryButtonRow: {
-    marginTop: 8,
+  secondaryButtonRow : {
+    marginTop : 8,
   },
-});
+})
 
-export default WalletActions; 
+export default WalletActions 

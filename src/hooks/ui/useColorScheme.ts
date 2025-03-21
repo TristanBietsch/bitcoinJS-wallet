@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
-import { useColorScheme as useNativeColorScheme } from 'react-native';
+import { useState, useEffect } from 'react'
+import { useColorScheme as useNativeColorScheme } from 'react-native'
 
 const useColorScheme = () => {
-    const nativeColorScheme = useNativeColorScheme();
-    const [colorScheme, setColorScheme] = useState(nativeColorScheme || 'light');
+    const nativeColorScheme = useNativeColorScheme()
+    const [ colorScheme, setColorScheme ] = useState(nativeColorScheme || 'light')
 
     useEffect(() => {
         if (nativeColorScheme) {
-            setColorScheme(nativeColorScheme);
+            setColorScheme(nativeColorScheme)
         }
-    }, [nativeColorScheme]);
+    }, [ nativeColorScheme ])
 
-    return colorScheme;
-};
+    return colorScheme
+}
 
-export default useColorScheme; 
+export default useColorScheme 

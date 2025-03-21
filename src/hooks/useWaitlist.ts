@@ -1,1 +1,1 @@
-export * from './useWaitlist/useWaitlist'; 
+export * from './useWaitlist/useWaitlist' 

@@ -1,3 +1,3 @@
-import useColorScheme from './ui/useColorScheme';
+import useColorScheme from './ui/useColorScheme'
 
-export { useColorScheme }; 
+export { useColorScheme } 

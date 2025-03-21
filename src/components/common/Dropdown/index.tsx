@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react'
 import { 
   View, 
   Text, 
@@ -8,7 +8,7 @@ import {
   FlatList,
   SafeAreaView,
   TouchableWithoutFeedback
-} from 'react-native';
+} from 'react-native'
 
 type DropdownOption = {
   label: string;
@@ -32,27 +32,27 @@ const Dropdown = ({
   backgroundColor = 'red',
   textColor = 'white'
 }: DropdownProps) => {
-  const [visible, setVisible] = useState(false);
+  const [ visible, setVisible ] = useState(false)
   
   // Find the currently selected option
-  const selectedOption = options.find(option => option.value === selectedValue);
+  const selectedOption = options.find(option => option.value === selectedValue)
 
   const toggleDropdown = () => {
-    setVisible(!visible);
-  };
+    setVisible(!visible)
+  }
 
   const handleSelect = (value: string) => {
-    onSelect(value);
-    setVisible(false);
-  };
+    onSelect(value)
+    setVisible(false)
+  }
 
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={[styles.dropdownButton, { backgroundColor }]}
+        style={[ styles.dropdownButton, { backgroundColor } ]}
         onPress={toggleDropdown}
       >
-        <Text style={[styles.buttonText, { color: textColor }]}>
+        <Text style={[ styles.buttonText, { color: textColor } ]}>
           {selectedOption ? selectedOption.label : placeholder} ▼
         </Text>
       </TouchableOpacity>
@@ -95,56 +95,56 @@ const Dropdown = ({
         </TouchableWithoutFeedback>
       </Modal>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    zIndex: 1,
+  container : {
+    position : 'relative',
+    zIndex   : 1,
   },
-  dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+  dropdownButton : {
+    flexDirection     : 'row',
+    alignItems        : 'center',
+    justifyContent    : 'center',
+    paddingVertical   : 10,
+    paddingHorizontal : 20,
+    borderRadius      : 20,
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonText : {
+    fontSize   : 16,
+    fontWeight : 'bold',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  modalOverlay : {
+    flex            : 1,
+    backgroundColor : 'rgba(0, 0, 0, 0.5)',
+    justifyContent  : 'center',
+    alignItems      : 'center',
   },
-  modalContent: {
-    width: '80%',
-    maxHeight: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    overflow: 'hidden',
+  modalContent : {
+    width           : '80%',
+    maxHeight       : '80%',
+    backgroundColor : 'white',
+    borderRadius    : 10,
+    overflow        : 'hidden',
   },
-  optionsContainer: {
-    maxHeight: 300,
+  optionsContainer : {
+    maxHeight : 300,
   },
-  option: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+  option : {
+    padding           : 15,
+    borderBottomWidth : 1,
+    borderBottomColor : '#f0f0f0',
   },
-  selectedOption: {
-    backgroundColor: '#f7f7f7',
+  selectedOption : {
+    backgroundColor : '#f7f7f7',
   },
-  optionText: {
-    fontSize: 16,
+  optionText : {
+    fontSize : 16,
   },
-  selectedOptionText: {
-    fontWeight: 'bold',
+  selectedOptionText : {
+    fontWeight : 'bold',
   },
-});
+})
 
-export default Dropdown; 
+export default Dropdown 

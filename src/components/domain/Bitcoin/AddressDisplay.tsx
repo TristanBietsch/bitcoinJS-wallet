@@ -3,46 +3,46 @@
  * Displays a Bitcoin address with QR code for receiving payments
  */
 
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button, Text, Card, QRCode } from '@gluestack-ui/themed';
-import { useBitcoinWallet } from '../../../hooks/bitcoin/useBitcoinWallet';
+import React, { useState } from 'react'
+import { View, StyleSheet } from 'react-native'
+import { Button, Text, Card, QRCode } from '@gluestack-ui/themed'
+import { useBitcoinWallet } from '../../../hooks/bitcoin/useBitcoinWallet'
 
 interface AddressDisplayProps {
   initialAddress?: string;
 }
 
 const AddressDisplay: React.FC<AddressDisplayProps> = ({ initialAddress }) => {
-  const { getNewAddress } = useBitcoinWallet();
-  const [address, setAddress] = useState<string>(initialAddress || '');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const { getNewAddress } = useBitcoinWallet()
+  const [ address, setAddress ] = useState<string>(initialAddress || '')
+  const [ isLoading, setIsLoading ] = useState<boolean>(false)
+  const [ error, setError ] = useState<string | null>(null)
 
   const generateNewAddress = async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
     
     try {
-      const addressData = await getNewAddress();
+      const addressData = await getNewAddress()
       if (addressData) {
-        setAddress(addressData.address);
+        setAddress(addressData.address)
       } else {
-        setError('Failed to generate address');
+        setError('Failed to generate address')
       }
     } catch (err) {
-      setError('Error generating new address');
-      console.error(err);
+      setError('Error generating new address')
+      console.error(err)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Generate an address if none was provided
   React.useEffect(() => {
     if (!initialAddress) {
-      generateNewAddress();
+      generateNewAddress()
     }
-  }, [initialAddress]);
+  }, [ initialAddress ])
 
   return (
     <Card style={styles.container}>
@@ -80,46 +80,46 @@ const AddressDisplay: React.FC<AddressDisplayProps> = ({ initialAddress }) => {
         <Button.Text>Generate New Address</Button.Text>
       </Button>
     </Card>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    alignItems: 'center',
-    width: '100%',
+  container : {
+    padding    : 20,
+    alignItems : 'center',
+    width      : '100%',
   },
-  title: {
-    marginBottom: 16,
+  title : {
+    marginBottom : 16,
   },
-  qrContainer: {
-    marginVertical: 20,
-    padding: 10,
-    backgroundColor: 'white',
-    borderRadius: 8,
+  qrContainer : {
+    marginVertical  : 20,
+    padding         : 10,
+    backgroundColor : 'white',
+    borderRadius    : 8,
   },
-  placeholder: {
-    width: 200,
-    height: 200,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
+  placeholder : {
+    width           : 200,
+    height          : 200,
+    backgroundColor : '#f0f0f0',
+    borderRadius    : 8,
   },
-  addressLabel: {
-    fontWeight: 'bold',
-    marginBottom: 4,
+  addressLabel : {
+    fontWeight   : 'bold',
+    marginBottom : 4,
   },
-  addressText: {
-    marginBottom: 20,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    fontFamily: 'monospace',
+  addressText : {
+    marginBottom      : 20,
+    textAlign         : 'center',
+    paddingHorizontal : 20,
+    fontFamily        : 'monospace',
   },
-  button: {
-    marginTop: 10,
+  button : {
+    marginTop : 10,
   },
-  error: {
-    marginBottom: 10,
+  error : {
+    marginBottom : 10,
   },
-});
+})
 
-export default AddressDisplay; 
+export default AddressDisplay 

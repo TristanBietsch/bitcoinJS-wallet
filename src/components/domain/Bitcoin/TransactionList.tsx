@@ -3,25 +3,25 @@
  * Displays a list of Bitcoin transactions
  */
 
-import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
-import { Box, Text, Divider, Icon, HStack, VStack } from '@gluestack-ui/themed';
-import { ArrowUpRight, ArrowDownLeft, Clock } from 'lucide-react-native';
-import { useBitcoinWallet } from '../../../hooks/bitcoin/useBitcoinWallet';
+import React from 'react'
+import { FlatList, StyleSheet } from 'react-native'
+import { Box, Text, Divider, HStack, VStack } from '@gluestack-ui/themed'
+import { ArrowUpRight, ArrowDownLeft, Clock } from 'lucide-react-native'
+import { useBitcoinWallet } from '../../../hooks/bitcoin/useBitcoinWallet'
 
 // Utility function to format satoshis to BTC
 const formatBTC = (sats: number): string => {
-  return (sats / 100000000).toFixed(8);
-};
+  return (sats / 100000000).toFixed(8)
+}
 
 // Utility function to format date
 const formatDate = (timestamp: number): string => {
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleDateString();
-};
+  const date = new Date(timestamp * 1000)
+  return date.toLocaleDateString()
+}
 
 interface TransactionItemProps {
-  txid: string;
+  _txid: string;
   sent: number;
   received: number;
   fee: number;
@@ -30,7 +30,7 @@ interface TransactionItemProps {
 }
 
 const TransactionItem: React.FC<TransactionItemProps> = ({
-  txid,
+  _txid,
   sent,
   received,
   fee,
@@ -38,8 +38,8 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
   timestamp,
 }) => {
   // Determine if this is an incoming or outgoing transaction
-  const isOutgoing = sent > received;
-  const amount = isOutgoing ? sent - received - fee : received;
+  const isOutgoing = sent > received
+  const amount = isOutgoing ? sent - received - fee : received
   
   return (
     <Box style={styles.transactionItem}>
@@ -82,18 +82,18 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
         </VStack>
       </HStack>
     </Box>
-  );
-};
+  )
+}
 
 const TransactionList: React.FC = () => {
-  const { transactions, isLoading, error, refreshWallet } = useBitcoinWallet();
+  const { transactions, isLoading, error, refreshWallet } = useBitcoinWallet()
 
   if (isLoading && transactions.length === 0) {
     return (
       <Box style={styles.container}>
         <Text style={styles.centered}>Loading transactions...</Text>
       </Box>
-    );
+    )
   }
 
   if (error) {
@@ -101,7 +101,7 @@ const TransactionList: React.FC = () => {
       <Box style={styles.container}>
         <Text style={styles.error}>{error}</Text>
       </Box>
-    );
+    )
   }
 
   if (transactions.length === 0) {
@@ -109,7 +109,7 @@ const TransactionList: React.FC = () => {
       <Box style={styles.container}>
         <Text style={styles.centered}>No transactions found</Text>
       </Box>
-    );
+    )
   }
 
   return (
@@ -123,61 +123,61 @@ const TransactionList: React.FC = () => {
         refreshing={isLoading}
       />
     </Box>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
+  container : {
+    flex  : 1,
+    width : '100%',
   },
-  transactionItem: {
-    padding: 16,
+  transactionItem : {
+    padding : 16,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  iconContainer : {
+    width          : 40,
+    height         : 40,
+    borderRadius   : 20,
+    justifyContent : 'center',
+    alignItems     : 'center',
   },
-  incomingIcon: {
-    backgroundColor: '#0aa356',
+  incomingIcon : {
+    backgroundColor : '#0aa356',
   },
-  outgoingIcon: {
-    backgroundColor: '#e75a5c',
+  outgoingIcon : {
+    backgroundColor : '#e75a5c',
   },
-  transactionType: {
-    fontWeight: 'bold',
-    fontSize: 16,
+  transactionType : {
+    fontWeight : 'bold',
+    fontSize   : 16,
   },
-  date: {
-    color: '#666',
-    fontSize: 12,
+  date : {
+    color    : '#666',
+    fontSize : 12,
   },
-  amount: {
-    fontWeight: 'bold',
-    fontSize: 16,
+  amount : {
+    fontWeight : 'bold',
+    fontSize   : 16,
   },
-  incomingText: {
-    color: '#0aa356',
+  incomingText : {
+    color : '#0aa356',
   },
-  outgoingText: {
-    color: '#e75a5c',
+  outgoingText : {
+    color : '#e75a5c',
   },
-  confirmations: {
-    color: '#666',
-    fontSize: 12,
+  confirmations : {
+    color    : '#666',
+    fontSize : 12,
   },
-  centered: {
-    textAlign: 'center',
-    padding: 20,
+  centered : {
+    textAlign : 'center',
+    padding   : 20,
   },
-  error: {
-    textAlign: 'center',
-    padding: 20,
-    color: 'red',
+  error : {
+    textAlign : 'center',
+    padding   : 20,
+    color     : 'red',
   },
-});
+})
 
-export default TransactionList; 
+export default TransactionList 

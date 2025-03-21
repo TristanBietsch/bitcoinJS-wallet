@@ -1,44 +1,44 @@
-import React from 'react';
-import { Text, TextProps } from 'react-native';
-import { useColorScheme } from '@/src/hooks/useColorScheme';
-import { Colors } from '@/src/constants/Colors';
-import { fonts } from '@/src/constants/fonts';
+import React from 'react'
+import { Text, TextProps } from 'react-native'
+import { useColorScheme } from '@/src/hooks/useColorScheme'
+import { Colors } from '@/src/constants/Colors'
+import { fonts } from '@/src/constants/fonts'
 
 export type ThemedTextProps = TextProps & {
   type?: 'default' | 'defaultSemiBold' | 'title' | 'subtitle' | 'link';
 };
 
 export function ThemedText(props: ThemedTextProps) {
-  const colorScheme = useColorScheme();
-  const { style, type = 'default', ...otherProps } = props;
+  const colorScheme = useColorScheme()
+  const { style, type = 'default', ...otherProps } = props
   
   const styles = {
-    default: { 
-      fontSize: 16, 
-      fontFamily: fonts.regular, 
-      color: Colors[colorScheme ?? 'light'].text 
+    default : { 
+      fontSize   : 16, 
+      fontFamily : fonts.regular, 
+      color      : Colors[colorScheme ?? 'light'].text 
     },
-    defaultSemiBold: { 
-      fontSize: 16, 
-      fontFamily: fonts.semibold, 
-      color: Colors[colorScheme ?? 'light'].text 
+    defaultSemiBold : { 
+      fontSize   : 16, 
+      fontFamily : fonts.semibold, 
+      color      : Colors[colorScheme ?? 'light'].text 
     },
-    title: { 
-      fontSize: 24, 
-      fontFamily: fonts.bold, 
-      color: Colors[colorScheme ?? 'light'].text 
+    title : { 
+      fontSize   : 24, 
+      fontFamily : fonts.bold, 
+      color      : Colors[colorScheme ?? 'light'].text 
     },
-    subtitle: { 
-      fontSize: 18, 
-      fontFamily: fonts.medium, 
-      color: Colors[colorScheme ?? 'light'].text 
+    subtitle : { 
+      fontSize   : 18, 
+      fontFamily : fonts.medium, 
+      color      : Colors[colorScheme ?? 'light'].text 
     },
-    link: { 
-      fontSize: 16, 
-      fontFamily: fonts.regular, 
-      color: Colors[colorScheme ?? 'light'].tint 
+    link : { 
+      fontSize   : 16, 
+      fontFamily : fonts.regular, 
+      color      : Colors[colorScheme ?? 'light'].tint 
     },
-  };
+  }
   
-  return <Text style={[styles[type], style]} {...otherProps} />;
+  return <Text style={[ styles[type], style ]} {...otherProps} />
 } 

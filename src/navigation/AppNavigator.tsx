@@ -1,16 +1,16 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import "@/global.css";
-import { GluestackUIProvider } from "@/src/components/common/Provider";
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet } from 'react-native';
-import 'react-native-reanimated';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomNavigation } from '@/src/components/common/BottomNavigation';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import "@/global.css"
+import { GluestackUIProvider } from "@/src/components/common/Provider"
+import { StatusBar } from 'expo-status-bar'
+import { StyleSheet } from 'react-native'
+import 'react-native-reanimated'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { BottomNavigation } from '@/src/components/common/BottomNavigation'
 
-import { useColorScheme } from '@/src/hooks/useColorScheme';
+import { useColorScheme } from '@/src/hooks/useColorScheme'
 
 export default function AppNavigator() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme()
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -21,11 +21,11 @@ export default function AppNavigator() {
         </ThemeProvider>
       </GluestackUIProvider>
     </GestureHandlerRootView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container : {
+    flex : 1,
   },
-});
+})

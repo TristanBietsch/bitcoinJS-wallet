@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 const useWallet = () => {
-    const [wallet, setWallet] = useState(null);
+    const [ wallet, _setWallet ] = useState(null)
 
     useEffect(() => {
         // Fetch wallet data
-    }, []);
+    }, [])
 
-    return { wallet };
-};
+    return { wallet }
+}
 
-export default useWallet; 
+export default useWallet 

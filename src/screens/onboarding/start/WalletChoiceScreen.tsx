@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { ThemedText } from '@/src/components/ThemedText';
-import { ThemedView } from '@/src/components/ThemedView';
+import React from 'react'
+import { View, StyleSheet } from 'react-native'
+import { TouchableOpacity } from 'react-native-gesture-handler'
+import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedView } from '@/src/components/ThemedView'
 
 interface WalletChoiceScreenProps {
   onCreateWallet: () => void;
@@ -21,7 +21,7 @@ export default function WalletChoiceScreen({ onCreateWallet, onImportWallet }: W
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
-          style={[styles.button, styles.primaryButton]} 
+          style={[ styles.button, styles.primaryButton ]} 
           onPress={onCreateWallet}
         >
           <ThemedText type="defaultSemiBold" style={styles.buttonText}>
@@ -33,7 +33,7 @@ export default function WalletChoiceScreen({ onCreateWallet, onImportWallet }: W
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.button, styles.secondaryButton]} 
+          style={[ styles.button, styles.secondaryButton ]} 
           onPress={onImportWallet}
         >
           <ThemedText type="defaultSemiBold" style={styles.buttonText}>
@@ -45,47 +45,47 @@ export default function WalletChoiceScreen({ onCreateWallet, onImportWallet }: W
         </TouchableOpacity>
       </View>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+  container : {
+    flex           : 1,
+    padding        : 20,
+    justifyContent : 'center',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
+  title : {
+    fontSize     : 28,
+    fontWeight   : 'bold',
+    marginBottom : 10,
+    textAlign    : 'center',
   },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: 40,
-    opacity: 0.7,
+  subtitle : {
+    textAlign    : 'center',
+    marginBottom : 40,
+    opacity      : 0.7,
   },
-  buttonContainer: {
-    gap: 20,
+  buttonContainer : {
+    gap : 20,
   },
-  button: {
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
+  button : {
+    padding      : 20,
+    borderRadius : 12,
+    alignItems   : 'center',
   },
-  primaryButton: {
-    backgroundColor: '#000',
+  primaryButton : {
+    backgroundColor : '#000',
   },
-  secondaryButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#000',
+  secondaryButton : {
+    backgroundColor : '#fff',
+    borderWidth     : 1,
+    borderColor     : '#000',
   },
-  buttonText: {
-    fontSize: 18,
-    marginBottom: 4,
+  buttonText : {
+    fontSize     : 18,
+    marginBottom : 4,
   },
-  buttonSubtext: {
-    opacity: 0.7,
+  buttonSubtext : {
+    opacity : 0.7,
   },
-}); 
+}) 

@@ -1,79 +1,79 @@
-import React, { useState } from 'react';
-import { OnboardingScreenProps } from '@/src/types/onboarding';
-import WelcomeScreen from './start/WelcomeScreen';
-import WalletChoiceScreen from './start/WalletChoiceScreen';
-import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen';
-import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen';
-import ImportWalletScreen from './import/ImportWalletScreen';
-import SuccessScreen from './status/SuccessScreen';
-import ErrorScreen from './status/ErrorScreen';
+import React, { useState } from 'react'
+import { OnboardingScreenProps } from '@/src/types/onboarding'
+import WelcomeScreen from './start/WelcomeScreen'
+import WalletChoiceScreen from './start/WalletChoiceScreen'
+import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen'
+import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen'
+import ImportWalletScreen from './import/ImportWalletScreen'
+import SuccessScreen from './status/SuccessScreen'
+import ErrorScreen from './status/ErrorScreen'
 
 type WalletStep = 'welcome' | 'choice' | 'warning' | 'confirm-seed' | 'import' | 'success' | 'error';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
-  const [currentStep, setCurrentStep] = useState<WalletStep>('welcome');
-  const [error, setError] = useState<string | null>(null);
+  const [ currentStep, setCurrentStep ] = useState<WalletStep>('welcome')
+  const [ error, setError ] = useState<string | null>(null)
 
   const handleGetStarted = () => {
-    setCurrentStep('choice');
-  };
+    setCurrentStep('choice')
+  }
 
   const handleCreateWallet = () => {
-    setCurrentStep('warning');
-  };
+    setCurrentStep('warning')
+  }
 
   const handleImportWallet = () => {
-    setCurrentStep('import');
-  };
+    setCurrentStep('import')
+  }
 
   const handleWarningComplete = () => {
-    setCurrentStep('confirm-seed');
-  };
+    setCurrentStep('confirm-seed')
+  }
 
   const handleConfirmSeedComplete = () => {
-    setCurrentStep('success');
-  };
+    setCurrentStep('success')
+  }
 
   const handleImportComplete = () => {
-    setCurrentStep('success');
-  };
+    setCurrentStep('success')
+  }
 
-  const handleError = (message: string) => {
-    setError(message);
-    setCurrentStep('error');
-  };
+  const _handleError = (message: string) => {
+    setError(message)
+    setCurrentStep('error')
+  }
 
   const handleRetry = () => {
-    setCurrentStep('choice');
-    setError(null);
-  };
+    setCurrentStep('choice')
+    setError(null)
+  }
 
   const handleSuccess = () => {
-    onComplete();
-  };
+    onComplete()
+  }
 
   // Render wallet setup flow
   switch (currentStep) {
     case 'welcome':
-      return <WelcomeScreen onGetStarted={handleGetStarted} />;
+      return <WelcomeScreen onGetStarted={handleGetStarted} />
     case 'choice':
       return (
         <WalletChoiceScreen
           onCreateWallet={handleCreateWallet}
           onImportWallet={handleImportWallet}
         />
-      );
+      )
     case 'warning':
-      return <SeedPhraseWarningScreen onComplete={handleWarningComplete} />;
+      return <SeedPhraseWarningScreen onComplete={handleWarningComplete} />
     case 'confirm-seed':
-      return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} />;
+      return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} />
     case 'import':
-      return <ImportWalletScreen onComplete={handleImportComplete} />;
+      return <ImportWalletScreen onComplete={handleImportComplete} />
     case 'success':
-      return <SuccessScreen onComplete={handleSuccess} />;
+      return <SuccessScreen onComplete={handleSuccess} />
     case 'error':
-      return <ErrorScreen onRetry={handleRetry} message={error || undefined} />;
+      return <ErrorScreen onRetry={handleRetry} message={error || undefined} />
     default:
-      return null;
+      return null
   }
 } 

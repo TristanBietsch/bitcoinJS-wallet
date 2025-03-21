@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../../types/colors';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
+import React from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import { COLORS } from '../../types/colors'
+import Card from '../ui/Card'
+import Button from '../ui/Button'
 
 interface SecureBackupPromptProps {
   onBackupNow: () => void;
@@ -21,7 +21,7 @@ const SecureBackupPrompt: React.FC<SecureBackupPromptProps> = ({
     ? 'today' 
     : daysCreated === 1 
       ? 'yesterday' 
-      : `${daysCreated} days ago`;
+      : `${daysCreated} days ago`
 
   return (
     <Card style={styles.card}>
@@ -50,43 +50,43 @@ const SecureBackupPrompt: React.FC<SecureBackupPromptProps> = ({
         />
       </View>
     </Card>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.warningLight,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.warning,
-    marginHorizontal: 16,
-    marginVertical: 16,
+  card : {
+    backgroundColor  : COLORS.warningLight,
+    borderLeftWidth  : 4,
+    borderLeftColor  : COLORS.warning,
+    marginHorizontal : 16,
+    marginVertical   : 16,
   },
-  warningHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+  warningHeader : {
+    flexDirection : 'row',
+    alignItems    : 'center',
+    marginBottom  : 12,
   },
-  warningIcon: {
-    fontSize: 20,
-    marginRight: 8,
+  warningIcon : {
+    fontSize    : 20,
+    marginRight : 8,
   },
-  warningTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.warning,
+  warningTitle : {
+    fontSize   : 18,
+    fontWeight : 'bold',
+    color      : COLORS.warning,
   },
-  warningText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: COLORS.text,
-    marginBottom: 16,
+  warningText : {
+    fontSize     : 14,
+    lineHeight   : 20,
+    color        : COLORS.text,
+    marginBottom : 16,
   },
-  buttonsContainer: {
-    marginTop: 8,
+  buttonsContainer : {
+    marginTop : 8,
   },
-  buttonSpacer: {
-    height: 12,
+  buttonSpacer : {
+    height : 12,
   },
-});
+})
 
-export default SecureBackupPrompt; 
+export default SecureBackupPrompt 

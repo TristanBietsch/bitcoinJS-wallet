@@ -1,159 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
-import { ThemedText } from '@/src/components/ThemedText';
-import Dropdown from '@/src/components/common/Dropdown';
-import IOSDropdown from '@/src/components/common/IOSDropdown';
-import { ChevronLeft } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react'
+import { View, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native'
+import { Stack, useRouter } from 'expo-router'
+import { ThemedText } from '@/src/components/ThemedText'
+import Dropdown from '@/src/components/common/Dropdown'
+import IOSDropdown from '@/src/components/common/IOSDropdown'
+import { ChevronLeft } from 'lucide-react-native'
 
 // Currency options for the dropdown
 const CURRENCY_OPTIONS = [
   { label: 'USD', value: 'USD' },
   { label: 'BTC', value: 'BTC' },
   { label: 'SATS', value: 'SATS' },
-];
+]
 
 // Currency type definition
 type CurrencyType = 'USD' | 'BTC' | 'SATS';
 
 // Constants
-const SATS_PER_BTC = 100000000; // 1 BTC = 100,000,000 SATS (this is a fixed value)
+const SATS_PER_BTC = 100000000 // 1 BTC = 100,000,000 SATS (this is a fixed value)
 
 export default function ReceiveScreen() {
-  const router = useRouter();
+  const router = useRouter()
   
   // State for amount and currency
-  const [amount, setAmount] = useState('0');
-  const [currency, setCurrency] = useState<CurrencyType>('USD');
-  const [conversionDisabled, setConversionDisabled] = useState(false);
+  const [ amount, setAmount ] = useState('0')
+  const [ currency, setCurrency ] = useState<CurrencyType>('USD')
+  const [ conversionDisabled, setConversionDisabled ] = useState(false)
   
   // State for Bitcoin price
-  const [btcPrice, setBtcPrice] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [ btcPrice, setBtcPrice ] = useState<number | null>(null)
+  const [ isLoading, setIsLoading ] = useState(false)
+  const [ _error, setError ] = useState<string | null>(null)
   
   // Dummy balance for display
-  const balance = '$2,257.65';
+  const balance = '$2,257.65'
   
   // Fetch the current Bitcoin price
   const fetchBitcoinPrice = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsLoading(true)
+      setError(null)
       
       // Using CoinGecko API to get the current Bitcoin price in USD
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
       
       if (!response.ok) {
-        throw new Error('Failed to fetch Bitcoin price');
+        throw new Error('Failed to fetch Bitcoin price')
       }
       
-      const data = await response.json();
-      const price = data.bitcoin.usd;
+      const data = await response.json()
+      const price = data.bitcoin.usd
       
       if (!price) {
-        throw new Error('Invalid price data');
+        throw new Error('Invalid price data')
       }
       
-      setBtcPrice(price);
-      setIsLoading(false);
+      setBtcPrice(price)
+      setIsLoading(false)
     } catch (err) {
-      setError('Failed to fetch Bitcoin price. Using fallback value.');
-      setBtcPrice(60000); // Fallback price if API fails
-      setIsLoading(false);
-      console.error('Error fetching Bitcoin price:', err);
+      setError('Failed to fetch Bitcoin price. Using fallback value.')
+      setBtcPrice(60000) // Fallback price if API fails
+      setIsLoading(false)
+      console.error('Error fetching Bitcoin price:', err)
     }
-  };
+  }
   
   // Fetch Bitcoin price on component mount
   useEffect(() => {
-    fetchBitcoinPrice();
+    fetchBitcoinPrice()
     
     // Refresh price every 60 seconds
-    const intervalId = setInterval(fetchBitcoinPrice, 60000);
+    const intervalId = setInterval(fetchBitcoinPrice, 60000)
     
     // Clean up interval on unmount
-    return () => clearInterval(intervalId);
-  }, []);
+    return () => clearInterval(intervalId)
+  }, [])
   
   // Convert amount between currencies using real rates
   const convertAmount = (value: string, fromCurrency: CurrencyType, toCurrency: CurrencyType): string => {
     // If price hasn't loaded or currencies are the same, return unchanged
-    if (!btcPrice || value === '0' || fromCurrency === toCurrency) return value;
+    if (!btcPrice || value === '0' || fromCurrency === toCurrency) return value
     
-    const numericValue = parseFloat(value);
-    if (isNaN(numericValue)) return '0';
+    const numericValue = parseFloat(value)
+    if (isNaN(numericValue)) return '0'
     
     // Convert to BTC as intermediate step
-    let valueInBTC = numericValue;
+    let valueInBTC = numericValue
     if (fromCurrency === 'USD') {
-      valueInBTC = numericValue / btcPrice;
+      valueInBTC = numericValue / btcPrice
     } else if (fromCurrency === 'SATS') {
-      valueInBTC = numericValue / SATS_PER_BTC;
+      valueInBTC = numericValue / SATS_PER_BTC
     }
     
     // Convert from BTC to target currency
-    let result = valueInBTC;
+    let result = valueInBTC
     if (toCurrency === 'USD') {
-      result = valueInBTC * btcPrice;
+      result = valueInBTC * btcPrice
     } else if (toCurrency === 'SATS') {
-      result = valueInBTC * SATS_PER_BTC;
+      result = valueInBTC * SATS_PER_BTC
     }
     
     // Format based on currency type
     if (toCurrency === 'BTC') {
-      return result.toFixed(8);
+      return result.toFixed(8)
     } else if (toCurrency === 'USD') {
-      return result.toFixed(2);
+      return result.toFixed(2)
     } else {
       // SATS should be whole numbers
-      return Math.round(result).toString();
+      return Math.round(result).toString()
     }
-  };
+  }
   
   // Handle currency change
   const handleCurrencyChange = (newCurrency: string) => {
-    const newCurrencyType = newCurrency as CurrencyType;
+    const newCurrencyType = newCurrency as CurrencyType
     if (currency !== newCurrencyType && !conversionDisabled) {
-      const newAmount = convertAmount(amount, currency, newCurrencyType);
-      setAmount(newAmount);
+      const newAmount = convertAmount(amount, currency, newCurrencyType)
+      setAmount(newAmount)
     }
-    setCurrency(newCurrencyType);
-  };
+    setCurrency(newCurrencyType)
+  }
   
   // Handle input
   const handleNumberPress = (num: string) => {
     // Enable conversion when user manually enters a value
-    setConversionDisabled(false);
+    setConversionDisabled(false)
     
     setAmount(prev => {
-      if (prev === '0' && num !== '.') return num;
-      if (num === '.' && prev.includes('.')) return prev;
-      return prev + num;
-    });
-  };
+      if (prev === '0' && num !== '.') return num
+      if (num === '.' && prev.includes('.')) return prev
+      return prev + num
+    })
+  }
   
   const handleBackspace = () => {
     // Enable conversion when user manually enters a value
-    setConversionDisabled(false);
+    setConversionDisabled(false)
     
-    setAmount(prev => prev.length <= 1 ? '0' : prev.slice(0, -1));
-  };
+    setAmount(prev => prev.length <= 1 ? '0' : prev.slice(0, -1))
+  }
   
   // Navigate back to home
   const handleBackPress = () => {
-    router.push('/');
-  };
+    router.push('/')
+  }
   
   const handleGenerateQR = () => {
     router.push({
-      pathname: '/payment/invoice',
-      params: {
+      pathname : '/payment/invoice',
+      params   : {
         amount,
         currency
       }
-    });
-  };
+    })
+  }
   
   // Render number key
   const renderNumberKey = (value: string) => (
@@ -164,29 +164,29 @@ export default function ReceiveScreen() {
     >
       <ThemedText style={styles.numberKeyText}>{value}</ThemedText>
     </TouchableOpacity>
-  );
+  )
   
   // Number pad keys layout
   const numberPadKeys = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    ['.', '0', '⌫']
-  ];
+    [ '1', '2', '3' ],
+    [ '4', '5', '6' ],
+    [ '7', '8', '9' ],
+    [ '.', '0', '⌫' ]
+  ]
   
   // Format displayed amount based on currency
   const getFormattedAmount = () => {
     if (currency === 'USD') {
-      return amount.includes('.') ? amount : `${amount}.00`;
+      return amount.includes('.') ? amount : `${amount}.00`
     }
-    return amount;
-  };
+    return amount
+  }
   
   return (
     <View style={styles.container}>
       <Stack.Screen 
         options={{
-          headerShown: false, // Hide the navigation bar completely
+          headerShown : false, // Hide the navigation bar completely
         }} 
       />
       
@@ -263,93 +263,93 @@ export default function ReceiveScreen() {
         </View>
       </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-    padding: 0,
+  container : {
+    flex            : 1,
+    backgroundColor : 'white',
+    padding         : 0,
   },
-  backButton: {
-    position: 'absolute',
-    top: 70,
-    left: 16,
-    zIndex: 10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  backButton : {
+    position       : 'absolute',
+    top            : 70,
+    left           : 16,
+    zIndex         : 10,
+    width          : 40,
+    height         : 40,
+    borderRadius   : 20,
+    justifyContent : 'center',
+    alignItems     : 'center',
   },
-  amountContainer: {
-    flex: 0,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 120,
-    marginBottom: 20,
+  amountContainer : {
+    flex           : 0,
+    justifyContent : 'flex-start',
+    alignItems     : 'center',
+    paddingTop     : 120,
+    marginBottom   : 20,
   },
-  amountDisplay: { 
-    marginBottom: 4,
+  amountDisplay : { 
+    marginBottom : 4,
   },
-  amountText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: 'black',
+  amountText : {
+    fontSize   : 48,
+    fontWeight : 'bold',
+    color      : 'black',
   },
-  currencyText: {
-    fontSize: 32,
-    color: 'gray',
-    marginLeft: 4,
+  currencyText : {
+    fontSize   : 32,
+    color      : 'gray',
+    marginLeft : 4,
   },
-  balanceText: {
-    fontSize: 14,
-    color: 'gray',
-    marginBottom: 0,
+  balanceText : {
+    fontSize     : 14,
+    color        : 'gray',
+    marginBottom : 0,
   },
-  currencyToggleContainer: {
-    marginVertical: 12,
-    width: 150,
-    height: 36,
-    justifyContent: 'center',
+  currencyToggleContainer : {
+    marginVertical : 12,
+    width          : 150,
+    height         : 36,
+    justifyContent : 'center',
   },
-  footerContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingBottom: 32,
+  footerContainer : {
+    position      : 'absolute',
+    bottom        : 0,
+    left          : 0,
+    right         : 0,
+    paddingBottom : 32,
   },
-  continueButton: {
-    backgroundColor: 'red',
-    paddingVertical: 16,
-    borderRadius: 30,
-    marginBottom: 40,
-    marginHorizontal: 24,
-    alignItems: 'center',
+  continueButton : {
+    backgroundColor  : 'red',
+    paddingVertical  : 16,
+    borderRadius     : 30,
+    marginBottom     : 40,
+    marginHorizontal : 24,
+    alignItems       : 'center',
   },
-  continueButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  continueButtonText : {
+    color      : 'white',
+    fontSize   : 16,
+    fontWeight : 'bold',
   },
-  numberPadContainer: {
-    paddingHorizontal: 24,
+  numberPadContainer : {
+    paddingHorizontal : 24,
   },
-  numberPadRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+  numberPadRow : {
+    flexDirection  : 'row',
+    justifyContent : 'space-between',
+    marginBottom   : 24,
   },
-  numberKey: {
-    width: 60,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
+  numberKey : {
+    width          : 60,
+    height         : 60,
+    justifyContent : 'center',
+    alignItems     : 'center',
   },
-  numberKeyText: {
-    fontSize: 32,
-    color: 'black',
+  numberKeyText : {
+    fontSize : 32,
+    color    : 'black',
   },
-}); 
+}) 

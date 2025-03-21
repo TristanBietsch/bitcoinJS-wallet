@@ -2,18 +2,18 @@
  * Bitcoin Price Screen
  * Displays real-time Bitcoin price with interactive chart and time period selector
  */
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useFonts } from 'expo-font';
+import React, { useState, useCallback } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { useFonts } from 'expo-font'
 import { 
   Inter_400Regular, 
   Inter_500Medium, 
   Inter_700Bold 
-} from '@expo-google-fonts/inter';
+} from '@expo-google-fonts/inter'
 import { 
   IBMPlexMono_400Regular, 
   IBMPlexMono_700Bold 
-} from '@expo-google-fonts/ibm-plex-mono';
+} from '@expo-google-fonts/ibm-plex-mono'
 
 // Import all components from the price module
 import {
@@ -21,10 +21,10 @@ import {
   PriceChange, 
   TimeSelector, 
   BitcoinChart,
-} from '@/src/components/domain/Price';
-import { useBitcoinPriceData } from '@/src/hooks/wallet/useBitcoinPriceData';
-import { TIME_PERIODS } from '@/src/config/price';
-import { TimeframePeriod } from '@/src/types/price.types';
+} from '@/src/components/domain/Price'
+import { useBitcoinPriceData } from '@/src/hooks/wallet/useBitcoinPriceData'
+import { TIME_PERIODS } from '@/src/config/price'
+import { TimeframePeriod } from '@/src/types/price.types'
 
 /**
  * Bitcoin Price Screen Component
@@ -32,30 +32,30 @@ import { TimeframePeriod } from '@/src/types/price.types';
  */
 const PriceScreen = () => {
   // Load custom fonts
-  const [fontsLoaded] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-Bold': Inter_700Bold,
-    'IBMPlexMono-Regular': IBMPlexMono_400Regular,
-    'IBMPlexMono-Bold': IBMPlexMono_700Bold,
-  });
+  const [ fontsLoaded ] = useFonts({
+    'Inter-Regular'       : Inter_400Regular,
+    'Inter-Medium'        : Inter_500Medium,
+    'Inter-Bold'          : Inter_700Bold,
+    'IBMPlexMono-Regular' : IBMPlexMono_400Regular,
+    'IBMPlexMono-Bold'    : IBMPlexMono_700Bold,
+  })
   
   // Add loading state handler to prevent rapid switching
-  const [isChangingPeriod, setIsChangingPeriod] = useState(false);
+  const [ isChangingPeriod, setIsChangingPeriod ] = useState(false)
   
   // State for selected time period
-  const [selectedPeriod, setSelectedPeriod] = useState<TimeframePeriod>(TIME_PERIODS[0]);
+  const [ selectedPeriod, setSelectedPeriod ] = useState<TimeframePeriod>(TIME_PERIODS[0])
   
   // Handler for period changes with debounce
   const handlePeriodChange = useCallback((period: TimeframePeriod) => {
-    setIsChangingPeriod(true);
-    setSelectedPeriod(period);
+    setIsChangingPeriod(true)
+    setSelectedPeriod(period)
     
     // Reset changing state after a short delay
     setTimeout(() => {
-      setIsChangingPeriod(false);
-    }, 300);
-  }, []);
+      setIsChangingPeriod(false)
+    }, 300)
+  }, [])
   
   // Fetch Bitcoin data based on selected time period
   const { 
@@ -67,10 +67,10 @@ const PriceScreen = () => {
     labels, 
     isLoading, 
     error 
-  } = useBitcoinPriceData(selectedPeriod);
+  } = useBitcoinPriceData(selectedPeriod)
   
   // Combined loading state
-  const showLoading = !fontsLoaded || isLoading || isChangingPeriod;
+  const showLoading = !fontsLoaded || isLoading || isChangingPeriod
   
   // Show loading state while fonts are loading
   if (!fontsLoaded) {
@@ -79,7 +79,7 @@ const PriceScreen = () => {
         <ActivityIndicator size="large" color="#00D782" />
         <Text style={styles.loadingText}>Loading fonts...</Text>
       </View>
-    );
+    )
   }
   
   return (
@@ -131,60 +131,60 @@ const PriceScreen = () => {
         onSelectPeriod={handlePeriodChange}
       />
     </View>
-  );
-};
+  )
+}
 
 /**
  * Styles for the Bitcoin Price Screen
  */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingBottom: 100, // Add padding for bottom navigation
+  container : {
+    flex            : 1,
+    backgroundColor : '#FFFFFF',
+    paddingBottom   : 100, // Add padding for bottom navigation
   },
-  priceContainer: {
-    padding: 20,
-    alignItems: 'center',
-    marginTop: 80, // Increased from 50 to move price down
-    marginBottom: 10, // Add some space below the price
+  priceContainer : {
+    padding      : 20,
+    alignItems   : 'center',
+    marginTop    : 80, // Increased from 50 to move price down
+    marginBottom : 10, // Add some space below the price
   },
-  chartAreaContainer: {
-    flex: 1,
-    marginTop: 10, // Add a little space above chart
-    marginBottom: 10, // Add a little space below chart
+  chartAreaContainer : {
+    flex         : 1,
+    marginTop    : 10, // Add a little space above chart
+    marginBottom : 10, // Add a little space below chart
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  loadingContainer : {
+    flex           : 1,
+    justifyContent : 'center',
+    alignItems     : 'center',
   },
-  loadingText: {
-    fontFamily: 'Inter-Regular',
-    marginTop: 10,
-    color: '#666666',
+  loadingText : {
+    fontFamily : 'Inter-Regular',
+    marginTop  : 10,
+    color      : '#666666',
   },
-  errorContainer: {
-    padding: 20,
-    alignItems: 'center',
+  errorContainer : {
+    padding    : 20,
+    alignItems : 'center',
   },
-  errorText: {
-    fontFamily: 'Inter-Regular',
-    color: '#FF4D4D',
-    marginBottom: 10,
-    textAlign: 'center',
+  errorText : {
+    fontFamily   : 'Inter-Regular',
+    color        : '#FF4D4D',
+    marginBottom : 10,
+    textAlign    : 'center',
   },
-  retryButton: {
-    backgroundColor: '#00D782',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 4,
+  retryButton : {
+    backgroundColor   : '#00D782',
+    paddingVertical   : 8,
+    paddingHorizontal : 16,
+    borderRadius      : 4,
   },
-  retryButtonText: {
-    fontFamily: 'Inter-Medium',
-    color: 'white',
-    fontWeight: '500',
+  retryButtonText : {
+    fontFamily : 'Inter-Medium',
+    color      : 'white',
+    fontWeight : '500',
   },
-});
+})
 
-export default PriceScreen; 
+export default PriceScreen 

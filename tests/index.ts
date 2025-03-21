@@ -6,10 +6,10 @@
  */
 
 // Configuration and environment setup
-export * from './utils/testConfig';
+export * from './utils/testConfig'
 
 // Testing utilities
-export * from './utils/testUtils';
+export * from './utils/testUtils'
 
 // Test suites
 // These don't export anything but are mentioned here for documentation

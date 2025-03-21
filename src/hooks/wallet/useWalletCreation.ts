@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 const useWalletCreation = () => {
-    const [isCreating, setIsCreating] = useState(false);
+    const [ isCreating, setIsCreating ] = useState(false)
 
     const createWallet = async () => {
-        setIsCreating(true);
+        setIsCreating(true)
         // Logic to create a wallet
-        setIsCreating(false);
-    };
+        setIsCreating(false)
+    }
 
-    return { isCreating, createWallet };
-};
+    return { isCreating, createWallet }
+}
 
-export default useWalletCreation; 
+export default useWalletCreation 

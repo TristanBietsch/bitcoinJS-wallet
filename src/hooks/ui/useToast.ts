@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 const useToast = () => {
-    const [toast, setToast] = useState<string | null>(null);
+    const [ toast, setToast ] = useState<string | null>(null)
 
     const showToast = (message: string) => {
-        setToast(message);
+        setToast(message)
         // Logic to display toast
-    };
+    }
 
-    return { toast, showToast };
-};
+    return { toast, showToast }
+}
 
-export default useToast; 
+export default useToast 

@@ -51,7 +51,16 @@ export default [
       '@typescript-eslint' : tsPlugin,
     },
 
-    files: ["src/**/*.ts", "src/**/*.tsx", "app/**/*.ts", "app/**/*.tsx"],
+    files: [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "app/**/*.ts",
+      "app/**/*.tsx",
+      "tests/**/*.ts",
+      "tests/**/*.tsx",
+      "**/*.d.ts",
+      "App.tsx"
+    ],
 
     rules: {
       semi                    : [2, 'never'],

@@ -1,5 +1,5 @@
 export const biometricService = {
-    authenticate: () => {
+    authenticate : () => {
         // Placeholder for biometric authentication
     },
-}; 
+} 

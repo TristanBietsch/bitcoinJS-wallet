@@ -1,19 +1,19 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 const usePin = () => {
-    const [pin, setPin] = useState('');
+    const [ pin, setPin ] = useState('')
 
     const setNewPin = (newPin: string) => {
         // Logic to set a new PIN
-        setPin(newPin);
-    };
+        setPin(newPin)
+    }
 
     const clearPin = () => {
         // Logic to clear the PIN
-        setPin('');
-    };
+        setPin('')
+    }
 
-    return { pin, setNewPin, clearPin };
-};
+    return { pin, setNewPin, clearPin }
+}
 
-export default usePin; 
+export default usePin 

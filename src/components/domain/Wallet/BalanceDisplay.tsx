@@ -1,7 +1,6 @@
-import React from 'react';
-import { View } from 'react-native';
-import { Text, VStack, HStack, Box } from "@gluestack-ui/themed";
-import { useColorMode } from '@gluestack-ui/themed';
+import React from 'react'
+import { Text, VStack, HStack, Box } from "@gluestack-ui/themed"
+import { useColorMode } from '@gluestack-ui/themed'
 
 interface BalanceDisplayProps {
   balance: number;
@@ -22,7 +21,7 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
   fiatCurrency = 'USD',
   showFiat = true,
 }) => {
-  const { colorMode } = useColorMode();
+  const { colorMode } = useColorMode()
   
   return (
     <Box 
@@ -65,7 +64,7 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
         )}
       </VStack>
     </Box>
-  );
-};
+  )
+}
 
-export default BalanceDisplay; 
+export default BalanceDisplay 

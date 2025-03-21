@@ -1,3 +1,3 @@
-import { ThemedView } from './common/ThemedView';
+import { ThemedView } from './common/ThemedView'
 
-export { ThemedView }; 
+export { ThemedView } 

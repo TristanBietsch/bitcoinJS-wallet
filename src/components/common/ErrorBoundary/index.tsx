@@ -1,7 +1,7 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Box, Heading, Text, Button } from "@gluestack-ui/themed";
-import * as Sentry from 'sentry-expo';
-import { useHaptics } from '@/src/hooks/useHaptics';
+import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { Box, Heading, Text, Button } from "@gluestack-ui/themed"
+import * as Sentry from 'sentry-expo'
+import { useHaptics } from '@/src/hooks/useHaptics'
 
 interface Props {
   children: ReactNode;
@@ -19,46 +19,46 @@ interface State {
  */
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
-    super(props);
+    super(props)
     this.state = {
-      hasError: false,
-      error: null,
-    };
+      hasError : false,
+      error    : null,
+    }
   }
 
   static getDerivedStateFromError(error: Error): State {
     return {
-      hasError: true,
+      hasError : true,
       error,
-    };
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Report error to Sentry
     Sentry.Native.captureException(error, {
-      extra: {
-        componentStack: errorInfo.componentStack,
+      extra : {
+        componentStack : errorInfo.componentStack,
       },
-    });
+    })
     
-    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+    console.error('Error caught by ErrorBoundary:', error, errorInfo)
   }
 
   resetError = (): void => {
     // Trigger haptic feedback for UI action
-    const { triggerNotification } = useHaptics();
-    triggerNotification('success');
+    const { triggerNotification } = useHaptics()
+    triggerNotification('success')
     
     this.setState({
-      hasError: false,
-      error: null,
-    });
-  };
+      hasError : false,
+      error    : null,
+    })
+  }
 
   render(): ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback) {
-        return this.props.fallback;
+        return this.props.fallback
       }
 
       return (
@@ -77,11 +77,11 @@ class ErrorBoundary extends Component<Props, State> {
             <Button.Text>Try Again</Button.Text>
           </Button>
         </Box>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary 

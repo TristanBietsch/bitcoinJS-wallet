@@ -1,14 +1,14 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { COLORS } from '@/src/types/colors';
-import { Button, Card } from '@gluestack-ui/themed';
-import { fonts } from '@/src/constants/fonts';
+import React from 'react'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { COLORS } from '@/src/types/colors'
+import { Button, Card } from '@gluestack-ui/themed'
+import { fonts } from '@/src/constants/fonts'
 
 // Extend COLORS with warningLight if missing
 const extendedColors = {
   ...COLORS,
-  warningLight: '#FFF8E1' // Light amber color for warnings
-};
+  warningLight : '#FFF8E1' // Light amber color for warnings
+}
 
 interface Transaction {
   id: string;
@@ -48,15 +48,15 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
     memo,
     txid,
     confirmations,
-  } = transaction;
+  } = transaction
 
-  const formattedDate = new Date(date).toLocaleDateString();
-  const formattedTime = new Date(date).toLocaleTimeString();
-  const sign = type === 'receive' ? '+' : '-';
+  const formattedDate = new Date(date).toLocaleDateString()
+  const formattedTime = new Date(date).toLocaleTimeString()
+  const sign = type === 'receive' ? '+' : '-'
   const statusColor = 
     status === 'completed' ? styles.success :
     status === 'pending' ? styles.pending :
-    styles.failed;
+    styles.failed
 
   return (
     <ScrollView style={styles.container}>
@@ -65,13 +65,13 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
           <Text style={styles.title}>
             {type === 'receive' ? 'Received Bitcoin' : 'Sent Bitcoin'}
           </Text>
-          <View style={[styles.statusBadge, statusColor]}>
+          <View style={[ styles.statusBadge, statusColor ]}>
             <Text style={styles.statusText}>{status}</Text>
           </View>
         </View>
 
         <View style={styles.amountContainer}>
-          <Text style={[styles.amount, type === 'receive' ? styles.receiveAmount : styles.sendAmount]}>
+          <Text style={[ styles.amount, type === 'receive' ? styles.receiveAmount : styles.sendAmount ]}>
             {sign}{amount} {currency}
           </Text>
           {fee !== undefined && (
@@ -140,98 +140,98 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
         </View>
       </Card>
     </ScrollView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container : {
+    flex : 1,
   },
-  card: {
-    margin: 16,
+  card : {
+    margin : 16,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+  header : {
+    flexDirection  : 'row',
+    justifyContent : 'space-between',
+    alignItems     : 'center',
+    marginBottom   : 20,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.text,
+  title : {
+    fontSize   : 20,
+    fontWeight : 'bold',
+    color      : COLORS.text,
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+  statusBadge : {
+    paddingHorizontal : 12,
+    paddingVertical   : 6,
+    borderRadius      : 16,
   },
-  success: {
-    backgroundColor: COLORS.successLight,
+  success : {
+    backgroundColor : COLORS.successLight,
   },
-  pending: {
-    backgroundColor: extendedColors.warningLight,
+  pending : {
+    backgroundColor : extendedColors.warningLight,
   },
-  failed: {
-    backgroundColor: COLORS.errorLight,
+  failed : {
+    backgroundColor : COLORS.errorLight,
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+  statusText : {
+    fontSize      : 12,
+    fontWeight    : '600',
+    textTransform : 'uppercase',
   },
-  amountContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
+  amountContainer : {
+    alignItems   : 'center',
+    marginBottom : 24,
   },
-  amount: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  amount : {
+    fontSize     : 28,
+    fontWeight   : 'bold',
+    marginBottom : 4,
   },
-  receiveAmount: {
-    color: COLORS.success,
+  receiveAmount : {
+    color : COLORS.success,
   },
-  sendAmount: {
-    color: COLORS.error,
+  sendAmount : {
+    color : COLORS.error,
   },
-  fee: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+  fee : {
+    fontSize : 14,
+    color    : COLORS.textSecondary,
   },
-  detailsSection: {
-    marginBottom: 24,
+  detailsSection : {
+    marginBottom : 24,
   },
-  detailRow: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+  detailRow : {
+    flexDirection     : 'row',
+    paddingVertical   : 12,
+    borderBottomWidth : 1,
+    borderBottomColor : COLORS.border,
   },
-  detailLabel: {
-    flex: 1,
-    fontSize: 14,
-    color: COLORS.textSecondary,
+  detailLabel : {
+    flex     : 1,
+    fontSize : 14,
+    color    : COLORS.textSecondary,
   },
-  detailValue: {
-    flex: 2,
-    fontSize: 14,
-    color: COLORS.text,
-    textAlign: 'right',
+  detailValue : {
+    flex      : 2,
+    fontSize  : 14,
+    color     : COLORS.text,
+    textAlign : 'right',
   },
-  addressValue: {
-    flex: 2,
-    fontSize: 14,
-    color: COLORS.text,
-    textAlign: 'right',
-    fontFamily: fonts.monospace,
+  addressValue : {
+    flex       : 2,
+    fontSize   : 14,
+    color      : COLORS.text,
+    textAlign  : 'right',
+    fontFamily : fonts.monospace,
   },
-  buttonContainer: {
-    marginTop: 8,
+  buttonContainer : {
+    marginTop : 8,
   },
-  buttonSpacer: {
-    height: 12,
+  buttonSpacer : {
+    height : 12,
   },
-});
+})
 
-export default TransactionDetails; 
+export default TransactionDetails 

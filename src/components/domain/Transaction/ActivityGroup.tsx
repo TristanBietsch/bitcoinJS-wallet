@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '@/src/components/ThemedText';
-import { ActivityItem } from './ActivityItem';
-import { Transaction } from '@/tests/mockData/transactionData';
-import { fonts } from '@/src/constants/fonts';
+import React from 'react'
+import { View, StyleSheet } from 'react-native'
+import { ThemedText } from '@/src/components/ThemedText'
+import { ActivityItem } from './ActivityItem'
+import { Transaction } from '@/tests/mockData/transactionData'
+import { fonts } from '@/src/constants/fonts'
 
 interface ActivityGroupProps {
   title: string;
@@ -16,7 +16,7 @@ export const ActivityGroup: React.FC<ActivityGroupProps> = ({
   transactions,
   onPressTransaction 
 }) => {
-  if (transactions.length === 0) return null;
+  if (transactions.length === 0) return null
   
   return (
     <View style={styles.container}>
@@ -37,26 +37,26 @@ export const ActivityGroup: React.FC<ActivityGroupProps> = ({
         ))}
       </View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 24,
+  container : {
+    marginBottom : 24,
   },
-  title: {
-    fontSize: 18,
-    fontFamily: fonts.semibold,
-    marginBottom: 8,
-    paddingHorizontal: 16,
+  title : {
+    fontSize          : 18,
+    fontFamily        : fonts.semibold,
+    marginBottom      : 8,
+    paddingHorizontal : 16,
   },
-  transactionsContainer: {
-    backgroundColor: '#FFFFFF',
+  transactionsContainer : {
+    backgroundColor : '#FFFFFF',
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginLeft: 68, // Align with the content, not the icon
-    marginRight: 16,
+  divider : {
+    height          : 1,
+    backgroundColor : '#E0E0E0',
+    marginLeft      : 68, // Align with the content, not the icon
+    marginRight     : 16,
   },
-}); 
+}) 

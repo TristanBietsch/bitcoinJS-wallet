@@ -1,5 +1,5 @@
 export const persistService = {
-    persistData: (data: any) => {
+    persistData : (_data: any) => {
         // Placeholder for persisting data
     },
-}; 
+} 

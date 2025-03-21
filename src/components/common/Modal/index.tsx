@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   Modal as GluestackModal,
   ModalBackdrop,
@@ -10,7 +10,7 @@ import {
   CloseIcon,
   Icon,
   Heading
-} from "@gluestack-ui/themed";
+} from "@gluestack-ui/themed"
 
 interface ModalProps {
   visible: boolean;
@@ -53,7 +53,7 @@ const Modal: React.FC<ModalProps> = ({
         )}
       </ModalContent>
     </GluestackModal>
-  );
-};
+  )
+}
 
-export default Modal; 
+export default Modal 

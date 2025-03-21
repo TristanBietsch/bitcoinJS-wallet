@@ -1,6 +1,6 @@
-import React from 'react';
-import { View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import React from 'react'
+import { View } from 'react-native'
+import Svg, { Circle, Path } from 'react-native-svg'
 
 interface ErrorIconProps {
   size?: number;
@@ -21,7 +21,7 @@ const ErrorIcon = ({ size = 24, color = '#FFFFFF' }: ErrorIconProps) => {
         <Circle cx="12" cy="17" r="1" fill={color} />
       </Svg>
     </View>
-  );
-};
+  )
+}
 
-export default ErrorIcon; 
+export default ErrorIcon 

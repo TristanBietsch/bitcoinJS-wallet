@@ -1,8 +1,8 @@
 export const pinService = {
-    setPin: (pin: string) => {
+    setPin : (_pin: string) => {
         // Placeholder for setting a PIN
     },
-    validatePin: (pin: string) => {
+    validatePin : (_pin: string) => {
         // Placeholder for validating a PIN
     },
-}; 
+} 

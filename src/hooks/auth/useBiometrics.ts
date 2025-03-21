@@ -1,19 +1,19 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 const useBiometrics = () => {
-    const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+    const [ isBiometricEnabled, setIsBiometricEnabled ] = useState(false)
 
     const enableBiometrics = () => {
         // Logic to enable biometrics
-        setIsBiometricEnabled(true);
-    };
+        setIsBiometricEnabled(true)
+    }
 
     const disableBiometrics = () => {
         // Logic to disable biometrics
-        setIsBiometricEnabled(false);
-    };
+        setIsBiometricEnabled(false)
+    }
 
-    return { isBiometricEnabled, enableBiometrics, disableBiometrics };
-};
+    return { isBiometricEnabled, enableBiometrics, disableBiometrics }
+}
 
-export default useBiometrics; 
+export default useBiometrics 

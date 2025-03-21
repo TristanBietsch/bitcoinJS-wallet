@@ -47,6 +47,9 @@
     "**/*.ts",
     "**/*.tsx",
     "nativewind-env.d.ts",
-    "src/types/env.d.ts"
+    "src/types/env.d.ts",
+    ".expo/**/*.ts",
+    ".expo/**/*.tsx",
+    ".expo/**/*.d.ts"
   ]
 }

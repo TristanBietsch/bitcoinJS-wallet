@@ -1,6 +1,6 @@
-import React from 'react';
-import { TouchableOpacity } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import React from 'react'
+import { TouchableOpacity } from 'react-native'
+import * as WebBrowser from 'expo-web-browser'
 
 export function ExternalLink({ href, children, ...props }: any) {
   return (
@@ -10,5 +10,5 @@ export function ExternalLink({ href, children, ...props }: any) {
     >
       {children}
     </TouchableOpacity>
-  );
+  )
 } 

@@ -2,16 +2,16 @@
  * Bitcoin Price Screen
  * Displays real-time Bitcoin price with interactive chart and time period selector
  */
-import React from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import AnimatedPrice from '@/src/components/domain/Price/AnimatedPrice';
-import BitcoinChart from '@/src/components/domain/Price/BitcoinChart';
-import PriceChange from '@/src/components/domain/Price/PriceChange';
-import TimeSelector from '@/src/components/domain/Price/TimeSelector';
-  import { ThemedView } from '@/src/components/common/ThemedView';
-import { ThemedText } from '@/src/components/common/ThemedText';
-import { useBitcoinPrice } from '@/src/hooks/useBitcoinPrice';
+import React from 'react'
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
+import AnimatedPrice from '@/src/components/domain/Price/AnimatedPrice'
+import BitcoinChart from '@/src/components/domain/Price/BitcoinChart'
+import PriceChange from '@/src/components/domain/Price/PriceChange'
+import TimeSelector from '@/src/components/domain/Price/TimeSelector'
+  import { ThemedView } from '@/src/components/common/ThemedView'
+import { ThemedText } from '@/src/components/common/ThemedText'
+import { useBitcoinPrice } from '@/src/hooks/useBitcoinPrice'
 
 /**
  * Bitcoin Price Screen Component
@@ -28,7 +28,7 @@ export default function PriceScreen() {
     priceChange,
     refresh,
     availableTimeframes
-  } = useBitcoinPrice();
+  } = useBitcoinPrice()
 
   return (
     <ThemedView style={styles.container}>
@@ -70,37 +70,37 @@ export default function PriceScreen() {
         )}
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 /**
  * Styles for the Bitcoin Price Screen
  */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container : {
+    flex : 1,
   },
-  scrollContent: {
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 32,
+  scrollContent : {
+    paddingTop        : 16,
+    paddingHorizontal : 16,
+    paddingBottom     : 32,
   },
-  header: {
-    marginBottom: 24,
-    alignItems: 'center',
+  header : {
+    marginBottom : 24,
+    alignItems   : 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  title : {
+    fontSize     : 24,
+    fontWeight   : 'bold',
+    marginBottom : 8,
   },
-  priceContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
+  priceContainer : {
+    alignItems   : 'center',
+    marginBottom : 16,
   },
-  error: {
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 20,
+  error : {
+    color     : 'red',
+    textAlign : 'center',
+    marginTop : 20,
   },
-}); 
+}) 

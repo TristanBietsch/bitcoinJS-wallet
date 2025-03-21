@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 export const Collapsible = ({ title, children }: { title: string; children: React.ReactNode }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [ expanded, setExpanded ] = useState(false)
   
   return (
     <View style={styles.container}>
@@ -11,21 +11,21 @@ export const Collapsible = ({ title, children }: { title: string; children: Reac
       </TouchableOpacity>
       {expanded && <View style={styles.content}>{children}</View>}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: 10,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 15,
+  container : {
+    marginVertical  : 10,
+    backgroundColor : '#f5f5f5',
+    borderRadius    : 8,
+    padding         : 15,
   },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 16,
+  title : {
+    fontWeight : 'bold',
+    fontSize   : 16,
   },
-  content: {
-    marginTop: 10,
+  content : {
+    marginTop : 10,
   },
-}); 
+}) 

@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express'
 
 export const securityChecks = (req: Request, res: Response, next: NextFunction) => {
     // Security checks logic here
-    next();
-}; 
+    next()
+} 

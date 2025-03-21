@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from '@sentry/react-native'
 
 /**
  * Initialize Sentry for error tracking
@@ -6,22 +6,22 @@ import * as Sentry from '@sentry/react-native';
  */
 export const initSentry = () => {
   if (__DEV__) {
-    return; // Don't initialize Sentry in development
+    return // Don't initialize Sentry in development
   }
 
   Sentry.init({
-    dsn: 'YOUR_DSN_HERE', // Replace with your actual DSN
-    debug: false,
-    tracesSampleRate: 1.0,
+    dsn              : 'YOUR_DSN_HERE', // Replace with your actual DSN
+    debug            : false,
+    tracesSampleRate : 1.0,
     beforeSend(event) {
       // Don't send events in development
       if (__DEV__) {
-        return null;
+        return null
       }
-      return event;
+      return event
     },
-  });
-};
+  })
+}
 
 /**
  * Log an error to Sentry with additional context
@@ -32,10 +32,10 @@ export const logError = (
 ) => {
   if (!__DEV__) {
     Sentry.captureException(error, {
-      extra: context
-    });
+      extra : context
+    })
   }
-};
+}
 
 /**
  * Log a message to Sentry
@@ -46,10 +46,10 @@ export const logMessage = (
 ) => {
   if (!__DEV__) {
     Sentry.captureMessage(message, {
-      level: level,
-    });
+      level : level,
+    })
   }
-};
+}
 
 /**
  * Set user information for better error context
@@ -63,9 +63,9 @@ export const setUserContext = (
 ) => {
   if (!__DEV__) {
     if (user) {
-      Sentry.setUser(user);
+      Sentry.setUser(user)
     } else {
-      Sentry.setUser(null);
+      Sentry.setUser(null)
     }
   }
-}; 
+} 

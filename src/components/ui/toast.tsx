@@ -19,27 +19,27 @@ interface ToastProps {
 
 // Toast component
 const Toast = forwardRef<View, ToastProps>(
-  ({ variant = "solid", action = "muted", children, style, ...props }, ref) => {
+  ({ _variant = "solid", action = "muted", children, style, ...props }, ref) => {
     const baseStyles: ViewStyle = {
-      padding: 16,
-      marginVertical: 4,
-      marginHorizontal: 4,
-      borderRadius: 8,
-      gap: 4,
-      backgroundColor: action === 'error' ? '#EF4444' : action === 'success' ? '#10B981' : '#262626',
-      flexDirection: 'row',
-      alignItems: 'center',
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
+      padding          : 16,
+      marginVertical   : 4,
+      marginHorizontal : 4,
+      borderRadius     : 8,
+      gap              : 4,
+      backgroundColor  : action === 'error' ? '#EF4444' : action === 'success' ? '#10B981' : '#262626',
+      flexDirection    : 'row',
+      alignItems       : 'center',
+      shadowColor      : "#000",
+      shadowOffset     : { width: 0, height: 2 },
+      shadowOpacity    : 0.25,
+      shadowRadius     : 3.84,
+      elevation        : 5,
     }
 
     return (
       <Motion.View
         ref={ref as any}
-        style={[baseStyles, style]}
+        style={[ baseStyles, style ]}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -64,14 +64,14 @@ const ToastTitle = forwardRef<Text, ToastTitleProps>(({ children, style, ...prop
   React.useEffect(() => {
     // Announce to screen readers
     if (typeof children === 'string') {
-      AccessibilityInfo.announceForAccessibility(children);
+      AccessibilityInfo.announceForAccessibility(children)
     }
-  }, [children])
+  }, [ children ])
 
   const baseStyles: TextStyle = {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
+    color      : '#FFFFFF',
+    fontWeight : '600',
+    fontSize   : 16,
   }
 
   return (
@@ -81,7 +81,7 @@ const ToastTitle = forwardRef<Text, ToastTitleProps>(({ children, style, ...prop
       aria-live="assertive"
       aria-atomic="true"
       role="alert"
-      style={[baseStyles, style]}
+      style={[ baseStyles, style ]}
     >
       {children}
     </Text>
@@ -99,15 +99,15 @@ interface ToastDescriptionProps {
 const ToastDescription = forwardRef<Text, ToastDescriptionProps>(
   ({ children, style, ...props }, ref) => {
     const baseStyles: TextStyle = {
-      color: '#FFFFFF',
-      fontSize: 14,
+      color    : '#FFFFFF',
+      fontSize : 14,
     }
 
     return (
       <Text
         ref={ref as any}
         {...props}
-        style={[baseStyles, style]}
+        style={[ baseStyles, style ]}
       >
         {children}
       </Text>
@@ -116,8 +116,8 @@ const ToastDescription = forwardRef<Text, ToastDescriptionProps>(
 )
 
 // Set display names for better debugging
-Toast.displayName = 'Toast';
-ToastTitle.displayName = 'ToastTitle';
-ToastDescription.displayName = 'ToastDescription';
+Toast.displayName = 'Toast'
+ToastTitle.displayName = 'ToastTitle'
+ToastDescription.displayName = 'ToastDescription'
 
 export { useToast, Toast, ToastTitle, ToastDescription } 

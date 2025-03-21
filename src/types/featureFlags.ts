@@ -1,5 +1,5 @@
 export const featureFlags = {
-    newFeature: true,
-    betaAccess: false,
-    darkMode: true,
-}; 
+    newFeature : true,
+    betaAccess : false,
+    darkMode   : true,
+} 

@@ -1,12 +1,11 @@
-import React from 'react';
+import React from 'react'
 import { 
   TouchableOpacity, 
   Text, 
   StyleSheet, 
   ActionSheetIOS,
-  View,
   Platform
-} from 'react-native';
+} from 'react-native'
 
 type DropdownOption = {
   label: string;
@@ -39,33 +38,33 @@ const IOSDropdown = ({
   disabled = false
 }: IOSDropdownProps) => {
   // Find the currently selected option
-  const selectedOption = options.find(option => option.value === selectedValue);
+  const selectedOption = options.find(option => option.value === selectedValue)
   
   const showActionSheet = () => {
-    if (disabled || Platform.OS !== 'ios') return;
+    if (disabled || Platform.OS !== 'ios') return
     
-    const optionLabels = options.map(option => option.label);
-    const cancelButtonIndex = optionLabels.length;
+    const optionLabels = options.map(option => option.label)
+    const cancelButtonIndex = optionLabels.length
     
     // Add cancel button
-    optionLabels.push(cancelButtonLabel);
+    optionLabels.push(cancelButtonLabel)
     
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        options: optionLabels,
+        options            : optionLabels,
         cancelButtonIndex,
         title,
         // Use the userInterfaceStyle to determine if the action sheet should be light or dark mode
-        userInterfaceStyle: 'light',
+        userInterfaceStyle : 'light',
       },
       (buttonIndex) => {
         // If cancel button wasn't pressed (which is equal to the length of our options array)
         if (buttonIndex !== cancelButtonIndex) {
-          onSelect(options[buttonIndex].value);
+          onSelect(options[buttonIndex].value)
         }
       }
-    );
-  };
+    )
+  }
 
   return (
     <TouchableOpacity 
@@ -77,29 +76,29 @@ const IOSDropdown = ({
       onPress={showActionSheet}
       disabled={disabled}
     >
-      <Text style={[styles.buttonText, { color: textColor }]}>
+      <Text style={[ styles.buttonText, { color: textColor } ]}>
         {selectedOption ? selectedOption.label : title} ▼
       </Text>
     </TouchableOpacity>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center'
+  button : {
+    paddingVertical   : 10,
+    paddingHorizontal : 20,
+    borderRadius      : 20,
+    flexDirection     : 'row',
+    alignItems        : 'center',
+    justifyContent    : 'center'
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold'
+  buttonText : {
+    fontSize   : 16,
+    fontWeight : 'bold'
   },
-  disabledButton: {
-    opacity: 0.6
+  disabledButton : {
+    opacity : 0.6
   }
-});
+})
 
-export default IOSDropdown; 
+export default IOSDropdown 

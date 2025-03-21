@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 const useFeeEstimation = () => {
-    const [fee, setFee] = useState(0);
+    const [ fee, _setFee ] = useState(0)
 
     useEffect(() => {
         // Estimate transaction fee
-    }, []);
+    }, [])
 
-    return { fee };
-};
+    return { fee }
+}
 
-export default useFeeEstimation; 
+export default useFeeEstimation 

@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { Colors } from '../../config/Colors';
+import React from 'react'
+import { View, ActivityIndicator, StyleSheet, Text } from 'react-native'
+import { Colors } from '../../config/Colors'
 
 interface LoaderProps {
   size?: 'small' | 'large';
@@ -21,7 +21,7 @@ const Loader: React.FC<LoaderProps> = ({
         <ActivityIndicator size={size} color={color} />
         {text && <Text style={styles.text}>{text}</Text>}
       </View>
-    );
+    )
   }
 
   return (
@@ -29,26 +29,26 @@ const Loader: React.FC<LoaderProps> = ({
       <ActivityIndicator size={size} color={color} />
       {text && <Text style={styles.text}>{text}</Text>}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  container : {
+    padding        : 16,
+    alignItems     : 'center',
+    justifyContent : 'center',
   },
-  fullScreenContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.light.background,
+  fullScreenContainer : {
+    flex            : 1,
+    alignItems      : 'center',
+    justifyContent  : 'center',
+    backgroundColor : Colors.light.background,
   },
-  text: {
-    marginTop: 8,
-    color: Colors.light.text,
-    fontSize: 14,
+  text : {
+    marginTop : 8,
+    color     : Colors.light.text,
+    fontSize  : 14,
   },
-});
+})
 
-export default Loader; 
+export default Loader 
