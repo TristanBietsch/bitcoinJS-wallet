@@ -147,7 +147,7 @@ export default function ReceiveScreen() {
   
   const handleGenerateQR = () => {
     router.push({
-      pathname : '/payment/invoice',
+      pathname : '/receive/invoice' as any,
       params   : {
         amount,
         currency
