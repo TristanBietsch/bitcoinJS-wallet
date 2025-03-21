@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack } from 'expo-router'
 
 export default function TransactionLayout() {
   return (
@@ -6,10 +6,10 @@ export default function TransactionLayout() {
       <Stack.Screen
         name="[id]"
         options={{
-          headerShown: true,
-          title: 'Transaction Details',
+          headerShown : true,
+          title       : 'Transaction Details',
         }}
       />
     </Stack>
-  );
+  )
 } 

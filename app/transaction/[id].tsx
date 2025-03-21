@@ -1,25 +1,25 @@
-import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router'
+import { StyleSheet } from 'react-native'
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedView } from '@/src/components/ThemedView'
 
 // Mock data - this will be replaced with real data later
 const mockTransaction = {
-  id: '1',
-  amount: '100.00',
-  type: 'SEND',
-  date: '2024-03-10',
-  status: 'COMPLETED',
-  recipient: '0x1234...5678',
-  description: 'Test transaction',
-};
+  id          : '1',
+  amount      : '100.00',
+  type        : 'SEND',
+  date        : '2024-03-10',
+  status      : 'COMPLETED',
+  recipient   : '0x1234...5678',
+  description : 'Test transaction',
+}
 
 export default function TransactionDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>()
 
   // This will be replaced with real data fetching logic
-  const transaction = mockTransaction;
+  const transaction = mockTransaction
 
   return (
     <ThemedView style={styles.container}>
@@ -33,18 +33,18 @@ export default function TransactionDetailsScreen() {
         <ThemedText>Description: {transaction.description}</ThemedText>
       </ThemedView>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 20,
+  container : {
+    flex       : 1,
+    alignItems : 'center',
+    padding    : 20,
   },
-  detailsContainer: {
-    width: '100%',
-    marginTop: 20,
-    gap: 10,
+  detailsContainer : {
+    width     : '100%',
+    marginTop : 20,
+    gap       : 10,
   },
-}); 
+}) 
