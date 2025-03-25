@@ -32,7 +32,13 @@
     "plugins": [
       "expo-router",
       "expo-splash-screen",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan QR codes"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -231,7 +231,16 @@ export default function SendAmountScreen() {
       
       <View style={styles.footerContainer}>
         {/* Continue Button */}
-        <TouchableOpacity style={styles.continueButton}>
+        <TouchableOpacity 
+          style={styles.continueButton}
+          onPress={() => router.push({
+            pathname : '/send/confirm' as any,
+            params   : {
+              amount   : amount,
+              currency : currency
+            }
+          })}
+        >
           <ThemedText style={styles.continueButtonText}>Continue</ThemedText>
         </TouchableOpacity>
         

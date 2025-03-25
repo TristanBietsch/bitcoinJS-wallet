@@ -1,8 +1,8 @@
 import React from 'react'
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native'
+import { StyleSheet, View, TouchableOpacity } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { ThemedText } from '@/src/components/ThemedText'
-import { ChevronLeft, Camera } from 'lucide-react-native'
+import { ChevronLeft } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function SendCameraScreen() {
@@ -14,17 +14,17 @@ export default function SendCameraScreen() {
   }
 
   return (
-    <View style={[
-      styles.container,
-      {
-        paddingTop : insets.top
-      }
-    ]}>
+    <View style={styles.container}>
       <Stack.Screen 
         options={{
           headerShown : false
         }} 
       />
+
+      {/* Camera will be implemented later */}
+      <View style={styles.cameraPlaceholder}>
+        <ThemedText>Camera functionality will be implemented later</ThemedText>
+      </View>
 
       {/* Back Button */}
       <TouchableOpacity 
@@ -38,20 +38,6 @@ export default function SendCameraScreen() {
       >
         <ChevronLeft size={24} color="white" />
       </TouchableOpacity>
-
-      {/* Mock Camera View */}
-      <View style={styles.cameraContainer}>
-        <Camera size={48} color="white" />
-        <Text style={styles.cameraText}>Camera Placeholder</Text>
-      </View>
-
-      {/* Overlay */}
-      <View style={styles.overlay}>
-        <View style={styles.scanArea} />
-        <ThemedText style={styles.instructions}>
-          Position the QR code within the frame
-        </ThemedText>
-      </View>
     </View>
   )
 }
@@ -61,43 +47,21 @@ const styles = StyleSheet.create({
     flex            : 1,
     backgroundColor : '#000'
   },
-  backButton : {
-    position : 'absolute',
-    left     : 10,
-    zIndex   : 10
-  },
-  cameraContainer : {
-    flex           : 1,
-    justifyContent : 'center',
-    alignItems     : 'center'
-  },
-  cameraText : {
-    color     : 'white',
-    marginTop : 10,
-    fontSize  : 16
-  },
-  overlay : {
-    position        : 'absolute',
-    top             : 0,
-    left            : 0,
-    right           : 0,
-    bottom          : 0,
-    backgroundColor : 'rgba(0, 0, 0, 0.5)',
+  cameraPlaceholder : {
+    flex            : 1,
     justifyContent  : 'center',
-    alignItems      : 'center'
+    alignItems      : 'center',
+    backgroundColor : '#333'
   },
-  scanArea : {
-    width           : 250,
-    height          : 250,
-    borderWidth     : 2,
-    borderColor     : '#fff',
-    backgroundColor : 'transparent',
-    marginBottom    : 20
-  },
-  instructions : {
-    color     : '#fff',
-    fontSize  : 16,
-    textAlign : 'center',
-    padding   : 20
+  backButton : {
+    position        : 'absolute',
+    left            : 20,
+    zIndex          : 10,
+    width           : 40,
+    height          : 40,
+    borderRadius    : 20,
+    justifyContent  : 'center',
+    alignItems      : 'center',
+    backgroundColor : 'rgba(0, 0, 0, 0.3)'
   }
 }) 

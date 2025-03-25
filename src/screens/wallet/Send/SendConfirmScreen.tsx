@@ -1,0 +1,188 @@
+import React from 'react'
+import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native'
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
+import { ThemedText } from '@/src/components/ThemedText'
+import { ChevronLeft, ExternalLink } from 'lucide-react-native'
+import { useSendStore } from '@/src/store/sendStore'
+
+// Speed options with their fees (matching SendAddressScreen)
+const speedOptions = {
+  economy : {
+    sats : 3000,
+    usd  : 2.13
+  },
+  standard : {
+    sats : 5000,
+    usd  : 3.55
+  },
+  express : {
+    sats : 8000,
+    usd  : 5.68
+  }
+}
+
+export default function SendConfirmScreen() {
+  const router = useRouter()
+  const { address, speed } = useSendStore()
+  const params = useLocalSearchParams<{ amount: string; currency: string }>()
+  
+  // Get fee based on selected speed
+  const fee = speedOptions[speed as keyof typeof speedOptions]
+  
+  // Calculate total (amount + fee)
+  const amount = parseFloat(params.amount || '0')
+  const totalAmount = params.currency === 'USD' 
+    ? (amount + fee.usd).toFixed(2)
+    : (amount + fee.sats).toString()
+  
+  // Format address into lines
+  const addressLines = [
+    address.slice(0, 20),
+    address.slice(20, 40),
+    address.slice(40)
+  ].filter(Boolean)
+  
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      {/* Back Button */}
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => router.back()}
+      >
+        <ChevronLeft size={24} color="black" />
+      </TouchableOpacity>
+      
+      {/* Transaction Details */}
+      <View style={styles.content}>
+        <View style={styles.detailRow}>
+          <ThemedText style={styles.label}>Amount</ThemedText>
+          <ThemedText style={styles.value}>
+            ${amount} USD
+          </ThemedText>
+        </View>
+        
+        <View style={styles.detailRow}>
+          <ThemedText style={styles.label}>To address</ThemedText>
+          <View style={styles.addressContainer}>
+            {addressLines.map((line, index) => (
+              <ThemedText key={index} style={styles.value} numberOfLines={1}>
+                {line}
+              </ThemedText>
+            ))}
+          </View>
+        </View>
+        
+        <View style={styles.detailRow}>
+          <View style={styles.labelWithIcon}>
+            <ThemedText style={styles.label}>Fee</ThemedText>
+            <TouchableOpacity onPress={() => Linking.openURL('https://mempool.space')}>
+              <ExternalLink size={16} color="#666" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.valueContainer}>
+            <ThemedText style={styles.value}>
+              ${fee.usd} USD
+            </ThemedText>
+            <ThemedText style={styles.subtext}>xxxx sat/vbyte</ThemedText>
+          </View>
+        </View>
+        
+        <View style={[ styles.detailRow, styles.totalRow ]}>
+          <ThemedText style={[ styles.label, styles.bold ]}>Total</ThemedText>
+          <ThemedText style={[ styles.value, styles.bold ]}>
+            ${totalAmount} USD
+          </ThemedText>
+        </View>
+      </View>
+      
+      {/* Send Button */}
+      <TouchableOpacity 
+        style={styles.sendButton}
+        onPress={() => console.log('Sending transaction...')}
+      >
+        <ThemedText style={styles.sendButtonText}>Send</ThemedText>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container : {
+    flex : 1
+  },
+  backButton : {
+    position       : 'absolute',
+    top            : 60,
+    left           : 20,
+    width          : 40,
+    height         : 40,
+    borderRadius   : 20,
+    alignItems     : 'center',
+    justifyContent : 'center'
+  },
+  content : {
+    flex              : 1,
+    paddingHorizontal : 20,
+    paddingTop        : 120,
+    gap               : 32
+  },
+  detailRow : {
+    flexDirection  : 'row',
+    justifyContent : 'space-between',
+    alignItems     : 'flex-start'
+  },
+  labelWithIcon : {
+    flexDirection : 'row',
+    alignItems    : 'center',
+    gap           : 8
+  },
+  label : {
+    fontSize : 16,
+    color    : '#666'
+  },
+  valueContainer : {
+    alignItems : 'flex-end'
+  },
+  addressContainer : {
+    alignItems : 'flex-end',
+    flex       : 1,
+    marginLeft : 40
+  },
+  value : {
+    fontSize  : 16,
+    color     : '#000',
+    textAlign : 'right'
+  },
+  subtext : {
+    fontSize  : 14,
+    color     : '#666',
+    marginTop : 4
+  },
+  bold : {
+    fontWeight : '600'
+  },
+  totalRow : {
+    marginTop      : 12,
+    paddingTop     : 24,
+    borderTopWidth : 1,
+    borderTopColor : '#E5E5E5'
+  },
+  sendButton : {
+    position        : 'absolute',
+    bottom          : 40,
+    left            : 20,
+    right           : 20,
+    height          : 56,
+    backgroundColor : '#FF0000',
+    borderRadius    : 28,
+    alignItems      : 'center',
+    justifyContent  : 'center'
+  },
+  sendButtonText : {
+    color      : '#FFF',
+    fontSize   : 16,
+    fontWeight : '600'
+  }
+}) 
