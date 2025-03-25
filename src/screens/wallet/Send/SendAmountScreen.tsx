@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native'
-import { Stack, useRouter } from 'expo-router'
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
 import { ThemedText } from '@/src/components/ThemedText'
 import Dropdown from '@/src/components/common/Dropdown'
 import IOSDropdown from '@/src/components/common/IOSDropdown'
@@ -19,8 +19,9 @@ type CurrencyType = 'USD' | 'BTC' | 'SATS';
 // Constants
 const SATS_PER_BTC = 100000000 // 1 BTC = 100,000,000 SATS (this is a fixed value)
 
-export default function SendScreen() {
+export default function SendAmountScreen() {
   const router = useRouter()
+  const _params = useLocalSearchParams<{ address: string; speed: string }>()
   
   // State for amount and currency
   const [ amount, setAmount ] = useState('0')
@@ -140,10 +141,14 @@ export default function SendScreen() {
     setAmount(prev => prev.length <= 1 ? '0' : prev.slice(0, -1))
   }
   
-  // Navigate back to home
+  // Navigate back to address screen
   const handleBackPress = () => {
-    router.push('/')
+    router.back()
   }
+  
+  // Example of using the passed params:
+  // const { address, speed } = params
+  // These will be used when implementing the final send functionality
   
   // Render number key
   const renderNumberKey = (value: string) => (
