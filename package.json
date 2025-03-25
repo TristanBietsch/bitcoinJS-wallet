@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.26.9",
+    "@bitcoin-design/bitcoin-icons": "^0.1.1",
     "@expo-google-fonts/ibm-plex-mono": "^0.2.3",
     "@expo-google-fonts/inter": "^0.2.3",
     "@gluestack-style/react": "^1.0.57",
