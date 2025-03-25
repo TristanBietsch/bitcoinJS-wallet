@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Pressable } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Pressable, Clipboard, Alert, Platform } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { ThemedText } from '@/src/components/ThemedText'
 import { ChevronRight, ChevronLeft, Turtle, Squirrel, Rabbit } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { validateAddress } from '@/src/utils/validation/validateAddress'
+import { useSendStore } from '@/src/store/sendStore'
+import { useFocusEffect } from '@react-navigation/native'
 
 interface SpeedOption {
   id: string
@@ -44,11 +47,80 @@ const speedOptions: SpeedOption[] = [
 export default function SendAddressScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
-  const [ selectedSpeed, setSelectedSpeed ] = useState<string>('economy')
-  const [ address, setAddress ] = useState('')
+  const { address, speed, setAddress, setSpeed } = useSendStore()
+  const [ addressError, setAddressError ] = useState<string | null>(null)
+  const [ _clipboardAddress, setClipboardAddress ] = useState<string | null>(null)
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true
+
+      const check = async () => {
+        try {
+          const clipboardContent = await Clipboard.getString()
+          if (!isActive) return
+
+          if (clipboardContent && !address) {
+            const result = validateAddress(clipboardContent)
+            if (result.isValid) {
+              setClipboardAddress(clipboardContent)
+              showPasteAlert(clipboardContent)
+            }
+          }
+        } catch (error) {
+          console.error('Error checking clipboard:', error)
+        }
+      }
+
+      check()
+
+      return () => {
+        isActive = false
+        setClipboardAddress(null)
+      }
+    }, [ address ])
+  )
+
+  const showPasteAlert = (detectedAddress: string) => {
+    if (Platform.OS === 'ios') {
+      Alert.alert(
+        'Paste Bitcoin Address?',
+        'A valid Bitcoin address was found in your clipboard. Use it?',
+        [
+          {
+            text    : 'Cancel',
+            style   : 'cancel',
+            onPress : () => setClipboardAddress(null)
+          },
+          {
+            text    : 'Paste',
+            style   : 'default',
+            onPress : () => {
+              setAddress(detectedAddress)
+              setAddressError(null)
+              setClipboardAddress(null)
+            }
+          }
+        ],
+        { cancelable: false }
+      )
+    }
+  }
+
+  const handleAddressChange = (text: string) => {
+    setAddress(text)
+    if (text) {
+      const result = validateAddress(text)
+      setAddressError(result.error)
+    } else {
+      setAddressError(null)
+    }
+  }
 
   const handleQRScan = () => {
-    router.push('../send/camera')
+    router.push({
+      pathname : '/send/camera' as any
+    })
   }
 
   const handleSpeedInfoPress = () => {
@@ -57,16 +129,22 @@ export default function SendAddressScreen() {
   }
 
   const handleBackPress = () => {
+    setAddress('')
+    setSpeed('economy')
     router.back()
   }
 
   const handleNextPress = () => {
-    if (!address) return
+    const result = validateAddress(address)
+    if (!result.isValid) {
+      setAddressError(result.error)
+      return
+    }
     router.push({
       pathname : '/send/amount' as any,
       params   : {
         address,
-        speed : selectedSpeed
+        speed
       }
     })
   }
@@ -103,11 +181,17 @@ export default function SendAddressScreen() {
         <View style={styles.section}>
           <View style={styles.addressSection}>
             <TextInput
-              style={styles.addressInput}
-              placeholder="Address"
+              style={[
+                styles.addressInput,
+                addressError && styles.addressInputError
+              ]}
+              placeholder="Bitcoin Address"
               value={address}
-              onChangeText={setAddress}
+              onChangeText={handleAddressChange}
               placeholderTextColor="#999"
+              autoCapitalize="none"
+              autoCorrect={false}
+              multiline={false}
             />
             <TouchableOpacity 
               style={styles.qrButton}
@@ -116,6 +200,9 @@ export default function SendAddressScreen() {
               <View style={styles.qrIcon} />
             </TouchableOpacity>
           </View>
+          {addressError && (
+            <ThemedText style={styles.errorText}>{addressError}</ThemedText>
+          )}
         </View>
 
         {/* Speed Selection Section */}
@@ -133,9 +220,9 @@ export default function SendAddressScreen() {
                 key={option.id}
                 style={[
                   styles.speedButton,
-                  selectedSpeed === option.id && styles.selectedSpeed
+                  speed === option.id && styles.selectedSpeed
                 ]}
-                onPress={() => setSelectedSpeed(option.id)}
+                onPress={() => setSpeed(option.id)}
               >
                 <View style={styles.speedLeft}>
                   {option.id === 'economy' && <Turtle size={32} color="#000" />}
@@ -199,6 +286,17 @@ const styles = StyleSheet.create({
     paddingHorizontal : 16,
     marginRight       : 12,
     fontSize          : 16,
+  },
+  addressInputError : {
+    backgroundColor : '#FFF5F5',
+    borderWidth     : 1,
+    borderColor     : '#FF0000'
+  },
+  errorText : {
+    color      : '#FF0000',
+    fontSize   : 14,
+    marginTop  : 8,
+    marginLeft : 4
   },
   qrButton : {
     width           : 56,

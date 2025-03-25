@@ -26,7 +26,7 @@
     "@gluestack-ui/themed": "^1.1.69",
     "@gluestack-ui/toast": "^1.0.9",
     "@hookform/resolvers": "^4.1.2",
-    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-picker/picker": "2.9.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
@@ -83,7 +83,8 @@
     "tailwindcss": "^3.4.17",
     "vision-camera-code-scanner": "^0.2.0",
     "zeego": "^2.0.4",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
