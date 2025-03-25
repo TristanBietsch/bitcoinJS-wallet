@@ -3,25 +3,28 @@ import { usePathname, useRouter } from 'expo-router'
 import { CreditCard, Home, Bitcoin, Clock } from 'lucide-react-native'
 import { Pressable, StyleSheet, View, Text } from 'react-native'
 
+// Define valid route paths
+type ValidRoutes = '/' | '/waitlist' | '/price' | '/activity'
+
 // Define tabs configuration
 const TABS = [
   {
-    path  : '/waitlist',
+    path  : '/waitlist' as ValidRoutes,
     title : 'Card',
     icon  : CreditCard,
   },
   {
-    path  : '/',
+    path  : '/' as ValidRoutes,
     title : 'Home',
     icon  : Home,
   },
   {
-    path  : '/price',
+    path  : '/price' as ValidRoutes,
     title : 'Price',
     icon  : Bitcoin,
   },
   {
-    path  : '/activity',
+    path  : '/activity' as ValidRoutes,
     title : 'Activity',
     icon  : Clock,
   },
@@ -31,23 +34,23 @@ export function BottomNavigation() {
   const router = useRouter()
   const pathname = usePathname()
 
+  const handleNavigation = (path: string) => {
+    // Type assertion to tell TypeScript this is a valid route
+    router.push(path as any)
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
         {TABS.map(({ path, title, icon: Icon }) => {
+          // Check if current path matches this tab's path
           const isActive = pathname === path
           
           return (
             <Pressable
               key={path}
               style={styles.tabItem}
-              onPress={() => {
-                console.log('Navigating to:', path)
-                if (path === '/') router.navigate('/')
-                else if (path === '/waitlist') router.navigate('/waitlist')
-                else if (path === '/price') router.navigate('/price')
-                else if (path === '/activity') router.navigate('/activity')
-              }}
+              onPress={() => handleNavigation(path)}
             >
               <View style={styles.tabContent}>
                 <Icon 

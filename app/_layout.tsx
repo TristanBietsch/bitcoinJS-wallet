@@ -22,7 +22,7 @@ import { useColorScheme } from '@/src/hooks/useColorScheme'
 SplashScreen.preventAutoHideAsync()
 
 // Routes where bottom navigation should be hidden
-const HIDDEN_NAV_ROUTES = [ '/payment', '/receive', '/send' ]
+const HIDDEN_NAV_ROUTES = [ '/receive', '/send', '/transaction' ]
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
