@@ -137,10 +137,16 @@ export const useCustomFee = () => {
     // Input will be initialized by the useEffect
   }, [])
 
+  // Override setCustomFee to also set persistedFee when loading from store
+  const setCustomFeeWithPersistence = useCallback((fee: CustomFee) => {
+    setCustomFee(fee)
+    setPersistedFee(fee)
+  }, [])
+
   return {
     customFee       : persistedFee || customFee,
     showCustomFeeModal,
-    setCustomFee,
+    setCustomFee    : setCustomFeeWithPersistence,
     setShowCustomFeeModal,
     handleNumberPress,
     handleCloseCustomFeeModal,

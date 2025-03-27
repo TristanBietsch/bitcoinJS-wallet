@@ -75,12 +75,12 @@ export default function SendAddressScreen() {
         checkClipboard()
       }
       
-      if (storedSpeed) {
-        handleSpeedChangeBase(storedSpeed as SpeedTier)
-      }
-      
+      // Handle custom fee first since it should override speed
       if (storedCustomFee) {
         setCustomFee(storedCustomFee)
+        handleSpeedChangeBase('custom')
+      } else if (storedSpeed) {
+        handleSpeedChangeBase(storedSpeed as SpeedTier)
       }
       
       // No need to return a cleanup function - we don't want to reset when leaving
