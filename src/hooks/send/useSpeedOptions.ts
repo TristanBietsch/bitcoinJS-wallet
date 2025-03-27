@@ -6,7 +6,7 @@ import { useCustomFee } from './useCustomFee'
 export const useSpeedOptions = () => {
   const [ speed, setSpeed ] = useState<SpeedTier>('standard')
   const [ showSpeedInfoModal, setShowSpeedInfoModal ] = useState(false)
-  const { customFee } = useCustomFee()
+  const { customFee : _customFee } = useCustomFee()
 
   const handleSpeedChange = useCallback((newSpeed: SpeedTier) => {
     setSpeed(newSpeed)

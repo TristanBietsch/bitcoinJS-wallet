@@ -20,9 +20,13 @@ export default function SendAddressScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const { 
+    address: storedAddress, 
+    speed: storedSpeed, 
+    customFee: storedCustomFee,
     setAddress: setStoreAddress, 
     setSpeed: setStoreSpeed, 
-    setCustomFee: setStoreCustomFee 
+    setCustomFee: setStoreCustomFee,
+    reset: resetStore
   } = useSendStore()
   
   const {
@@ -46,6 +50,7 @@ export default function SendAddressScreen() {
   const {
     customFee,
     showCustomFeeModal,
+    setCustomFee,
     setShowCustomFeeModal,
     handleNumberPress,
     handleCloseCustomFeeModal,
@@ -54,27 +59,27 @@ export default function SendAddressScreen() {
     hasPersistedFee
   } = useCustomFee()
 
-  // Reset all states when leaving screen
+  // Load data from store when screen is focused
   useFocusEffect(
     React.useCallback(() => {
-      return () => {
-        // This runs when screen loses focus (leaving the screen)
-        resetAddress()
-        resetSpeed()
-        // Only reset custom fee if we're going back
-        const isGoingBack = router.canGoBack()
-        if (isGoingBack) {
-          resetCustomFee()
-        }
+      // Only load from store if there's data to load
+      if (storedAddress) {
+        handleAddressChange(storedAddress)
       }
-    }, [])
-  )
-
-  // Check clipboard when screen is focused
-  useFocusEffect(
-    React.useCallback(() => {
+      
+      if (storedSpeed) {
+        handleSpeedChangeBase(storedSpeed as SpeedTier)
+      }
+      
+      if (storedCustomFee) {
+        setCustomFee(storedCustomFee)
+      }
+      
+      // Check clipboard for address
       checkClipboard()
-    }, [])
+      
+      // No need to return a cleanup function - we don't want to reset when leaving
+    }, [ storedAddress, storedSpeed, storedCustomFee ])
   )
 
   const handleQRScan = () => {
@@ -87,6 +92,7 @@ export default function SendAddressScreen() {
     resetAddress()
     resetSpeed()
     resetCustomFee()
+    resetStore() // Reset store when explicitly going back to home
     router.back()
   }
 
@@ -116,6 +122,11 @@ export default function SendAddressScreen() {
     handleSpeedChangeBase(newSpeed)
   }
 
+  const handleCustomFeeButtonConfirm = () => {
+    // Once custom fee is confirmed, set speed to 'custom'
+    handleSpeedChangeBase('custom')
+  }
+  
   const handleCustomFeePress = () => {
     setShowCustomFeeModal(true)
   }
@@ -212,7 +223,10 @@ export default function SendAddressScreen() {
         visible={showCustomFeeModal}
         customFee={customFee}
         onClose={handleCloseCustomFeeModal}
-        onConfirm={handleConfirmCustomFee}
+        onConfirm={() => {
+          handleConfirmCustomFee()
+          handleCustomFeeButtonConfirm()
+        }}
         onNumberPress={handleNumberPress}
       />
 

@@ -50,7 +50,7 @@ export const useCustomFee = () => {
   }, [])
 
   return {
-    customFee : persistedFee || customFee,
+    customFee       : persistedFee || customFee,
     showCustomFeeModal,
     setCustomFee,
     setShowCustomFeeModal,

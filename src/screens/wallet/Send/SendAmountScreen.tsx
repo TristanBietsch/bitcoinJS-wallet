@@ -5,6 +5,7 @@ import { ThemedText } from '@/src/components/ThemedText'
 import Dropdown from '@/src/components/common/Dropdown'
 import IOSDropdown from '@/src/components/common/IOSDropdown'
 import { ChevronLeft } from 'lucide-react-native'
+import { useSendStore } from '@/src/store/sendStore'
 
 // Currency options for the dropdown
 const CURRENCY_OPTIONS = [
@@ -21,6 +22,11 @@ const SATS_PER_BTC = 100000000 // 1 BTC = 100,000,000 SATS (this is a fixed valu
 
 export default function SendAmountScreen() {
   const router = useRouter()
+  const { 
+    address : _address, 
+    speed : _speed, 
+    customFee : _customFee 
+  } = useSendStore()
   const _params = useLocalSearchParams<{ address: string; speed: string }>()
   
   // State for amount and currency
@@ -75,7 +81,7 @@ export default function SendAmountScreen() {
     
     // Clean up interval on unmount
     return () => clearInterval(intervalId)
-  }, [])
+  }, [ fetchBitcoinPrice ])
   
   // Convert amount between currencies using real rates
   const convertAmount = (value: string, fromCurrency: CurrencyType, toCurrency: CurrencyType): string => {
@@ -141,7 +147,7 @@ export default function SendAmountScreen() {
     setAmount(prev => prev.length <= 1 ? '0' : prev.slice(0, -1))
   }
   
-  // Navigate back to address screen
+  // Handle back navigation
   const handleBackPress = () => {
     router.back()
   }
