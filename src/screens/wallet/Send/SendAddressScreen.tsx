@@ -13,6 +13,8 @@ import { CustomFeeModal } from '@/src/components/send/CustomFeeModal'
 import { useAddressValidation } from '@/src/hooks/send/useAddressValidation'
 import { useSpeedOptions } from '@/src/hooks/send/useSpeedOptions'
 import { useCustomFee } from '@/src/hooks/send/useCustomFee'
+import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
+import { SpeedTier } from '@/src/types/transaction/send.types'
 
 export default function SendAddressScreen() {
   const insets = useSafeAreaInsets()
@@ -35,7 +37,7 @@ export default function SendAddressScreen() {
     speed,
     showSpeedInfoModal,
     speedOptions,
-    handleSpeedChange,
+    handleSpeedChange: handleSpeedChangeBase,
     handleSpeedInfoPress,
     handleCloseSpeedInfoModal,
     resetSpeed
@@ -48,7 +50,8 @@ export default function SendAddressScreen() {
     handleNumberPress,
     handleCloseCustomFeeModal,
     handleConfirmCustomFee,
-    resetCustomFee
+    resetCustomFee,
+    hasPersistedFee
   } = useCustomFee()
 
   // Reset all states when leaving screen
@@ -58,7 +61,11 @@ export default function SendAddressScreen() {
         // This runs when screen loses focus (leaving the screen)
         resetAddress()
         resetSpeed()
-        resetCustomFee()
+        // Only reset custom fee if we're going back
+        const isGoingBack = router.canGoBack()
+        if (isGoingBack) {
+          resetCustomFee()
+        }
       }
     }, [])
   )
@@ -99,6 +106,14 @@ export default function SendAddressScreen() {
         speed
       }
     })
+  }
+
+  const handleSpeedChange = (newSpeed: SpeedTier) => {
+    if (newSpeed === 'custom') {
+      setShowCustomFeeModal(true)
+      return
+    }
+    handleSpeedChangeBase(newSpeed)
   }
 
   const handleCustomFeePress = () => {
@@ -159,6 +174,21 @@ export default function SendAddressScreen() {
                 onPress={() => handleSpeedChange(option.id as any)}
               />
             ))}
+
+            {hasPersistedFee && (
+              <SpeedOptionButton
+                option={{
+                  id    : 'custom',
+                  label : 'Custom',
+                  fee   : {
+                    sats : customFee.totalSats,
+                    usd  : parseFloat(getFormattedUsdFee(customFee.totalSats))
+                  }
+                }}
+                isSelected={speed === 'custom'}
+                onPress={() => handleSpeedChange('custom')}
+              />
+            )}
 
             <TouchableOpacity 
               style={styles.customFeeButton}

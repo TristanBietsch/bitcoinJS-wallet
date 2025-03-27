@@ -11,6 +11,7 @@ const DEFAULT_CUSTOM_FEE: CustomFee = {
 export const useCustomFee = () => {
   const [ customFee, setCustomFee ] = useState<CustomFee>(DEFAULT_CUSTOM_FEE)
   const [ showCustomFeeModal, setShowCustomFeeModal ] = useState(false)
+  const [ persistedFee, setPersistedFee ] = useState<CustomFee | null>(null)
 
   const handleNumberPress = useCallback((num: string) => {
     if (num === '⌫') {
@@ -38,22 +39,25 @@ export const useCustomFee = () => {
   }, [])
 
   const handleConfirmCustomFee = useCallback(() => {
+    setPersistedFee(customFee)
     setShowCustomFeeModal(false)
-  }, [])
+  }, [ customFee ])
 
   const resetCustomFee = useCallback(() => {
     setCustomFee(DEFAULT_CUSTOM_FEE)
+    setPersistedFee(null)
     setShowCustomFeeModal(false)
   }, [])
 
   return {
-    customFee,
+    customFee : persistedFee || customFee,
     showCustomFeeModal,
     setCustomFee,
     setShowCustomFeeModal,
     handleNumberPress,
     handleCloseCustomFeeModal,
     handleConfirmCustomFee,
-    resetCustomFee
+    resetCustomFee,
+    hasPersistedFee : !!persistedFee
   }
 } 
