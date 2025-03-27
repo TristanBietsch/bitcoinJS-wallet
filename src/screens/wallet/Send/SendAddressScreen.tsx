@@ -68,14 +68,35 @@ export default function SendAddressScreen() {
   const [ _isEditingTotalFee, _setIsEditingTotalFee ] = useState(false)
   const [ showSpeedInfoModal, setShowSpeedInfoModal ] = useState(false)
 
+  // Reset all states when leaving screen
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // This runs when screen loses focus (leaving the screen)
+        setAddress('')
+        setSpeed('standard')
+        const defaultCustomFee = {
+          totalSats        : 2000,
+          confirmationTime : 60,
+          feeRate          : 5
+        }
+        setCustomFee(defaultCustomFee)
+        setCustomFeeAdded(false)
+        setStoreCustomFee(defaultCustomFee)
+        setShowCustomFeeModal(false)
+        setAddressError(null)
+        setClipboardAddress(null)
+      }
+    }, [])
+  )
+
   // Initialize customFee from store if available
   useFocusEffect(
     React.useCallback(() => {
-      if (storeCustomFee) {
+      if (storeCustomFee && customFeeAdded) {
         setCustomFee(storeCustomFee)
-        setCustomFeeAdded(true)
       }
-    }, [ storeCustomFee ])
+    }, [ storeCustomFee, customFeeAdded ])
   )
 
   useFocusEffect(
@@ -155,8 +176,24 @@ export default function SendAddressScreen() {
   }
 
   const handleBackPress = () => {
+    // Reset address
     setAddress('')
-    setSpeed('economy')
+    
+    // Reset speed to standard
+    setSpeed('standard')
+    
+    // Reset all custom fee related states
+    const defaultCustomFee = {
+      totalSats        : 2000,
+      confirmationTime : 60,
+      feeRate          : 5
+    }
+    setCustomFee(defaultCustomFee)
+    setCustomFeeAdded(false)  // This will change button back to "Enter Custom fee"
+    setStoreCustomFee(defaultCustomFee)
+    setShowCustomFeeModal(false)  // Ensure modal is closed
+    
+    // Navigate back
     router.back()
   }
 
