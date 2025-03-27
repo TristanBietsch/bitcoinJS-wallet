@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Pressable, Clipboard, Alert, Platform, Modal } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { ThemedText } from '@/src/components/ThemedText'
-import { ChevronRight, ChevronLeft, Turtle, Squirrel, Rabbit, Pencil, Clock, X } from 'lucide-react-native'
+import { ChevronRight, ChevronLeft, Turtle, Squirrel, Rabbit, Clock, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { validateAddress } from '@/src/utils/validation/validateAddress'
 import { useSendStore } from '@/src/store/sendStore'
@@ -65,7 +65,7 @@ export default function SendAddressScreen() {
   })
   const [ customFeeAdded, setCustomFeeAdded ] = useState(false)
   const [ _activeField, setActiveField ] = useState<string | null>(null)
-  const [ isEditingTotalFee, setIsEditingTotalFee ] = useState(false)
+  const [ _isEditingTotalFee, _setIsEditingTotalFee ] = useState(false)
   const [ showSpeedInfoModal, setShowSpeedInfoModal ] = useState(false)
 
   // Initialize customFee from store if available
@@ -196,46 +196,6 @@ export default function SendAddressScreen() {
     setShowCustomFeeModal(false)
   }
 
-  const handleTotalFeeChange = (value: string) => {
-    const totalSats = parseInt(value.replace(/[^0-9]/g, '')) || 0
-    // Keep the fee rate constant and adjust confirmation time
-    const newCustomFee = {
-      ...customFee,
-      totalSats,
-      // Use our mock data utility to calculate confirmation time
-      confirmationTime : transactionFees.estimateConfirmationTime(customFee.feeRate),
-    }
-    setCustomFee(newCustomFee)
-  }
-
-  const handleConfirmationTimeChange = (value: string) => {
-    const confirmationTime = parseInt(value) || 1
-    // Calculate an appropriate fee rate for this confirmation time
-    const feeRate = transactionFees.calculateRateFromTime(confirmationTime)
-    
-    const newCustomFee = {
-      ...customFee,
-      confirmationTime,
-      feeRate,
-      // Calculate total fee based on the new fee rate
-      totalSats : transactionFees.calculateFeeFromRate(feeRate)
-    }
-    setCustomFee(newCustomFee)
-  }
-
-  const handleFeeRateChange = (value: string) => {
-    const feeRate = parseInt(value) || 1
-    
-    const newCustomFee = {
-      ...customFee,
-      feeRate,
-      // Calculate the new total fee and estimated confirmation time
-      totalSats        : transactionFees.calculateFeeFromRate(feeRate),
-      confirmationTime : transactionFees.estimateConfirmationTime(feeRate)
-    }
-    setCustomFee(newCustomFee)
-  }
-
   // Format the fee for display in USD
   const getFormattedUsdFee = (sats: number) => {
     return (sats * transactionFees.conversion.satToDollar).toFixed(2)
@@ -245,6 +205,46 @@ export default function SendAddressScreen() {
   const _toggleEditField = (field: string) => {
     setActiveField(field)
   }
+
+  // Add number pad handlers
+  const handleNumberPress = (num: string) => {
+    if (num === '⌫') {
+      setCustomFee(prev => ({
+        ...prev,
+        totalSats : Math.floor(prev.totalSats / 10)
+      }))
+      return
+    }
+
+    setCustomFee(prev => {
+      const newValue = prev.totalSats.toString() + num
+      const totalSats = parseInt(newValue)
+      const feeRate = transactionFees.calculateRateFromTime(totalSats)
+      return {
+        totalSats,
+        feeRate,
+        confirmationTime : transactionFees.estimateConfirmationTime(feeRate)
+      }
+    })
+  }
+
+  const renderNumberKey = (value: string) => (
+    <TouchableOpacity 
+      key={value}
+      style={styles.numberKey} 
+      onPress={() => handleNumberPress(value)}
+    >
+      <ThemedText style={styles.numberKeyText}>{value}</ThemedText>
+    </TouchableOpacity>
+  )
+  
+  // Number pad keys layout
+  const numberPadKeys = [
+    [ '1', '2', '3' ],
+    [ '4', '5', '6' ],
+    [ '7', '8', '9' ],
+    [ '.', '0', '⌫' ]
+  ]
 
   return (
     <View style={[
@@ -383,7 +383,7 @@ export default function SendAddressScreen() {
         <View style={styles.infoModalOverlay}>
           <View style={styles.infoModalContainer}>
             <View style={styles.infoModalHeader}>
-              <ThemedText style={styles.infoModalTitle}>Transaction Confirmation Speed</ThemedText>
+              <ThemedText style={styles.infoModalTitle}>Confirmation Speed</ThemedText>
               <TouchableOpacity 
                 style={styles.infoModalCloseButton} 
                 onPress={() => setShowSpeedInfoModal(false)}
@@ -441,7 +441,7 @@ export default function SendAddressScreen() {
         animationType="slide"
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={[ styles.modalContainer, { marginTop: insets.top } ]}>
             <View style={styles.modalHeader}>
               <TouchableOpacity 
                 style={styles.modalBackButton} 
@@ -453,10 +453,6 @@ export default function SendAddressScreen() {
               <ThemedText style={styles.modalTitle}>Custom fee</ThemedText>
             </View>
             <View style={styles.modalContent}>
-              <ThemedText style={styles.modalSubtitle}>
-                Change one of the values below and the others will adjust.
-              </ThemedText>
-
               {/* Total Fee */}
               <View style={styles.feeInputRow}>
                 <View style={styles.feeInputLabel}>
@@ -464,28 +460,11 @@ export default function SendAddressScreen() {
                   <ThemedText style={styles.feeInputSubtitle}>In sats</ThemedText>
                 </View>
                 <View style={styles.feeInputValueContainer}>
-                  {isEditingTotalFee ? (
-                    <TextInput
-                      style={styles.feeInputActive}
-                      value={customFee.totalSats.toString()}
-                      onChangeText={handleTotalFeeChange}
-                      keyboardType="numeric"
-                      autoFocus={true}
-                      onBlur={() => setIsEditingTotalFee(false)}
-                    />
-                  ) : (
-                    <TouchableOpacity 
-                      onPress={() => setIsEditingTotalFee(true)}
-                      style={styles.editableFeeContainer}
-                    >
-                      <View style={styles.editableFeeValueWrapper}>
-                        <ThemedText style={styles.feeInputValue}>
-                          {customFee.totalSats}
-                        </ThemedText>
-                        <Pencil size={16} color="#666" style={styles.editIcon} />
-                      </View>
-                    </TouchableOpacity>
-                  )}
+                  <View style={styles.editableFeeValueWrapper}>
+                    <ThemedText style={styles.feeInputValue}>
+                      {customFee.totalSats}
+                    </ThemedText>
+                  </View>
                   <ThemedText style={styles.feeEuroValue}>~${getFormattedUsdFee(customFee.totalSats)} USD</ThemedText>
                 </View>
               </View>
@@ -500,19 +479,11 @@ export default function SendAddressScreen() {
                   <ThemedText style={styles.feeInputSubtitle}>In minutes</ThemedText>
                 </View>
                 <View style={styles.feeInputValueContainer}>
-                  <TouchableOpacity style={styles.editableFeeContainer}>
-                    <View style={styles.editableFeeValueWrapper}>
-                      <TextInput
-                        style={styles.feeInputValue}
-                        value={customFee.confirmationTime.toString()}
-                        onChangeText={handleConfirmationTimeChange}
-                        keyboardType="numeric"
-                        onFocus={() => setActiveField('confirmationTime')}
-                        onBlur={() => setActiveField(null)}
-                      />
-                      <Pencil size={16} color="#666" style={styles.editIcon} />
-                    </View>
-                  </TouchableOpacity>
+                  <View style={styles.readOnlyValueContainer}>
+                    <ThemedText style={styles.feeInputValue}>
+                      {customFee.confirmationTime}
+                    </ThemedText>
+                  </View>
                 </View>
               </View>
 
@@ -526,27 +497,25 @@ export default function SendAddressScreen() {
                   <ThemedText style={styles.feeInputSubtitle}>In sat per vbyte</ThemedText>
                 </View>
                 <View style={styles.feeInputValueContainer}>
-                  <TouchableOpacity style={styles.editableFeeContainer}>
-                    <View style={styles.editableFeeValueWrapper}>
-                      <TextInput
-                        style={styles.feeInputValue}
-                        value={customFee.feeRate.toString()}
-                        onChangeText={handleFeeRateChange}
-                        keyboardType="numeric"
-                        onFocus={() => setActiveField('feeRate')}
-                        onBlur={() => setActiveField(null)}
-                      />
-                      <Pencil size={16} color="#666" style={styles.editIcon} />
-                    </View>
-                  </TouchableOpacity>
+                  <View style={styles.readOnlyValueContainer}>
+                    <ThemedText style={styles.feeInputValue}>
+                      {customFee.feeRate}
+                    </ThemedText>
+                  </View>
                 </View>
               </View>
             </View>
             
             <View style={styles.modalFooter}>
-              <ThemedText style={styles.modalFooterText}>
-                Adjust the fee values to customize your transaction priority.
-              </ThemedText>
+
+              {/* Number Pad */}
+              <View style={styles.numberPadContainer}>
+                {numberPadKeys.map((row, rowIndex) => (
+                  <View key={`row-${rowIndex}`} style={styles.numberPadRow}>
+                    {row.map(key => renderNumberKey(key))}
+                  </View>
+                ))}
+              </View>
 
               <TouchableOpacity 
                 style={styles.confirmButton}
@@ -719,13 +688,13 @@ const styles = StyleSheet.create({
   modalOverlay : {
     flex            : 1,
     backgroundColor : 'rgba(0, 0, 0, 0.5)',
-    justifyContent  : 'flex-end',
+    justifyContent  : 'flex-start',
   },
   modalContainer : {
     backgroundColor      : '#FFFFFF',
     borderTopLeftRadius  : 16,
     borderTopRightRadius : 16,
-    height               : 550,
+    height               : '85%',
   },
   modalHeader : {
     paddingHorizontal : 20,
@@ -827,14 +796,15 @@ const styles = StyleSheet.create({
     backgroundColor : '#E5E5E5',
   },
   modalFooter : {
-    padding   : 20,
-    marginTop : 'auto',
+    padding         : 20,
+    marginTop       : 'auto',
+    backgroundColor : '#FFFFFF',
   },
   modalFooterText : {
     fontSize     : 14,
     color        : '#666',
     textAlign    : 'center',
-    marginBottom : 20,
+    marginBottom : 24,
   },
   confirmButton : {
     backgroundColor : '#FF0000',
@@ -842,6 +812,7 @@ const styles = StyleSheet.create({
     height          : 56,
     justifyContent  : 'center',
     alignItems      : 'center',
+    marginBottom    : 24,
   },
   confirmButtonText : {
     color      : '#fff',
@@ -869,17 +840,21 @@ const styles = StyleSheet.create({
     elevation       : 5,
   },
   infoModalHeader : {
-    flexDirection  : 'row',
-    justifyContent : 'space-between',
-    alignItems     : 'center',
-    marginBottom   : 20,
+    flexDirection : 'row',
+    alignItems    : 'center',
+    marginBottom  : 20,
+    position      : 'relative',
   },
   infoModalTitle : {
     fontSize   : 20,
     fontWeight : '600',
+    textAlign  : 'center',
+    flex       : 1,
   },
   infoModalCloseButton : {
-    padding : 5,
+    padding  : 5,
+    position : 'absolute',
+    right    : 0,
   },
   infoModalContent : {
     marginBottom : 20,
@@ -929,5 +904,33 @@ const styles = StyleSheet.create({
     color      : '#fff',
     fontSize   : 16,
     fontWeight : '600',
+  },
+  readOnlyValueContainer : {
+    flexDirection     : 'row',
+    alignItems        : 'center',
+    paddingVertical   : 6,
+    paddingHorizontal : 12,
+    minWidth          : 120,
+    justifyContent    : 'flex-end',
+  },
+  // Add numpad styles
+  numberPadContainer : {
+    paddingHorizontal : 24,
+    marginBottom      : 0,
+  },
+  numberPadRow : {
+    flexDirection  : 'row',
+    justifyContent : 'space-between',
+    marginBottom   : 32,
+  },
+  numberKey : {
+    width          : 60,
+    height         : 60,
+    justifyContent : 'center',
+    alignItems     : 'center',
+  },
+  numberKeyText : {
+    fontSize : 32,
+    color    : 'black',
   },
 }) 
