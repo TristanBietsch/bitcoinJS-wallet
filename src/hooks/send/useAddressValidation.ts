@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { Clipboard, Platform, Alert } from 'react-native'
 import { validateAddress } from '@/src/utils/validation/validateAddress'
 
@@ -6,6 +6,9 @@ export const useAddressValidation = () => {
   const [ address, setAddress ] = useState('')
   const [ addressError, setAddressError ] = useState<string | null>(null)
   const [ clipboardAddress, setClipboardAddress ] = useState<string | null>(null)
+  
+  // Use a ref to track if we've shown the paste alert in this session
+  const hasShownPasteAlertRef = useRef(false)
 
   const handleAddressChange = useCallback((text: string) => {
     setAddress(text)
@@ -19,12 +22,17 @@ export const useAddressValidation = () => {
 
   const checkClipboard = useCallback(async () => {
     try {
-      const clipboardContent = await Clipboard.getString()
-      if (clipboardContent && !address) {
-        const result = validateAddress(clipboardContent)
-        if (result.isValid) {
-          setClipboardAddress(clipboardContent)
-          showPasteAlert(clipboardContent)
+      // Only check clipboard if we have no address yet and haven't shown the alert
+      if (!address && !hasShownPasteAlertRef.current) {
+        const clipboardContent = await Clipboard.getString()
+        if (clipboardContent) {
+          const result = validateAddress(clipboardContent)
+          if (result.isValid) {
+            setClipboardAddress(clipboardContent)
+            showPasteAlert(clipboardContent)
+            // Mark that we've shown the alert
+            hasShownPasteAlertRef.current = true
+          }
         }
       }
     } catch (error) {
@@ -62,6 +70,8 @@ export const useAddressValidation = () => {
     setAddress('')
     setAddressError(null)
     setClipboardAddress(null)
+    // Reset the alert flag when we reset the address
+    hasShownPasteAlertRef.current = false
   }, [])
 
   return {

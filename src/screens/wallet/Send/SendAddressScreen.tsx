@@ -62,9 +62,13 @@ export default function SendAddressScreen() {
   // Load data from store when screen is focused
   useFocusEffect(
     React.useCallback(() => {
-      // Only load from store if there's data to load
+      // First check if we have data in the store
       if (storedAddress) {
+        // If we have an address in the store, use it and don't check clipboard
         handleAddressChange(storedAddress)
+      } else {
+        // Only check clipboard if we don't have an address yet
+        checkClipboard()
       }
       
       if (storedSpeed) {
@@ -74,9 +78,6 @@ export default function SendAddressScreen() {
       if (storedCustomFee) {
         setCustomFee(storedCustomFee)
       }
-      
-      // Check clipboard for address
-      checkClipboard()
       
       // No need to return a cleanup function - we don't want to reset when leaving
     }, [ storedAddress, storedSpeed, storedCustomFee ])
