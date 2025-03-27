@@ -22,4 +22,7 @@ export const COLORS = {
   error         : '#F44336',
   errorLight    : '#FFEBEE',
   warning       : '#FFC107',
+  warningLight  : '#FFF8E1',
+  primary       : '#0085FF',
+  white         : '#FFFFFF',
 } 

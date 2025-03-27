@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { COLORS } from '../../types/colors'
+import { COLORS } from '@/src/types/theme/colors.types'
 import Card from '../ui/Card'
 
 interface WalletCardProps {

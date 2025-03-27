@@ -1,6 +1,6 @@
 import React from 'react'
 import { FlatList, Text, View, StyleSheet } from 'react-native'
-import { COLORS } from '../../types/colors'
+import { COLORS } from '@/src/types/theme/colors.types'
 import TransactionItem from './TransactionItem'
 
 interface Transaction {

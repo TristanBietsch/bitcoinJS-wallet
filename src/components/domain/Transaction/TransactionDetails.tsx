@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
-import { COLORS } from '@/src/types/colors'
+import { COLORS } from '@/src/types/theme/colors.types'
 import { Button, Card } from '@gluestack-ui/themed'
 import { fonts } from '@/src/constants/fonts'
 

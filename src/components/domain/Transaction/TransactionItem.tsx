@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { COLORS } from '@/src/types/colors'
+import { COLORS } from '@/src/types/theme/colors.types'
 
 interface Transaction {
   id: string;
