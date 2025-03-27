@@ -4,30 +4,49 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
 import { ThemedText } from '@/src/components/ThemedText'
 import { ChevronLeft, ExternalLink } from 'lucide-react-native'
 import { useSendStore } from '@/src/store/sendStore'
+import { transactionFees } from '@/tests/mockData/transactionData'
 
 // Speed options with their fees (matching SendAddressScreen)
 const speedOptions = {
   economy : {
-    sats : 3000,
-    usd  : 2.13
+    sats    : transactionFees.tiers.economy.sats,
+    usd     : transactionFees.tiers.economy.usd,
+    feeRate : transactionFees.tiers.economy.feeRate
   },
   standard : {
-    sats : 5000,
-    usd  : 3.55
+    sats    : transactionFees.tiers.standard.sats,
+    usd     : transactionFees.tiers.standard.usd,
+    feeRate : transactionFees.tiers.standard.feeRate
   },
   express : {
-    sats : 8000,
-    usd  : 5.68
+    sats    : transactionFees.tiers.express.sats,
+    usd     : transactionFees.tiers.express.usd,
+    feeRate : transactionFees.tiers.express.feeRate
   }
 }
 
 export default function SendConfirmScreen() {
   const router = useRouter()
-  const { address, speed } = useSendStore()
+  const { address, speed, customFee } = useSendStore()
   const params = useLocalSearchParams<{ amount: string; currency: string }>()
   
-  // Get fee based on selected speed
-  const fee = speedOptions[speed as keyof typeof speedOptions]
+  // Get fee based on selected speed or custom fee
+  let fee = {
+    sats    : 0,
+    usd     : 0,
+    feeRate : 0
+  }
+  
+  // Use custom fee if selected, otherwise use standard tiers
+  if (speed === 'custom' && customFee) {
+    fee = {
+      sats    : customFee.totalSats,
+      usd     : Number((customFee.totalSats * transactionFees.conversion.satToDollar).toFixed(2)),
+      feeRate : customFee.feeRate
+    }
+  } else {
+    fee = speedOptions[speed as keyof typeof speedOptions]
+  }
   
   // Calculate total (amount + fee)
   const amount = parseFloat(params.amount || '0')
@@ -85,7 +104,9 @@ export default function SendConfirmScreen() {
             <ThemedText style={styles.value}>
               ${fee.usd} USD
             </ThemedText>
-            <ThemedText style={styles.subtext}>xxxx sat/vbyte</ThemedText>
+            <ThemedText style={styles.subtext}>
+              {fee.feeRate || ((speed === 'economy') ? 3 : (speed === 'standard') ? 5 : 8)} sat/vbyte
+            </ThemedText>
           </View>
         </View>
         
