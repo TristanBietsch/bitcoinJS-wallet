@@ -9,13 +9,17 @@ interface CustomFee {
 }
 
 interface SendState {
-  address  : string
-  speed    : string
+  address: string
+  speed: string
   customFee?: CustomFee
-  setAddress : (address: string) => void
-  setSpeed   : (speed: string) => void
-  setCustomFee : (customFee: CustomFee) => void
-  reset     : () => void
+  amount: string
+  currency: 'USD' | 'BTC' | 'SATS'
+  setAddress: (address: string) => void
+  setSpeed: (speed: string) => void
+  setCustomFee: (customFee: CustomFee | undefined) => void
+  setAmount: (amount: string) => void
+  setCurrency: (currency: 'USD' | 'BTC' | 'SATS') => void
+  reset: () => void
 }
 
 export const useSendStore = create<SendState>()(
@@ -24,10 +28,20 @@ export const useSendStore = create<SendState>()(
       address      : '',
       speed        : 'economy',
       customFee    : undefined,
+      amount       : '0',
+      currency     : 'USD',
       setAddress   : (address) => set({ address }),
       setSpeed     : (speed) => set({ speed }),
       setCustomFee : (customFee) => set({ customFee }),
-      reset        : () => set({ address: '', speed: 'economy', customFee: undefined })
+      setAmount    : (amount) => set({ amount }),
+      setCurrency  : (currency) => set({ currency }),
+      reset        : () => set({ 
+        address   : '', 
+        speed     : 'economy', 
+        customFee : undefined,
+        amount    : '0',
+        currency  : 'USD'
+      })
     }),
     {
       name    : 'send-storage',

@@ -124,6 +124,8 @@ export default function SendAddressScreen() {
       setShowCustomFeeModal(true)
       return
     }
+    // Clear custom fee when switching to a standard speed tier
+    setStoreCustomFee(undefined)
     handleSpeedChangeBase(newSpeed)
   }
 

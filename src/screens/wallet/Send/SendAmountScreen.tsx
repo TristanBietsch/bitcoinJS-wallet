@@ -23,15 +23,19 @@ const SATS_PER_BTC = 100000000 // 1 BTC = 100,000,000 SATS (this is a fixed valu
 export default function SendAmountScreen() {
   const router = useRouter()
   const { 
-    address : _address, 
-    speed : _speed, 
-    customFee : _customFee 
+    address: _address, 
+    speed: _speed, 
+    customFee: _customFee,
+    amount: persistedAmount,
+    currency: persistedCurrency,
+    setAmount,
+    setCurrency
   } = useSendStore()
   const _params = useLocalSearchParams<{ address: string; speed: string }>()
   
   // State for amount and currency
-  const [ amount, setAmount ] = useState('0')
-  const [ currency, setCurrency ] = useState<CurrencyType>('USD')
+  const [ amount, setLocalAmount ] = useState(persistedAmount)
+  const [ currency, setLocalCurrency ] = useState<CurrencyType>(persistedCurrency)
   const [ conversionDisabled, setConversionDisabled ] = useState(false)
   
   // State for Bitcoin price
@@ -123,8 +127,10 @@ export default function SendAmountScreen() {
     const newCurrencyType = newCurrency as CurrencyType
     if (currency !== newCurrencyType && !conversionDisabled) {
       const newAmount = convertAmount(amount, currency, newCurrencyType)
+      setLocalAmount(newAmount)
       setAmount(newAmount)
     }
+    setLocalCurrency(newCurrencyType)
     setCurrency(newCurrencyType)
   }
   
@@ -133,10 +139,12 @@ export default function SendAmountScreen() {
     // Enable conversion when user manually enters a value
     setConversionDisabled(false)
     
-    setAmount(prev => {
-      if (prev === '0' && num !== '.') return num
-      if (num === '.' && prev.includes('.')) return prev
-      return prev + num
+    setLocalAmount(prev => {
+      const newAmount = prev === '0' && num !== '.' ? num :
+        num === '.' && prev.includes('.') ? prev :
+        prev + num
+      setAmount(newAmount)
+      return newAmount
     })
   }
   
@@ -144,7 +152,11 @@ export default function SendAmountScreen() {
     // Enable conversion when user manually enters a value
     setConversionDisabled(false)
     
-    setAmount(prev => prev.length <= 1 ? '0' : prev.slice(0, -1))
+    setLocalAmount(prev => {
+      const newAmount = prev.length <= 1 ? '0' : prev.slice(0, -1)
+      setAmount(newAmount)
+      return newAmount
+    })
   }
   
   // Handle back navigation
