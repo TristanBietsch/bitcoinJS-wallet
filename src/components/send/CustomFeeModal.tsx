@@ -12,6 +12,7 @@ interface CustomFeeModalProps {
   onClose: () => void
   onConfirm: () => void
   onNumberPress: (num: string) => void
+  pendingInput?: string
 }
 
 export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
@@ -19,8 +20,12 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
   customFee,
   onClose,
   onConfirm,
-  onNumberPress
+  onNumberPress,
+  pendingInput = ''
 }) => {
+  // Display the pending input if available, otherwise use the customFee totalSats
+  const displayValue = pendingInput !== undefined && pendingInput !== null ? pendingInput : customFee.totalSats.toString()
+  
   return (
     <Modal
       visible={visible}
@@ -50,10 +55,16 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
               <View style={styles.feeInputValueContainer}>
                 <View style={styles.editableFeeValueWrapper}>
                   <ThemedText style={styles.feeInputValue}>
-                    {customFee.totalSats}
+                    {displayValue || ''}
                   </ThemedText>
                 </View>
-                <ThemedText style={styles.feeUsdValue}>~${getFormattedUsdFee(customFee.totalSats)} USD</ThemedText>
+                <ThemedText style={styles.feeUsdValue}>
+                  ~${getFormattedUsdFee(
+                    displayValue && displayValue !== '' 
+                      ? parseInt(displayValue) 
+                      : customFee.totalSats
+                  )} USD
+                </ThemedText>
               </View>
             </View>
 

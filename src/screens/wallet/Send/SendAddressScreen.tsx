@@ -56,7 +56,9 @@ export default function SendAddressScreen() {
     handleCloseCustomFeeModal,
     handleConfirmCustomFee,
     resetCustomFee,
-    hasPersistedFee
+    hasPersistedFee,
+    startEditingFee,
+    pendingInput
   } = useCustomFee()
 
   // Load data from store when screen is focused
@@ -129,7 +131,7 @@ export default function SendAddressScreen() {
   }
   
   const handleCustomFeePress = () => {
-    setShowCustomFeeModal(true)
+    startEditingFee()
   }
 
   return (
@@ -189,6 +191,7 @@ export default function SendAddressScreen() {
 
             {hasPersistedFee && (
               <SpeedOptionButton
+                key="custom-fee"
                 option={{
                   id    : 'custom',
                   label : 'Custom',
@@ -198,7 +201,7 @@ export default function SendAddressScreen() {
                   }
                 }}
                 isSelected={speed === 'custom'}
-                onPress={() => handleSpeedChange('custom')}
+                onPress={() => handleSpeedChangeBase('custom')}
               />
             )}
 
@@ -206,7 +209,9 @@ export default function SendAddressScreen() {
               style={styles.customFeeButton}
               onPress={handleCustomFeePress}
             >
-              <ThemedText style={styles.customFeeText}>Enter Custom fee</ThemedText>
+              <ThemedText style={styles.customFeeText}>
+                {hasPersistedFee ? 'Edit Custom fee' : 'Enter Custom fee'}
+              </ThemedText>
               <ChevronRight size={20} color="#000" />
             </TouchableOpacity>
           </View>
@@ -229,6 +234,7 @@ export default function SendAddressScreen() {
           handleCustomFeeButtonConfirm()
         }}
         onNumberPress={handleNumberPress}
+        pendingInput={pendingInput}
       />
 
       {/* Next Button */}
