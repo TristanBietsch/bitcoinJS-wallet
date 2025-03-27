@@ -58,7 +58,9 @@ export default function SendAddressScreen() {
     resetCustomFee,
     hasPersistedFee,
     startEditingFee,
-    pendingInput
+    pendingInput,
+    feeError,
+    isInputValid
   } = useCustomFee()
 
   // Load data from store when screen is focused
@@ -235,6 +237,8 @@ export default function SendAddressScreen() {
         }}
         onNumberPress={handleNumberPress}
         pendingInput={pendingInput}
+        feeError={feeError}
+        isInputValid={isInputValid}
       />
 
       {/* Next Button */}

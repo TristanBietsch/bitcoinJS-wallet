@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Modal, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Modal, TouchableOpacity, StyleSheet, Text } from 'react-native'
 import { ThemedText } from '@/src/components/ThemedText'
 import { ChevronLeft } from 'lucide-react-native'
 import { CustomFee } from '@/src/types/transaction/send.types'
@@ -13,6 +13,8 @@ interface CustomFeeModalProps {
   onConfirm: () => void
   onNumberPress: (num: string) => void
   pendingInput?: string
+  feeError?: string | null
+  isInputValid?: boolean
 }
 
 export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
@@ -21,7 +23,9 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
   onClose,
   onConfirm,
   onNumberPress,
-  pendingInput = ''
+  pendingInput = '',
+  feeError = null,
+  isInputValid = true
 }) => {
   // Display the pending input if available, otherwise use the customFee totalSats
   const displayValue = pendingInput !== undefined && pendingInput !== null ? pendingInput : customFee.totalSats.toString()
@@ -53,7 +57,10 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
                 <ThemedText style={styles.feeInputSubtitle}>In sats</ThemedText>
               </View>
               <View style={styles.feeInputValueContainer}>
-                <View style={styles.editableFeeValueWrapper}>
+                <View style={[
+                  styles.editableFeeValueWrapper, 
+                  feeError ? styles.errorInput : null
+                ]}>
                   <ThemedText style={styles.feeInputValue}>
                     {displayValue || ''}
                   </ThemedText>
@@ -65,6 +72,9 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
                       : customFee.totalSats
                   )} USD
                 </ThemedText>
+                {feeError && (
+                  <Text style={styles.errorText}>{feeError}</Text>
+                )}
               </View>
             </View>
 
@@ -109,8 +119,12 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
             <NumberPad onNumberPress={onNumberPress} />
 
             <TouchableOpacity 
-              style={styles.confirmButton}
+              style={[
+                styles.confirmButton,
+                !isInputValid && styles.confirmButtonDisabled
+              ]}
               onPress={onConfirm}
+              disabled={!isInputValid}
             >
               <ThemedText style={styles.confirmButtonText}>Confirm</ThemedText>
             </TouchableOpacity>
@@ -229,5 +243,18 @@ const styles = StyleSheet.create({
     color      : '#fff',
     fontSize   : 16,
     fontWeight : '600'
+  },
+  errorInput : {
+    borderColor : '#FF0000',
+    borderWidth : 1
+  },
+  errorText : {
+    color     : '#FF0000',
+    fontSize  : 12,
+    marginTop : 4,
+    textAlign : 'right'
+  },
+  confirmButtonDisabled : {
+    backgroundColor : '#CCCCCC'
   }
 }) 

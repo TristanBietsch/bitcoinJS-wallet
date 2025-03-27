@@ -2,6 +2,9 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { CustomFee } from '@/src/types/transaction/send.types'
 import { transactionFees } from '@/tests/mockData/transactionData'
 
+// Set minimum fee to 150 sats
+const MIN_FEE_SATS = 150
+
 const DEFAULT_CUSTOM_FEE: CustomFee = {
   totalSats        : 2000,
   confirmationTime : 60,
@@ -13,10 +16,16 @@ export const useCustomFee = () => {
   const [ showCustomFeeModal, setShowCustomFeeModal ] = useState(false)
   const [ persistedFee, setPersistedFee ] = useState<CustomFee | null>(null)
   const [ pendingInput, setPendingInput ] = useState('')
+  const [ feeError, setFeeError ] = useState<string | null>(null)
   
   // Track if we've initialized the input, so we don't override user edits
   const hasInitializedInput = useRef(false)
 
+  // Validate the pending input
+  const isInputValid = pendingInput !== '' && 
+    !isNaN(parseInt(pendingInput)) && 
+    parseInt(pendingInput) >= MIN_FEE_SATS
+    
   // Reset the input when opening the modal
   useEffect(() => {
     if (showCustomFeeModal && !hasInitializedInput.current) {
@@ -24,9 +33,11 @@ export const useCustomFee = () => {
       const currentFee = persistedFee || customFee
       setPendingInput(currentFee.totalSats.toString())
       hasInitializedInput.current = true
+      setFeeError(null)
     } else if (!showCustomFeeModal) {
       // Reset the initialization flag when modal closes
       hasInitializedInput.current = false
+      setFeeError(null)
     }
   }, [ showCustomFeeModal, persistedFee, customFee ])
 
@@ -35,6 +46,7 @@ export const useCustomFee = () => {
     // Use the functional form to ensure we're using the latest state
     setPendingInput((prev) => {
       let newValue = prev
+      setFeeError(null) // Clear error when user is typing
       
       if (num === '⌫') {
         // Handle backspace - remove the last character
@@ -50,6 +62,11 @@ export const useCustomFee = () => {
       if (newValue && newValue !== '') {
         const totalSats = parseInt(newValue)
         if (!isNaN(totalSats)) {
+          // Validate against minimum
+          if (totalSats < MIN_FEE_SATS) {
+            setFeeError(`Minimum fee is ${MIN_FEE_SATS} sats`)
+          }
+          
           const feeRate = transactionFees.calculateRateFromTime(totalSats)
           setCustomFee({
             totalSats,
@@ -67,6 +84,7 @@ export const useCustomFee = () => {
   const handleCloseCustomFeeModal = useCallback(() => {
     setShowCustomFeeModal(false)
     setPendingInput('')
+    setFeeError(null)
     
     // Revert to persisted fee if available
     if (persistedFee) {
@@ -78,21 +96,28 @@ export const useCustomFee = () => {
   const handleConfirmCustomFee = useCallback(() => {
     let finalFee = customFee
     
-    // Handle empty input case - set to minimum fee
+    // Validate fee amount
     if (!pendingInput || pendingInput === '') {
-      const minTotalSats = 1000
-      const feeRate = transactionFees.calculateRateFromTime(minTotalSats)
-      finalFee = {
-        totalSats        : minTotalSats,
-        feeRate          : feeRate,
-        confirmationTime : transactionFees.estimateConfirmationTime(feeRate)
-      }
-      setCustomFee(finalFee)
+      setFeeError('Please enter a fee amount')
+      return // Don't proceed if input is empty
     }
     
+    const totalSats = parseInt(pendingInput)
+    if (isNaN(totalSats)) {
+      setFeeError('Invalid fee amount')
+      return // Don't proceed if input is invalid
+    }
+    
+    if (totalSats < MIN_FEE_SATS) {
+      setFeeError(`Minimum fee is ${MIN_FEE_SATS} sats`)
+      return // Don't proceed if below minimum
+    }
+    
+    // All validations passed, proceed with confirmation
     setPersistedFee(finalFee)
     setShowCustomFeeModal(false)
     setPendingInput('')
+    setFeeError(null)
   }, [ customFee, pendingInput ])
 
   // Reset everything to default
@@ -101,12 +126,14 @@ export const useCustomFee = () => {
     setPersistedFee(null)
     setShowCustomFeeModal(false)
     setPendingInput('')
+    setFeeError(null)
   }, [])
 
   // Start editing the fee
   const startEditingFee = useCallback(() => {
     setPendingInput('') // Reset pending input first
     setShowCustomFeeModal(true)
+    setFeeError(null)
     // Input will be initialized by the useEffect
   }, [])
 
@@ -121,6 +148,8 @@ export const useCustomFee = () => {
     resetCustomFee,
     hasPersistedFee : !!persistedFee,
     startEditingFee,
-    pendingInput
+    pendingInput,
+    feeError,
+    isInputValid
   }
 } 
