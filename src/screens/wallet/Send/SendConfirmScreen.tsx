@@ -5,6 +5,7 @@ import { ThemedText } from '@/src/components/ThemedText'
 import { ChevronLeft, ExternalLink } from 'lucide-react-native'
 import { useSendStore } from '@/src/store/sendStore'
 import { transactionFees } from '@/tests/mockData/transactionData'
+import { formatCurrency } from '@/tests/mockData/walletData'
 
 // Speed options with their fees (matching SendAddressScreen)
 const speedOptions = {
@@ -23,6 +24,25 @@ const speedOptions = {
     usd     : transactionFees.tiers.express.usd,
     feeRate : transactionFees.tiers.express.feeRate
   }
+}
+
+type CurrencyType = 'USD' | 'BTC' | 'SATS';
+
+// Custom formatter for the confirmation screen
+const formatConfirmationValue = (amount: number, currency: CurrencyType) => {
+  if (currency === 'SATS') {
+    const formattedNumber = amount.toLocaleString('en-US', {
+      minimumFractionDigits : 0,
+      maximumFractionDigits : 0
+    })
+    return (
+      <View style={styles.satsContainer}>
+        <ThemedText style={styles.value}>{formattedNumber}</ThemedText>
+        <ThemedText style={styles.satsLabel}>sats</ThemedText>
+      </View>
+    )
+  }
+  return <ThemedText style={styles.value}>{formatCurrency(amount, currency)}</ThemedText>
 }
 
 export default function SendConfirmScreen() {
@@ -48,11 +68,19 @@ export default function SendConfirmScreen() {
     fee = speedOptions[speed as keyof typeof speedOptions]
   }
   
-  // Calculate total (amount + fee)
+  // Parse amount and currency
   const amount = parseFloat(params.amount || '0')
-  const totalAmount = params.currency === 'USD' 
-    ? (amount + fee.usd).toFixed(2)
-    : (amount + fee.sats).toString()
+  const currency = (params.currency || 'USD') as CurrencyType
+  
+  // Calculate total (amount + fee) in the correct currency
+  const getFeeInCurrency = () => {
+    if (currency === 'USD') return fee.usd
+    if (currency === 'SATS') return fee.sats
+    // If BTC, convert sats to BTC
+    return fee.sats / 100000000
+  }
+  
+  const totalAmount = amount + getFeeInCurrency()
   
   // Format address into lines
   const addressLines = [
@@ -77,9 +105,7 @@ export default function SendConfirmScreen() {
       <View style={styles.content}>
         <View style={styles.detailRow}>
           <ThemedText style={styles.label}>Amount</ThemedText>
-          <ThemedText style={styles.value}>
-            ${amount} USD
-          </ThemedText>
+          {formatConfirmationValue(amount, currency)}
         </View>
         
         <View style={styles.detailRow}>
@@ -101,9 +127,7 @@ export default function SendConfirmScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.valueContainer}>
-            <ThemedText style={styles.value}>
-              ${fee.usd} USD
-            </ThemedText>
+            {formatConfirmationValue(getFeeInCurrency(), currency)}
             <ThemedText style={styles.subtext}>
               {fee.feeRate || ((speed === 'economy') ? 3 : (speed === 'standard') ? 5 : 8)} sat/vbyte
             </ThemedText>
@@ -112,9 +136,7 @@ export default function SendConfirmScreen() {
         
         <View style={[ styles.detailRow, styles.totalRow ]}>
           <ThemedText style={[ styles.label, styles.bold ]}>Total</ThemedText>
-          <ThemedText style={[ styles.value, styles.bold ]}>
-            ${totalAmount} USD
-          </ThemedText>
+          {formatConfirmationValue(totalAmount, currency)}
         </View>
       </View>
       
@@ -175,6 +197,15 @@ const styles = StyleSheet.create({
     fontSize  : 16,
     color     : '#000',
     textAlign : 'right'
+  },
+  satsContainer : {
+    flexDirection : 'row',
+    alignItems    : 'baseline'
+  },
+  satsLabel : {
+    fontSize   : 12,
+    color      : '#666',
+    marginLeft : 4
   },
   subtext : {
     fontSize  : 14,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getWalletBalance } from '@/src/utils/dummyWalletData'
+import { getWalletBalance } from '@/tests/mockData/walletData'
 
 type WalletBalanceData = {
   btcAmount: number;

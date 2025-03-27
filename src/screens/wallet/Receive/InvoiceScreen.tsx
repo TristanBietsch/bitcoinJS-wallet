@@ -5,6 +5,7 @@ import { ThemedText } from '@/src/components/ThemedText'
 import { ChevronLeft, Share2, Copy, Check } from 'lucide-react-native'
 import QRCode from 'react-native-qrcode-svg'
 import * as Clipboard from 'expo-clipboard'
+import { fetchCurrentPrice } from '@/src/services/api/price'
 
 // Mock bitcoin address - in production this would come from your wallet service
 const MOCK_BITCOIN_ADDRESS = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
@@ -23,10 +24,8 @@ export default function InvoiceScreen() {
   const fetchBitcoinPrice = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
-      if (!response.ok) throw new Error('Failed to fetch Bitcoin price')
-      const data = await response.json()
-      setBtcPrice(data.bitcoin.usd)
+      const price = await fetchCurrentPrice()
+      setBtcPrice(price)
     } catch (err) {
       console.error('Error fetching price:', err)
       setBtcPrice(60000) // Fallback price

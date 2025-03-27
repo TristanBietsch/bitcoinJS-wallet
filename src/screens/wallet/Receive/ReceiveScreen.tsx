@@ -5,6 +5,7 @@ import { ThemedText } from '@/src/components/ThemedText'
 import Dropdown from '@/src/components/common/Dropdown'
 import IOSDropdown from '@/src/components/common/IOSDropdown'
 import { ChevronLeft } from 'lucide-react-native'
+import { fetchCurrentPrice } from '@/src/services/api/price'
 
 // Currency options for the dropdown
 const CURRENCY_OPTIONS = [
@@ -41,24 +42,11 @@ export default function ReceiveScreen() {
       setIsLoading(true)
       setError(null)
       
-      // Using CoinGecko API to get the current Bitcoin price in USD
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch Bitcoin price')
-      }
-      
-      const data = await response.json()
-      const price = data.bitcoin.usd
-      
-      if (!price) {
-        throw new Error('Invalid price data')
-      }
-      
+      const price = await fetchCurrentPrice()
       setBtcPrice(price)
       setIsLoading(false)
     } catch (err) {
-      setError('Failed to fetch Bitcoin price. Using fallback value.')
+      setError('Failed to fetch Bitcoin price')
       setBtcPrice(60000) // Fallback price if API fails
       setIsLoading(false)
       console.error('Error fetching Bitcoin price:', err)
