@@ -22,6 +22,8 @@ interface SpeedSelectionProps {
   onCloseCustomFeeModal: () => void
   onCustomFeeChange: (fee: CustomFee) => void
   onNumberPress: (num: string) => void
+  pendingInput?: string
+  feeError?: string | null
 }
 
 export const SpeedSelection: React.FC<SpeedSelectionProps> = ({
@@ -38,6 +40,8 @@ export const SpeedSelection: React.FC<SpeedSelectionProps> = ({
   onCloseCustomFeeModal,
   onCustomFeeChange,
   onNumberPress,
+  pendingInput,
+  feeError
 }) => {
   return (
     <View style={styles.section}>
@@ -99,6 +103,8 @@ export const SpeedSelection: React.FC<SpeedSelectionProps> = ({
         customFee={customFee}
         isInputValid={isInputValid}
         onNumberPress={onNumberPress}
+        pendingInput={pendingInput}
+        feeError={feeError}
       />
     </View>
   )

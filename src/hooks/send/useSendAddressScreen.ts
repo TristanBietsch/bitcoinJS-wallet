@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
 import { useAddressValidation } from '@/src/hooks/send/useAddressValidation'
@@ -119,6 +119,13 @@ export const useSendAddressScreen = () => {
     handleSpeedChangeBase('custom')
   }
   
+  const handleCustomFeeConfirm = useCallback(() => {
+    // Set speed to custom first
+    handleSpeedChangeBase('custom')
+    // Then confirm the custom fee
+    handleConfirmCustomFee()
+  }, [ handleSpeedChangeBase, handleConfirmCustomFee ])
+
   const handleCustomFeePress = () => {
     startEditingFee()
   }
@@ -149,6 +156,6 @@ export const useSendAddressScreen = () => {
     handleCustomFeePress,
     handleNumberPress,
     handleCloseCustomFeeModal,
-    handleConfirmCustomFee
+    handleConfirmCustomFee : handleCustomFeeConfirm
   }
 } 

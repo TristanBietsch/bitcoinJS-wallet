@@ -48,7 +48,7 @@ export const useCustomFee = () => {
       let newValue = prev
       setFeeError(null) // Clear error when user is typing
       
-      if (num === '⌫') {
+      if (num === 'backspace') {
         // Handle backspace - remove the last character
         newValue = prev.slice(0, -1)
         console.log('Backspace pressed, new value:', newValue, 'old value:', prev)

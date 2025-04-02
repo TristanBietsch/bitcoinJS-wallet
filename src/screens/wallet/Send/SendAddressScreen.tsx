@@ -21,6 +21,8 @@ export default function SendAddressScreen() {
     customFee,
     showCustomFeeModal,
     isInputValid,
+    pendingInput,
+    feeError,
     
     // Handlers
     handleAddressChange,
@@ -87,6 +89,8 @@ export default function SendAddressScreen() {
           onCloseCustomFeeModal={handleCloseCustomFeeModal}
           onCustomFeeChange={handleConfirmCustomFee}
           onNumberPress={handleNumberPress}
+          pendingInput={pendingInput}
+          feeError={feeError}
         />
       </View>
 
