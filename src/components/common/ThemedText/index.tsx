@@ -1,7 +1,5 @@
 import React from 'react'
 import { Text, TextProps } from 'react-native'
-import { useColorScheme } from '@/src/hooks/useColorScheme'
-import { Colors } from '@/src/constants/colors'
 import { fonts } from '@/src/constants/fonts'
 
 export type ThemedTextProps = TextProps & {
@@ -9,34 +7,33 @@ export type ThemedTextProps = TextProps & {
 };
 
 export function ThemedText(props: ThemedTextProps) {
-  const colorScheme = useColorScheme()
   const { style, type = 'default', ...otherProps } = props
   
   const styles = {
     default : { 
       fontSize   : 16, 
       fontFamily : fonts.regular, 
-      color      : Colors[colorScheme ?? 'light'].text 
+      color      : '#11181C' 
     },
     defaultSemiBold : { 
       fontSize   : 16, 
       fontFamily : fonts.semibold, 
-      color      : Colors[colorScheme ?? 'light'].text 
+      color      : '#11181C' 
     },
     title : { 
       fontSize   : 24, 
       fontFamily : fonts.bold, 
-      color      : Colors[colorScheme ?? 'light'].text 
+      color      : '#11181C' 
     },
     subtitle : { 
       fontSize   : 18, 
       fontFamily : fonts.medium, 
-      color      : Colors[colorScheme ?? 'light'].text 
+      color      : '#11181C' 
     },
     link : { 
       fontSize   : 16, 
       fontFamily : fonts.regular, 
-      color      : Colors[colorScheme ?? 'light'].tint 
+      color      : '#0a7ea4' 
     },
   }
   

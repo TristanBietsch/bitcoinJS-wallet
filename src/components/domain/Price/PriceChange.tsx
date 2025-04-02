@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { Text, StyleSheet } from 'react-native'
-import { PriceChangeProps } from './types'
+import { PriceChangeProps } from '@/src/types/price.types'
 
 const PriceChange: React.FC<PriceChangeProps> = ({ changePercent, timeframe }) => {
   if (changePercent === null) return null

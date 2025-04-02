@@ -21,33 +21,33 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
   fiatCurrency = 'USD',
   showFiat = true,
 }) => {
-  const { colorMode } = useColorMode()
+  const colorMode = useColorMode()
   
   return (
     <Box 
       alignItems="center" 
-      p="$4"
-      bg={colorMode === 'dark' ? '$gray800' : '$gray100'}
+      padding={16}
+      backgroundColor={colorMode === 'dark' ? '$gray800' : '$gray100'}
       borderRadius="$lg"
     >
-      <VStack space="md" alignItems="center">
+      <VStack gap={16} alignItems="center">
         <Text
-          fontSize="$md"
+          fontSize={16}
           color="$gray500"
         >
           Current Balance
         </Text>
         <HStack alignItems="baseline">
           <Text
-            fontSize="$4xl"
-            fontWeight="$bold"
+            fontSize={36}
+            fontWeight="bold"
           >
             {balance.toLocaleString()}
           </Text>
           <Text
-            fontSize="$2xl"
-            fontWeight="$semibold"
-            ml="$1"
+            fontSize={24}
+            fontWeight="semibold"
+            marginLeft={4}
           >
             {currency}
           </Text>
@@ -55,9 +55,9 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
         
         {showFiat && balanceInFiat !== undefined && (
           <Text
-            fontSize="$sm"
+            fontSize={14}
             color="$gray500"
-            mt="$1"
+            marginTop={4}
           >
             ≈ {balanceInFiat.toLocaleString()} {fiatCurrency}
           </Text>

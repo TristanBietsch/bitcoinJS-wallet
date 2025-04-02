@@ -87,7 +87,7 @@ export const mmkvStorage = {
    */
   getAllKeys : async (): Promise<string[]> => {
     try {
-      return await AsyncStorage.getAllKeys()
+      return Array.from(await AsyncStorage.getAllKeys())
     } catch (error) {
       console.error('Storage getAllKeys error:', error)
       return []

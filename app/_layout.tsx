@@ -2,21 +2,19 @@
 import '../regeneratorRuntime'
 
 import React from 'react'
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import "@/global.css"
-import { GluestackUIProvider } from "@/src/components/common/Provider"
-import { useFonts } from 'expo-font'
-import * as SplashScreen from 'expo-splash-screen'
-import { StatusBar } from 'expo-status-bar'
-import { useEffect } from 'react'
-import { StyleSheet, View } from 'react-native'
-import 'react-native-reanimated'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { GluestackUIProvider } from '@/src/components/common/Provider'
 import { BottomNavigation } from '@/src/components/common/BottomNavigation'
-import { Slot, usePathname } from 'expo-router'
+import { View } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
+import { usePathname } from 'expo-router'
+import { Slot } from 'expo-router'
+import { useFonts } from 'expo-font'
+import { useEffect } from 'react'
+import * as SplashScreen from 'expo-splash-screen'
 import { initSentry } from '@/src/services/logging/sentryService'
-
-import { useColorScheme } from '@/src/hooks/useColorScheme'
+import { StyleSheet } from 'react-native'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -25,7 +23,6 @@ SplashScreen.preventAutoHideAsync()
 const HIDDEN_NAV_ROUTES = [ '/receive', '/send', '/transaction' ]
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme()
   const pathname = usePathname()
   
   // Check if bottom navigation should be hidden for current route
@@ -58,14 +55,12 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <GluestackUIProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <View style={styles.content}>
-            <Slot />
-          </View>
-          {!shouldHideNav && <BottomNavigation />}
-          <StatusBar style="auto" />
-        </ThemeProvider>
+      <GluestackUIProvider>
+        <View style={styles.content}>
+          <Slot />
+        </View>
+        {!shouldHideNav && <BottomNavigation />}
+        <StatusBar style="auto" />
       </GluestackUIProvider>
     </GestureHandlerRootView>
   )

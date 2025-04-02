@@ -1,3 +1,5 @@
+import React from 'react'
+
 export interface OnboardingStepProps {
   title: string;
   description: string;

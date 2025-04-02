@@ -148,8 +148,6 @@ export const config = createConfig({
         muted: vars({ '--color-background-muted': '247 248 247' }),
         success: vars({ '--color-background-success': '237 252 242' }),
         info: vars({ '--color-background-info': '235 248 254' }),
-        light: '#FBFBFB',
-        dark: '#181719',
       },
       indicator: {
         primary: vars({ '--color-indicator-primary': '55 55 55' }),

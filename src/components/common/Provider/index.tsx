@@ -4,15 +4,13 @@ import { config } from '@/gluestack.config'
 
 interface GluestackUIProviderProps {
   children: React.ReactNode;
-  mode?: 'light' | 'dark';
 }
 
 export function GluestackUIProvider({ 
-  children, 
-  mode = 'light' 
+  children
 }: GluestackUIProviderProps) {
   return (
-    <BaseGluestackUIProvider config={config} mode={mode}>
+    <BaseGluestackUIProvider config={config}>
       {children}
     </BaseGluestackUIProvider>
   )

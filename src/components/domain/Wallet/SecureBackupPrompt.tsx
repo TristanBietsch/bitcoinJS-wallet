@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { COLORS } from '@/src/types/theme/colors.types'
-import Card from '../ui/Card'
+import Card from '@/src/components/common/Card'
 import Button from '../ui/Button'
 
 interface SecureBackupPromptProps {
