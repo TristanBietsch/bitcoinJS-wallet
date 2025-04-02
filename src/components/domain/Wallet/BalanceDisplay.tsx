@@ -1,6 +1,6 @@
 import React from 'react'
-import { Text, VStack, HStack, Box } from "@gluestack-ui/themed"
-import { useColorMode } from '@gluestack-ui/themed'
+import { View, Text, StyleSheet, useColorScheme } from 'react-native'
+import { COLORS } from '@/src/types/theme/colors.types'
 
 interface BalanceDisplayProps {
   balance: number;
@@ -12,7 +12,7 @@ interface BalanceDisplayProps {
 
 /**
  * Displays the wallet balance in both crypto and fiat currencies
- * Adapts to light/dark mode via Gluestack UI theming
+ * Adapts to light/dark mode via React Native's useColorScheme
  */
 const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
   balance,
@@ -21,50 +21,71 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
   fiatCurrency = 'USD',
   showFiat = true,
 }) => {
-  const colorMode = useColorMode()
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme === 'dark'
   
   return (
-    <Box 
-      alignItems="center" 
-      padding={16}
-      backgroundColor={colorMode === 'dark' ? '$gray800' : '$gray100'}
-      borderRadius="$lg"
-    >
-      <VStack gap={16} alignItems="center">
-        <Text
-          fontSize={16}
-          color="$gray500"
-        >
+    <View style={[
+      styles.container,
+      { backgroundColor: isDark ? COLORS.textSecondary : COLORS.white }
+    ]}>
+      <View style={styles.content}>
+        <Text style={styles.label}>
           Current Balance
         </Text>
-        <HStack alignItems="baseline">
-          <Text
-            fontSize={36}
-            fontWeight="bold"
-          >
+        <View style={styles.balanceRow}>
+          <Text style={styles.balance}>
             {balance.toLocaleString()}
           </Text>
-          <Text
-            fontSize={24}
-            fontWeight="semibold"
-            marginLeft={4}
-          >
+          <Text style={styles.currency}>
             {currency}
           </Text>
-        </HStack>
+        </View>
         
         {showFiat && balanceInFiat !== undefined && (
-          <Text
-            fontSize={14}
-            color="$gray500"
-            marginTop={4}
-          >
+          <Text style={styles.fiatBalance}>
             ≈ {balanceInFiat.toLocaleString()} {fiatCurrency}
           </Text>
         )}
-      </VStack>
-    </Box>
+      </View>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container : {
+    padding      : 16,
+    borderRadius : 12,
+    alignItems   : 'center',
+  },
+  content : {
+    alignItems : 'center',
+    gap        : 16,
+  },
+  label : {
+    fontSize : 16,
+    color    : COLORS.textSecondary,
+  },
+  balanceRow : {
+    flexDirection : 'row',
+    alignItems    : 'baseline',
+  },
+  balance : {
+    fontSize   : 36,
+    fontWeight : 'bold',
+    color      : COLORS.text,
+  },
+  currency : {
+    fontSize   : 24,
+    fontWeight : '600',
+    marginLeft : 4,
+    color      : COLORS.text,
+  },
+  fiatBalance : {
+    fontSize  : 14,
+    color     : COLORS.textSecondary,
+    marginTop : 4,
+  },
+})
 
 export default BalanceDisplay 

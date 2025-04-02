@@ -1,7 +1,6 @@
 import React from 'react'
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { COLORS } from '@/src/types/theme/colors.types'
-import { Button, Card } from '@gluestack-ui/themed'
 import { fonts } from '@/src/constants/fonts'
 
 // Extend COLORS with warningLight if missing
@@ -60,7 +59,7 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
 
   return (
     <ScrollView style={styles.container}>
-      <Card style={styles.card}>
+      <View style={styles.card}>
         <View style={styles.header}>
           <Text style={styles.title}>
             {type === 'receive' ? 'Received Bitcoin' : 'Sent Bitcoin'}
@@ -123,22 +122,22 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
 
         <View style={styles.buttonContainer}>
           {onViewExplorer && txid && (
-            <Button
-              title="View in Explorer"
+            <TouchableOpacity
+              style={[ styles.button, styles.secondaryButton ]}
               onPress={onViewExplorer}
-              variant="secondary"
-              fullWidth
-            />
+            >
+              <Text style={styles.buttonText}>View in Explorer</Text>
+            </TouchableOpacity>
           )}
           <View style={styles.buttonSpacer} />
-          <Button
-            title="Close"
+          <TouchableOpacity
+            style={[ styles.button, styles.outlineButton ]}
             onPress={onClose}
-            variant="outline"
-            fullWidth
-          />
+          >
+            <Text style={styles.buttonText}>Close</Text>
+          </TouchableOpacity>
         </View>
-      </Card>
+      </View>
     </ScrollView>
   )
 }
@@ -148,7 +147,18 @@ const styles = StyleSheet.create({
     flex : 1,
   },
   card : {
-    margin : 16,
+    margin          : 16,
+    backgroundColor : COLORS.white,
+    borderRadius    : 12,
+    padding         : 16,
+    shadowColor     : '#000',
+    shadowOffset    : {
+      width  : 0,
+      height : 2,
+    },
+    shadowOpacity : 0.25,
+    shadowRadius  : 3.84,
+    elevation     : 5,
   },
   header : {
     flexDirection  : 'row',
@@ -231,6 +241,25 @@ const styles = StyleSheet.create({
   },
   buttonSpacer : {
     height : 12,
+  },
+  button : {
+    padding        : 12,
+    borderRadius   : 8,
+    alignItems     : 'center',
+    justifyContent : 'center',
+  },
+  secondaryButton : {
+    backgroundColor : COLORS.primary,
+  },
+  outlineButton : {
+    backgroundColor : 'transparent',
+    borderWidth     : 1,
+    borderColor     : COLORS.primary,
+  },
+  buttonText : {
+    color      : COLORS.text,
+    fontSize   : 16,
+    fontWeight : '600',
   },
 })
 

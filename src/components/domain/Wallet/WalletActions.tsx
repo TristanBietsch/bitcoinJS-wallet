@@ -1,6 +1,6 @@
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
-import Button from '../ui/Button'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { COLORS } from '@/src/types/theme/colors.types'
 
 interface WalletActionsProps {
   onSend: () => void;
@@ -25,45 +25,46 @@ const WalletActions: React.FC<WalletActionsProps> = ({
     <View style={styles.container}>
       <View style={styles.mainActionsRow}>
         <View style={styles.buttonContainer}>
-          <Button 
-            title="Send" 
-            onPress={onSend} 
+          <TouchableOpacity 
+            style={[ styles.button, styles.primaryButton ]}
+            onPress={onSend}
             disabled={disabled}
-            fullWidth
-          />
+          >
+            <Text style={styles.buttonText}>Send</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.buttonContainer}>
-          <Button 
-            title="Receive" 
-            onPress={onReceive} 
+          <TouchableOpacity 
+            style={[ styles.button, styles.secondaryButton ]}
+            onPress={onReceive}
             disabled={disabled}
-            variant="secondary"
-            fullWidth
-          />
+          >
+            <Text style={styles.buttonText}>Receive</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       {showSwap && onSwap && (
         <View style={styles.secondaryButtonRow}>
-          <Button 
-            title="Swap" 
+          <TouchableOpacity 
+            style={[ styles.button, styles.outlineButton ]}
             onPress={onSwap}
-            variant="outline"
             disabled={disabled}
-            fullWidth
-          />
+          >
+            <Text style={[ styles.buttonText, styles.outlineButtonText ]}>Swap</Text>
+          </TouchableOpacity>
         </View>
       )}
 
       {showBackup && onBackup && (
         <View style={styles.secondaryButtonRow}>
-          <Button 
-            title="Backup Wallet" 
+          <TouchableOpacity 
+            style={[ styles.button, styles.outlineButton ]}
             onPress={onBackup}
-            variant="outline"
             disabled={disabled}
-            fullWidth
-          />
+          >
+            <Text style={[ styles.buttonText, styles.outlineButtonText ]}>Backup Wallet</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -85,6 +86,31 @@ const styles = StyleSheet.create({
   },
   secondaryButtonRow : {
     marginTop : 8,
+  },
+  button : {
+    padding        : 12,
+    borderRadius   : 8,
+    alignItems     : 'center',
+    justifyContent : 'center',
+  },
+  primaryButton : {
+    backgroundColor : COLORS.primary,
+  },
+  secondaryButton : {
+    backgroundColor : COLORS.primary,
+  },
+  outlineButton : {
+    backgroundColor : 'transparent',
+    borderWidth     : 1,
+    borderColor     : COLORS.primary,
+  },
+  buttonText : {
+    color      : COLORS.white,
+    fontSize   : 16,
+    fontWeight : '600',
+  },
+  outlineButtonText : {
+    color : COLORS.primary,
   },
 })
 

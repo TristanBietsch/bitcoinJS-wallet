@@ -1,19 +1,17 @@
 import React from 'react'
-import { GluestackUIProvider as BaseGluestackUIProvider } from '@gluestack-ui/themed'
-import { config } from '@/gluestack.config'
 
-interface GluestackUIProviderProps {
+interface AppProviderProps {
   children: React.ReactNode;
 }
 
-export function GluestackUIProvider({ 
+export function AppProvider({ 
   children
-}: GluestackUIProviderProps) {
+}: AppProviderProps) {
   return (
-    <BaseGluestackUIProvider config={config}>
+    <>
       {children}
-    </BaseGluestackUIProvider>
+    </>
   )
 }
 
-export default GluestackUIProvider 
+export default AppProvider 

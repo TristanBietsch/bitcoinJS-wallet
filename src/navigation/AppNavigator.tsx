@@ -1,5 +1,5 @@
 import "@/global.css"
-import { GluestackUIProvider } from "@/src/components/common/Provider"
+import { AppProvider } from "@/src/components/common/Provider"
 import { StatusBar } from 'expo-status-bar'
 import { StyleSheet } from 'react-native'
 import 'react-native-reanimated'
@@ -9,10 +9,10 @@ import { BottomNavigation } from '@/src/components/common/BottomNavigation'
 export default function AppNavigator() {
   return (
     <GestureHandlerRootView style={styles.container}>
-      <GluestackUIProvider>
+      <AppProvider>
         <BottomNavigation />
         <StatusBar style="auto" />
-      </GluestackUIProvider>
+      </AppProvider>
     </GestureHandlerRootView>
   )
 }

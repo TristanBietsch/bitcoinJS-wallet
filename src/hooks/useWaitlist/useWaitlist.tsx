@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabaseService } from '@/src/services/api/supabaseService'
-import { useToast } from '@/src/components/ui/toast'
 import { z } from 'zod'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
@@ -71,7 +70,6 @@ export const useWaitlist = (): WaitlistHook => {
   const [ isRegistered, setIsRegistered ] = useState(false)
   const [ registeredEmail, setRegisteredEmail ] = useState<string | undefined>(undefined)
   const [ error, setError ] = useState<string | undefined>(undefined)
-  const _toast = useToast()
 
   // Load waitlist status from storage on mount
   useEffect(() => {

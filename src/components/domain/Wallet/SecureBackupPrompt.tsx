@@ -1,8 +1,6 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { COLORS } from '@/src/types/theme/colors.types'
-import Card from '@/src/components/common/Card'
-import Button from '../ui/Button'
 
 interface SecureBackupPromptProps {
   onBackupNow: () => void;
@@ -24,7 +22,7 @@ const SecureBackupPrompt: React.FC<SecureBackupPromptProps> = ({
       : `${daysCreated} days ago`
 
   return (
-    <Card style={styles.card}>
+    <View style={styles.card}>
       <View style={styles.warningHeader}>
         <Text style={styles.warningIcon}>⚠️</Text>
         <Text style={styles.warningTitle}>Backup Required</Text>
@@ -36,20 +34,21 @@ const SecureBackupPrompt: React.FC<SecureBackupPromptProps> = ({
       </Text>
       
       <View style={styles.buttonsContainer}>
-        <Button 
-          title="Backup Now" 
+        <TouchableOpacity 
+          style={[ styles.button, styles.primaryButton ]}
           onPress={onBackupNow}
-          fullWidth
-        />
+        >
+          <Text style={styles.buttonText}>Backup Now</Text>
+        </TouchableOpacity>
         <View style={styles.buttonSpacer} />
-        <Button 
-          title="Remind Later" 
+        <TouchableOpacity 
+          style={[ styles.button, styles.outlineButton ]}
           onPress={onRemindLater}
-          variant="outline"
-          fullWidth
-        />
+        >
+          <Text style={[ styles.buttonText, styles.outlineButtonText ]}>Remind Later</Text>
+        </TouchableOpacity>
       </View>
-    </Card>
+    </View>
   )
 }
 
@@ -60,6 +59,8 @@ const styles = StyleSheet.create({
     borderLeftColor  : COLORS.warning,
     marginHorizontal : 16,
     marginVertical   : 16,
+    padding          : 16,
+    borderRadius     : 12,
   },
   warningHeader : {
     flexDirection : 'row',
@@ -86,6 +87,28 @@ const styles = StyleSheet.create({
   },
   buttonSpacer : {
     height : 12,
+  },
+  button : {
+    padding        : 12,
+    borderRadius   : 8,
+    alignItems     : 'center',
+    justifyContent : 'center',
+  },
+  primaryButton : {
+    backgroundColor : COLORS.primary,
+  },
+  outlineButton : {
+    backgroundColor : 'transparent',
+    borderWidth     : 1,
+    borderColor     : COLORS.primary,
+  },
+  buttonText : {
+    color      : COLORS.white,
+    fontSize   : 16,
+    fontWeight : '600',
+  },
+  outlineButtonText : {
+    color : COLORS.primary,
   },
 })
 

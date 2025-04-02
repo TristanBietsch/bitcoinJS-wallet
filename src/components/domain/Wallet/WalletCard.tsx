@@ -1,7 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { COLORS } from '@/src/types/theme/colors.types'
-import Card from '../ui/Card'
 
 interface WalletCardProps {
   balance: number;
@@ -18,7 +17,7 @@ const WalletCard: React.FC<WalletCardProps> = ({
 }) => {
   return (
     <TouchableOpacity onPress={onPress} disabled={!onPress}>
-      <Card style={styles.card}>
+      <View style={styles.card}>
         <View style={styles.header}>
           <Text style={styles.walletName}>{walletName}</Text>
         </View>
@@ -36,7 +35,7 @@ const WalletCard: React.FC<WalletCardProps> = ({
             <Text style={styles.actionButtonText}>Receive</Text>
           </TouchableOpacity>
         </View>
-      </Card>
+      </View>
     </TouchableOpacity>
   )
 }
@@ -46,6 +45,16 @@ const styles = StyleSheet.create({
     padding          : 20,
     marginHorizontal : 16,
     marginTop        : 16,
+    backgroundColor  : COLORS.white,
+    borderRadius     : 12,
+    shadowColor      : '#000',
+    shadowOffset     : {
+      width  : 0,
+      height : 2,
+    },
+    shadowOpacity : 0.25,
+    shadowRadius  : 3.84,
+    elevation     : 5,
   },
   header : {
     flexDirection  : 'row',

@@ -3,13 +3,12 @@
  * Displays Bitcoin price history with interactive tooltip on touch/drag
  */
 import React, { useState, useRef, useMemo, useEffect } from 'react'
-import { View, Text, StyleSheet, Animated as RNAnimated, Dimensions, PanResponder } from 'react-native'
+import { View, Text, StyleSheet, Animated as RNAnimated, Dimensions, PanResponder, Alert } from 'react-native'
 import { LineChart } from 'react-native-chart-kit'
 import { BitcoinChartProps } from '@/src/types/price.types'
 import { formatDate, formatCurrency } from '@/src/utils/formatting/price'
 import { CHART_HEIGHT } from '@/src/config/price'      
-import { useToast, Toast, ToastTitle, ToastDescription } from '@/src/components/ui/toast'
-import ErrorIcon from '@/src/components/ui/icons/ErrorIcon'
+import * as Haptics from 'expo-haptics'
 
 // Get the actual screen dimensions
 const screenWidth = Dimensions.get('window').width
@@ -21,33 +20,6 @@ const BitcoinChart: React.FC<BitcoinChartProps> = ({
   timeframe,
   error
 }) => {
-  // Initialize toast
-  const toast = useToast()
-  
-  // Show error toast when error prop changes to true
-  useEffect(() => {
-    if (error) {
-      toast.show({
-        placement : "top",
-        duration  : 5000,
-        render    : ({ id }) => {
-          const toastId = "error-toast-" + id
-          return (
-            <Toast nativeID={toastId} action="error" variant="solid" style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ marginRight: 12 }}>
-                <ErrorIcon size={24} color="#FFFFFF" />
-              </View>
-              <View>
-                <ToastTitle>Error</ToastTitle>
-                <ToastDescription>Failed to fetch Bitcoin price data. Please try again later.</ToastDescription>
-              </View>
-            </Toast>
-          )
-        },
-      })
-    }
-  }, [ error, toast ])
-  
   // State for tooltip visibility and data
   const [ tooltipVisible, setTooltipVisible ] = useState(false)
   const [ activePoint, setActivePoint ] = useState({
@@ -194,6 +166,21 @@ const BitcoinChart: React.FC<BitcoinChartProps> = ({
     min          : minValue,
     max          : maxValue,
   }), [ minValue, maxValue ])
+  
+  // Show error alert when error prop changes to true
+  useEffect(() => {
+    if (error) {
+      // Trigger haptic feedback
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      
+      // Show alert
+      Alert.alert(
+        'Error',
+        'Failed to fetch Bitcoin price data. Please try again later.',
+        [ { text: 'OK' } ]
+      )
+    }
+  }, [ error ])
   
   return (
     <View style={styles.chartWrapper}>

@@ -4,7 +4,7 @@ import '../regeneratorRuntime'
 import React from 'react'
 import "@/global.css"
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { GluestackUIProvider } from '@/src/components/common/Provider'
+import { AppProvider } from '@/src/components/common/Provider'
 import { BottomNavigation } from '@/src/components/common/BottomNavigation'
 import { View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
@@ -55,13 +55,13 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <GluestackUIProvider>
+      <AppProvider>
         <View style={styles.content}>
           <Slot />
         </View>
         {!shouldHideNav && <BottomNavigation />}
         <StatusBar style="auto" />
-      </GluestackUIProvider>
+      </AppProvider>
     </GestureHandlerRootView>
   )
 }
