@@ -33,3 +33,5 @@ export const Colors = {
     tabIconSelected : tintColorDark,
   },
 }
+
+export const colors = Colors

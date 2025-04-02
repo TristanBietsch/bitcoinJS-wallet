@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { View, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Platform } from 'react-native'
 import { router } from 'expo-router'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { formatCurrency } from '@/tests/mockData/walletData'
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
 import Dropdown from '@/src/components/common/Dropdown'

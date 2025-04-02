@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { ActivityItem } from './ActivityItem'
 import { Transaction } from '@/tests/mockData/transactionData'
 import { fonts } from '@/src/constants/fonts'

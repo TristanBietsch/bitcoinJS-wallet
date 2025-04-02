@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { ActivityGroup } from '@/src/components/domain/Transaction/ActivityGroup'
 import { Transaction, mockTransactions } from '@/tests/mockData/transactionData'
 import { useRouter } from 'expo-router'

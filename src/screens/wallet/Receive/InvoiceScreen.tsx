@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, TouchableOpacity, Share, Platform } from 'react-native'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { ChevronLeft, Share2, Copy, Check } from 'lucide-react-native'
 import QRCode from 'react-native-qrcode-svg'
 import * as Clipboard from 'expo-clipboard'

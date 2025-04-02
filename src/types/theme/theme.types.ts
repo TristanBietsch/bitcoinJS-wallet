@@ -1,5 +1,5 @@
-import { colors } from './colors'
-import { fonts } from './fonts'
+import { colors } from '@/src/constants/colors'
+import { fonts } from '@/src/constants/fonts'
 
 export const theme = {
     colors,

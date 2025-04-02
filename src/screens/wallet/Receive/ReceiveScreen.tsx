@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import Dropdown from '@/src/components/common/Dropdown'
 import IOSDropdown from '@/src/components/common/IOSDropdown'
 import { ChevronLeft } from 'lucide-react-native'

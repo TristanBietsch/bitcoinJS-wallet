@@ -1,8 +1,8 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
-import { ThemedText } from '@/src/components/ThemedText'
-import { ThemedView } from '@/src/components/ThemedView'
+import { ThemedText } from '@/src/components/common/ThemedText'
+import { ThemedView } from '@/src/components/common/ThemedView'
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;

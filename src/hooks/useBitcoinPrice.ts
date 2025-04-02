@@ -10,11 +10,20 @@ import { TIME_PERIODS, AUTO_REFRESH_INTERVAL } from '@/src/config/price'
 
 export const useBitcoinPrice = () => {
   const [ currentPrice, setCurrentPrice ] = useState<number | null>(null)
-  const [ priceData, setPriceData ] = useState<PriceData | null>(null)
-  const [ timeframe, setTimeframe ] = useState<TimeframePeriod>('24h')
+  const [ priceData, setPriceData ] = useState<PriceData>({
+    currentPrice       : null,
+    previousPrice      : null,
+    priceChangePercent : null,
+    chartData          : [],
+    timestamps         : [],
+    labels             : [],
+    isLoading          : true,
+    error              : null
+  })
+  const [ timeframe, setTimeframe ] = useState<TimeframePeriod>(TIME_PERIODS[0])
   const [ loading, setLoading ] = useState(true)
   const [ error, setError ] = useState<string | null>(null)
-  const [ priceChange, setPriceChange ] = useState<number>(0)
+  const [ priceChange, setPriceChange ] = useState<number | null>(null)
 
   const fetchPriceData = useCallback(async () => {
     try {
@@ -29,11 +38,23 @@ export const useBitcoinPrice = () => {
       const historicalData = await fetchHistoricalPrices(timeframe)
       
       // Format chart data
-      const formattedData = formatChartData(historicalData)
-      setPriceData(formattedData)
+      const formattedData = formatChartData(historicalData, timeframe)
       
       // Calculate price change
-      const change = calculatePriceChange(historicalData)
+      const change = calculatePriceChange(price, formattedData.prices)
+      
+      // Update price data state
+      setPriceData({
+        currentPrice       : price,
+        previousPrice      : priceData.currentPrice,
+        priceChangePercent : change,
+        chartData          : formattedData.prices,
+        timestamps         : formattedData.timestamps,
+        labels             : formattedData.labels,
+        isLoading          : false,
+        error              : null
+      })
+      
       setPriceChange(change)
       
     } catch (err) {
@@ -42,7 +63,7 @@ export const useBitcoinPrice = () => {
     } finally {
       setLoading(false)
     }
-  }, [ timeframe ])
+  }, [ timeframe, priceData.currentPrice ])
 
   // Initial fetch
   useEffect(() => {

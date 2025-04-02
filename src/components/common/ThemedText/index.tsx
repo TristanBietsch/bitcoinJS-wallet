@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text, TextProps } from 'react-native'
 import { useColorScheme } from '@/src/hooks/useColorScheme'
-import { Colors } from '@/src/constants/Colors'
+import { Colors } from '@/src/constants/colors'
 import { fonts } from '@/src/constants/fonts'
 
 export type ThemedTextProps = TextProps & {

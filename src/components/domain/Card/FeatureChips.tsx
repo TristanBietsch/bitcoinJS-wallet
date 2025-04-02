@@ -8,7 +8,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { Check } from 'lucide-react-native'
-import { Colors } from '@/src/constants/Colors'
+import { Colors } from '@/src/constants/colors'
 
 // Feature chip data
 export const FEATURE_CHIPS = [
