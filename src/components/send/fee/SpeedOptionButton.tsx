@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { Turtle, Squirrel, Rabbit } from 'lucide-react-native'
 import { SpeedOption } from '@/src/types/transaction/send.types'
 

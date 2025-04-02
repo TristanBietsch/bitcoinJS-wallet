@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 
 interface AddressInputProps {
   value: string

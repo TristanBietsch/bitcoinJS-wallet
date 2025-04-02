@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Modal, TouchableOpacity, StyleSheet } from 'react-native'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { Clock, X } from 'lucide-react-native'
 
 interface SpeedInfoModalProps {

@@ -1,12 +1,16 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 
 interface NumberPadProps {
   onNumberPress: (num: string) => void
+  onBackspace: () => void
 }
 
-export const NumberPad: React.FC<NumberPadProps> = ({ onNumberPress }) => {
+export const NumberPad: React.FC<NumberPadProps> = ({
+  onNumberPress,
+  onBackspace
+}) => {
   const numberPadKeys = [
     [ '1', '2', '3' ],
     [ '4', '5', '6' ],
@@ -28,7 +32,17 @@ export const NumberPad: React.FC<NumberPadProps> = ({ onNumberPress }) => {
     <View style={styles.numberPadContainer}>
       {numberPadKeys.map((row, rowIndex) => (
         <View key={`row-${rowIndex}`} style={styles.numberPadRow}>
-          {row.map(key => renderNumberKey(key))}
+          {row.map(key => 
+            key === '⌫' ? (
+              <TouchableOpacity 
+                key={key}
+                style={styles.numberKey} 
+                onPress={onBackspace}
+              >
+                <ThemedText style={styles.numberKeyText}>{key}</ThemedText>
+              </TouchableOpacity>
+            ) : renderNumberKey(key)
+          )}
         </View>
       ))}
     </View>

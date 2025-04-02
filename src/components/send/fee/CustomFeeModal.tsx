@@ -1,9 +1,9 @@
 import React from 'react'
 import { View, Modal, TouchableOpacity, StyleSheet, Text } from 'react-native'
-import { ThemedText } from '@/src/components/common/ThemedText'  
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { ChevronLeft } from 'lucide-react-native'
 import { CustomFee } from '@/src/types/transaction/send.types'
-import { NumberPad } from '@/src/components/send/input/NumberPad'
+import { NumberPad } from '../input'
 import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
 
 interface CustomFeeModalProps {

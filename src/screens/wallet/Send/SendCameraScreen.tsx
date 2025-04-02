@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, View, TouchableOpacity } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
-import { ThemedText } from '@/src/components/ThemedText'
+import { ThemedText } from '@/src/components/common/ThemedText'
 import { ChevronLeft } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
