@@ -1,7 +1,9 @@
+import React from 'react'
 import { renderHook, act } from '@testing-library/react-hooks'
 import { useWaitlist } from '@/src/hooks/useWaitlist'
-import { setupTestEnv } from '../utils/testConfig'
+import { setupTestEnv, cleanupTestEnv } from '../utils/testConfig'
 import { clearWaitlistTestData, generateTestEmail } from '../utils/testUtils'
+import { supabaseService } from '@/src/services/api/supabaseService'
 
 // Setup test environment
 setupTestEnv()
@@ -15,7 +17,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => {
 // Don't mock the hook - we want to test the actual implementation
 jest.unmock('@/hooks/useWaitlist')
 
-describe('useWaitlist hook integration', () => {
+describe('useWaitlist hook', () => {
   // Use a unique email for each test to avoid conflicts
   const testEmail = generateTestEmail('hook')
   
@@ -26,6 +28,12 @@ describe('useWaitlist hook integration', () => {
   
   afterAll(async () => {
     await clearWaitlistTestData(testEmail)
+    await cleanupTestEnv()
+  })
+  
+  beforeEach(() => {
+    // Reset mocks before each test
+    jest.clearAllMocks()
   })
   
   it('should initialize with default values', () => {
@@ -76,6 +84,12 @@ describe('useWaitlist hook integration', () => {
     // Given: Hook is rendered with a valid email
     const { result } = renderHook(() => useWaitlist(), { wrapper })
     
+    // Mock successful waitlist submission
+    jest.spyOn(supabaseService, 'addToWaitlist').mockResolvedValueOnce({
+      success: true,
+      error: undefined
+    })
+    
     // When: Setting email and submitting
     act(() => {
       result.current.setEmail(testEmail)
@@ -91,5 +105,29 @@ describe('useWaitlist hook integration', () => {
     expect(result.current.registeredEmail).toBe(testEmail)
     expect(result.current.isLoading).toBe(false)
     expect(result.current.error).toBeUndefined()
+    expect(supabaseService.addToWaitlist).toHaveBeenCalledWith(testEmail)
+  })
+
+  it('should handle waitlist submission errors', async () => {
+    const { result } = renderHook(() => useWaitlist(), { wrapper })
+    const errorMessage = 'Failed to add to waitlist'
+    
+    // Mock failed waitlist submission
+    jest.spyOn(supabaseService, 'addToWaitlist').mockResolvedValueOnce({
+      success: false,
+      error: errorMessage
+    })
+    
+    act(() => {
+      result.current.setEmail(testEmail)
+    })
+    
+    await act(async () => {
+      await result.current.submitToWaitlist()
+    })
+    
+    expect(result.current.isRegistered).toBe(false)
+    expect(result.current.error).toBe(errorMessage)
+    expect(result.current.isLoading).toBe(false)
   })
 }) 

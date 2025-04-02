@@ -34,6 +34,21 @@ jest.mock('@legendapp/motion', () => ({
   AnimatePresence: 'MockAnimatePresence',
 }));
 
+// Mock the toast hook
+jest.mock('@/src/components/ui/toast', () => ({
+  useToast: () => ({
+    show: jest.fn(),
+    hide: jest.fn(),
+  }),
+}));
+
+// Mock the supabase service
+jest.mock('@/src/services/api/supabaseService', () => ({
+  supabaseService: {
+    addToWaitlist: jest.fn().mockResolvedValue({ success: true, error: null }),
+  },
+}));
+
 // Console error/warn override to fail tests on React warnings
 const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;

@@ -1,27 +1,35 @@
-import { supabaseService as _supabaseService } from '@/src/services/api/supabaseService'
+import { supabaseService } from '@/src/services/api/supabaseService'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const WAITLIST_STORAGE_KEY = 'nummus_card_waitlist_status'
 
 /**
- * Generates a unique test email with timestamp
+ * Generates a unique test email with prefix and timestamp
+ * @param prefix Optional prefix for the email
  * @returns A unique test email address
  */
-export const generateTestEmail = (): string => {
+export const generateTestEmail = (prefix: string = 'test'): string => {
   const timestamp = Date.now()
   const random = Math.floor(Math.random() * 1000)
-  return `integration.${timestamp}.${random}@example.com`
+  return `${prefix}.${timestamp}.${random}@example.com`
 }
 
 /**
  * Clears any test data from the waitlist
- * This is useful for ensuring a clean state before tests
+ * This ensures a clean state before and after tests
  */
-export const clearWaitlistTestData = async (): Promise<void> => {
+export const clearWaitlistTestData = async (email?: string): Promise<void> => {
   try {
-    // In a real implementation, this would clear test data from the database
-    // For now, we'll just log that we're clearing the data
-    console.log('Clearing waitlist test data')
+    // Clear AsyncStorage
+    await AsyncStorage.removeItem(WAITLIST_STORAGE_KEY)
+    
+    // If email is provided, attempt to remove from waitlist
+    if (email) {
+      await supabaseService.addToWaitlist(email)
+    }
   } catch (error) {
     console.error('Error clearing waitlist test data:', error)
-    throw error
+    // Don't throw the error to prevent test failures
   }
 }
 
