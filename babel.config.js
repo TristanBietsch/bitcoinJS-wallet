@@ -1,13 +1,13 @@
 module.exports = function(api) {
     api.cache(true);
 
+    api.cache(true);
+
     return {
-        presets: [
-            ["babel-preset-expo", {
-                "runtime": "automatic",
-                "jsxRuntime": "automatic"
-            }]
-        ],
+        presets: [["babel-preset-expo", {
+            "runtime": "automatic",
+            "jsxRuntime": "automatic"
+        }], "nativewind/babel"],
         plugins: [
             ["module-resolver", {
                 root: ["./"],

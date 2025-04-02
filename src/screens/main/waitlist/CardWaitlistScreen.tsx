@@ -16,10 +16,7 @@ import { ThemedView } from '@/src/components/common/ThemedView'
 import { FeatureChips } from '@/src/components/domain/Card/FeatureChips'
 import { useWaitlist } from '@/src/hooks/useWaitlist'
 import { Colors } from '@/src/constants/colors'
-import { useColorScheme } from '@/src/hooks/useColorScheme'
-
-// Define the colors with proper types
-type ColorScheme = keyof typeof Colors;
+import useColorScheme from '@/src/hooks/ui/useColorScheme'
 
 const CardWaitlistScreen = () => {
   const waitlist = useWaitlist()
@@ -32,7 +29,7 @@ const CardWaitlistScreen = () => {
     submitToWaitlist,
   } = waitlist
   
-  const colorScheme = useColorScheme() as ColorScheme
+  const colorScheme = useColorScheme()
   const colors = Colors[colorScheme]
   
   // Handle form submission
@@ -220,3 +217,4 @@ const styles = StyleSheet.create({
 })
 
 export default CardWaitlistScreen 
+

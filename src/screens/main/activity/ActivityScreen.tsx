@@ -79,7 +79,10 @@ export default function ActivityScreen() {
   
   const handlePressTransaction = (transaction: Transaction) => {
     // Navigate to transaction details screen using Expo Router
-    router.push(`/transaction/${transaction.id}`)
+    router.push({
+      pathname : '/transaction/[id]',
+      params   : { id: transaction.id }
+    } as any)
   }
   
   return (

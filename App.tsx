@@ -1,4 +1,5 @@
 import React from 'react'
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css"
 import { GluestackUIProvider } from "@/src/components/common/Provider"
 import { StatusBar } from 'expo-status-bar'
@@ -9,10 +10,10 @@ import AppNavigator from './src/navigation/AppNavigator'
 export default function App() {
   return (
     <GluestackUIProvider><SafeAreaProvider>
-        <NavigationContainer>
-          <AppNavigator />
-          <StatusBar style="auto" />
-        </NavigationContainer>
-      </SafeAreaProvider></GluestackUIProvider>
-  )
+          <NavigationContainer>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </SafeAreaProvider></GluestackUIProvider>
+  );
 } 
