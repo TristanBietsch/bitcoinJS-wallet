@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native'
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
-import { ThemedText } from '@/src/components/common/ThemedText'
+import { ThemedText } from '@/src/components/ui/Text'
 import { ChevronLeft, ExternalLink } from 'lucide-react-native'
 import { useSendStore } from '@/src/store/sendStore'
 import { transactionFees } from '@/tests/mockData/transactionData'

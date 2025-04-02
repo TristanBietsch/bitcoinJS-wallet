@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 
-import { ThemedText } from '@/src/components/common/ThemedText'
-import { ThemedView } from '@/src/components/common/ThemedView'
+import { ThemedText } from '@/src/components/ui/Text'
+import { ThemedView } from '@/src/components/ui/View'
 import { ChevronLeft } from 'lucide-react-native'
 
 // Mock data - this will be replaced with real data later

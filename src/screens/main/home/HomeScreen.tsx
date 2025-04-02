@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import { View, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Platform } from 'react-native'
 import { router } from 'expo-router'
-import { ThemedText } from '@/src/components/common/ThemedText'
+import { ThemedText } from '@/src/components/ui/Text'
 import { formatCurrency } from '@/tests/mockData/walletData'
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
-import Dropdown from '@/src/components/common/Dropdown'
-import IOSDropdown from '@/src/components/common/IOSDropdown'
+import Dropdown from '@/src/components/ui/Dropdown'
 
 // Currency options for the dropdown
 const CURRENCY_OPTIONS = [
@@ -113,7 +112,7 @@ const HomeScreen = () => {
         {/* Currency Selector - Platform specific */}
         <View style={styles.dropdownContainer}>
           {Platform.OS === 'ios' ? (
-            <IOSDropdown
+            <Dropdown
               options={CURRENCY_OPTIONS}
               selectedValue={currency}
               onSelect={handleCurrencyChange}

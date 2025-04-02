@@ -12,17 +12,3 @@ export const colors: Record<ColorKey, string> = {
     inactiveGray   : '#6F7390',      // Inactive Gray
     subtleBorder   : '#3B3E4A',      // Subtle Border
 }
-
-export const COLORS = {
-  text          : '#000000',
-  textSecondary : '#666666',
-  border        : '#E0E0E0',
-  success       : '#4CAF50',
-  successLight  : '#E8F5E9',
-  error         : '#F44336',
-  errorLight    : '#FFEBEE',
-  warning       : '#FFC107',
-  warningLight  : '#FFF8E1',
-  primary       : '#0085FF',
-  white         : '#FFFFFF',
-} 

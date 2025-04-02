@@ -1,10 +1,10 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Stack } from 'expo-router'
-import { ThemedText } from '@/src/components/common/ThemedText'
+import { ThemedText } from '@/src/components/ui/Text'
 import { ChevronLeft } from 'lucide-react-native'
-import { AmountDisplay } from '@/src/components/send/core'
-import { CurrencySelector, NumberPad } from '@/src/components/send/input'
+import { AmountDisplay } from '@/src/components/features/Send/Address/AmountDisplay'
+import { CurrencySelector, NumberPad } from '@/src/components/features/Send/Amount'
 import { useSendAmount } from '@/src/hooks/send/useSendAmount'
 
 export default function SendAmountScreen() {

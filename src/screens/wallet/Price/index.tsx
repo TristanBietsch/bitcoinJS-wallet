@@ -9,8 +9,8 @@ import AnimatedPrice from '@/src/components/domain/Price/AnimatedPrice'
 import BitcoinChart from '@/src/components/domain/Price/BitcoinChart'
 import PriceChange from '@/src/components/domain/Price/PriceChange'
 import TimeSelector from '@/src/components/domain/Price/TimeSelector'
-  import { ThemedView } from '@/src/components/common/ThemedView'
-import { ThemedText } from '@/src/components/common/ThemedText'
+  import { ThemedView } from '@/src/components/ui/View'
+import { ThemedText } from '@/src/components/ui/Text'
 import { useBitcoinPrice } from '@/src/hooks/useBitcoinPrice'
 
 /**

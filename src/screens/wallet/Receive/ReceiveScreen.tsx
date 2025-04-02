@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
-import { ThemedText } from '@/src/components/common/ThemedText'
-import Dropdown from '@/src/components/common/Dropdown'
-import IOSDropdown from '@/src/components/common/IOSDropdown'
+import { ThemedText } from '@/src/components/ui/Text'
+import Dropdown from '@/src/components/ui/Dropdown'
 import { ChevronLeft } from 'lucide-react-native'
 import { fetchCurrentPrice } from '@/src/services/api/price'
 
@@ -201,7 +200,7 @@ export default function ReceiveScreen() {
             <ActivityIndicator size="small" color="red" />
           ) : (
             Platform.OS === 'ios' ? (
-              <IOSDropdown
+              <Dropdown
                 options={CURRENCY_OPTIONS}
                 selectedValue={currency}
                 onSelect={handleCurrencyChange}

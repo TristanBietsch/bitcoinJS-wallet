@@ -21,7 +21,7 @@ import {
   PriceChange, 
   TimeSelector, 
   BitcoinChart,
-} from '@/src/components/domain/Price'
+} from '@/src/components/features/Price/Chart'
 import { useBitcoinPriceData } from '@/src/hooks/wallet/useBitcoinPriceData'
 import { TIME_PERIODS } from '@/src/config/price'
 import { TimeframePeriod } from '@/src/types/price.types'

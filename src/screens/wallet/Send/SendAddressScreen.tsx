@@ -1,11 +1,11 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { Stack } from 'expo-router'
-import { ThemedText } from '@/src/components/common/ThemedText'
+import { ThemedText } from '@/src/components/ui/Text'
 import { ChevronLeft } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { AddressInput } from '@/src/components/send/core'
-import { SpeedSelection } from '@/src/components/send/fee'
+import { AddressInput } from '@/src/components/features/Send/Address/AddressInput'
+import { SpeedSelection } from '@/src/components/features/Send/Fees/SpeedSelection'
 import { useSendAddressScreen } from '@/src/hooks/send/useSendAddressScreen'
 
 export default function SendAddressScreen() {
