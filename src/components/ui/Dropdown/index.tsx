@@ -22,6 +22,8 @@ type DropdownProps = {
   backgroundColor?: string;
   textColor?: string;
   disabled?: boolean;
+  title?: string;
+  cancelButtonLabel?: string;
 };
 
 const Dropdown = ({ 
@@ -31,7 +33,9 @@ const Dropdown = ({
   placeholder = 'Select an option',
   backgroundColor = 'red',
   textColor = 'white',
-  disabled = false
+  disabled = false,
+  title = 'Select an option',
+  cancelButtonLabel = 'Cancel'
 }: DropdownProps) => {
   const [ visible, setVisible ] = useState(false)
   
@@ -73,6 +77,12 @@ const Dropdown = ({
         <TouchableWithoutFeedback onPress={() => setVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{title}</Text>
+                <TouchableOpacity onPress={() => setVisible(false)}>
+                  <Text style={styles.cancelButton}>{cancelButtonLabel}</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.optionsContainer}>
                 <FlatList
                   data={options}
@@ -154,6 +164,22 @@ const styles = StyleSheet.create({
   },
   selectedOptionText : {
     fontWeight : 'bold',
+  },
+  modalHeader : {
+    flexDirection     : 'row',
+    justifyContent    : 'space-between',
+    alignItems        : 'center',
+    padding           : 15,
+    borderBottomWidth : 1,
+    borderBottomColor : '#f0f0f0',
+  },
+  modalTitle : {
+    fontSize   : 18,
+    fontWeight : 'bold',
+  },
+  cancelButton : {
+    fontSize : 16,
+    color    : '#666',
   },
 })
 

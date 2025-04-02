@@ -70,7 +70,12 @@ const CardWaitlistScreen = () => {
           </View>
 
           {/* Feature Chips */}
-          <FeatureChips />
+          <FeatureChips features={[
+            'Zero fees',
+            'Instant transfers',
+            'Secure storage',
+            'Global access'
+          ]} />
 
           {/* Email Input and Submit Button */}
           {!isRegistered ? (

@@ -1,6 +1,7 @@
 import React from 'react'
 import { FlatList, Text, View, StyleSheet } from 'react-native'
 import TransactionItem from './TransactionItem'
+import { Colors } from '@/src/constants/colors'
 
 interface Transaction {
   id: string;
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
   },
   emptyMessage : {
     fontSize  : 16,
-    color     : COLORS.textSecondary,
+    color     : Colors.light.text,
     textAlign : 'center',
   },
 })
