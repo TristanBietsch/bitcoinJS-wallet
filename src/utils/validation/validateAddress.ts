@@ -44,4 +44,13 @@ export const validateAddress = (input: string): ValidationResult => {
     isValid : true,
     error   : null
   }
+}
+
+/**
+ * Checks if a string is a valid Bitcoin address
+ * @param address The address to validate
+ * @returns True if the address is valid, false otherwise
+ */
+export const isValidBitcoinAddress = (address: string): boolean => {
+  return validateAddress(address).isValid
 } 

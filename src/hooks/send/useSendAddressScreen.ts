@@ -1,10 +1,11 @@
-import React, { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
 import { useAddressValidation } from '@/src/hooks/send/useAddressValidation'
 import { useSpeedOptions } from '@/src/hooks/send/useSpeedOptions'
 import { useCustomFee } from '@/src/hooks/send/useCustomFee'
 import { SpeedTier } from '@/src/types/transaction/send.types'
+import { validateAddress } from '@/src/utils/validation'
 
 export const useSendAddressScreen = () => {
   const router = useRouter()
@@ -53,11 +54,21 @@ export const useSendAddressScreen = () => {
   } = useCustomFee()
 
   // Load data from store when screen is focused
-  React.useEffect(() => {
+  useEffect(() => {
     // First check if we have data in the store
     if (storedAddress) {
-      // If we have an address in the store, use it and don't check clipboard
-      handleAddressChange(storedAddress)
+      // Validate the address from the store
+      const validationResult = validateAddress(storedAddress)
+      
+      if (validationResult.isValid) {
+        // If we have a valid address in the store, use it and don't check clipboard
+        handleAddressChange(storedAddress)
+      } else {
+        // If the stored address is invalid, reset it
+        resetStore()
+        // Then check clipboard
+        checkClipboard()
+      }
     } else {
       // Only check clipboard if we don't have an address yet
       checkClipboard()

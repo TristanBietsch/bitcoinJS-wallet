@@ -7,6 +7,7 @@ import { useCameraScanner } from '@/src/hooks/send/useCameraScanner'
 export default function SendCameraScreen() {
   const {
     handleQRCodeScanned,
+    handleCameraError,
     handleClose
   } = useCameraScanner()
 
@@ -21,6 +22,7 @@ export default function SendCameraScreen() {
       <AddressCamera 
         onScanSuccess={handleQRCodeScanned}
         onClose={handleClose}
+        onCameraError={handleCameraError}
       />
     </View>
   )

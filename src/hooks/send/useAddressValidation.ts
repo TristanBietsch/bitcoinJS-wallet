@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
-import { Clipboard, Platform, Alert } from 'react-native'
 import { validateAddress } from '@/src/utils/validation/validateAddress'
+import { checkClipboardForAddress, showPasteAddressAlert } from '@/src/utils/validation/clipboardValidation'
 
 export const useAddressValidation = () => {
   const [ address, setAddress ] = useState('')
@@ -21,50 +21,33 @@ export const useAddressValidation = () => {
   }, [])
 
   const checkClipboard = useCallback(async () => {
-    try {
-      // Only check clipboard if we have no address yet and haven't shown the alert
-      if (!address && !hasShownPasteAlertRef.current) {
-        const clipboardContent = await Clipboard.getString()
-        if (clipboardContent) {
-          const result = validateAddress(clipboardContent)
-          if (result.isValid) {
-            setClipboardAddress(clipboardContent)
-            showPasteAlert(clipboardContent)
-            // Mark that we've shown the alert
-            hasShownPasteAlertRef.current = true
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking clipboard:', error)
-    }
-  }, [ address ])
-
-  const showPasteAlert = useCallback((detectedAddress: string) => {
-    if (Platform.OS === 'ios') {
-      Alert.alert(
-        'Paste Bitcoin Address?',
-        'A valid Bitcoin address was found in your clipboard. Use it?',
-        [
-          {
-            text    : 'Cancel',
-            style   : 'cancel',
-            onPress : () => setClipboardAddress(null)
-          },
-          {
-            text    : 'Paste',
-            style   : 'default',
-            onPress : () => {
+    // Only check clipboard if we have no address yet and haven't shown the alert
+    if (!address && !hasShownPasteAlertRef.current) {
+      await checkClipboardForAddress(
+        // Valid address found
+        (detectedAddress) => {
+          setClipboardAddress(detectedAddress)
+          showPasteAddressAlert(
+            detectedAddress,
+            // On paste
+            () => {
               setAddress(detectedAddress)
               setAddressError(null)
               setClipboardAddress(null)
-            }
-          }
-        ],
-        { cancelable: false }
+            },
+            // On cancel
+            () => setClipboardAddress(null)
+          )
+          // Mark that we've shown the alert
+          hasShownPasteAlertRef.current = true
+        },
+        // No valid address
+        undefined,
+        // Error
+        (error) => console.error('Error checking clipboard:', error)
       )
     }
-  }, [])
+  }, [ address ])
 
   const resetAddress = useCallback(() => {
     setAddress('')

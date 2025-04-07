@@ -15,11 +15,13 @@ const FRAME_CORNER_SIZE = 20
 interface AddressCameraProps {
   onScanSuccess: (data: string) => void
   onClose: () => void
+  onCameraError?: () => void
 }
 
 export const AddressCamera: React.FC<AddressCameraProps> = ({
   onScanSuccess,
   onClose,
+  onCameraError
 }) => {
   const insets = useSafeAreaInsets()
   const [ permission, requestPermission ] = useCameraPermissions()
@@ -94,7 +96,7 @@ export const AddressCamera: React.FC<AddressCameraProps> = ({
           </ThemedText>
           <TouchableOpacity 
             style={styles.retryButton}
-            onPress={onClose}
+            onPress={onCameraError || onClose}
           >
             <ThemedText style={styles.retryButtonText}>Go Back</ThemedText>
           </TouchableOpacity>
@@ -122,7 +124,7 @@ export const AddressCamera: React.FC<AddressCameraProps> = ({
           </ThemedText>
           <TouchableOpacity 
             style={styles.retryButton}
-            onPress={onClose}
+            onPress={onCameraError || onClose}
           >
             <ThemedText style={styles.retryButtonText}>Go Back</ThemedText>
           </TouchableOpacity>

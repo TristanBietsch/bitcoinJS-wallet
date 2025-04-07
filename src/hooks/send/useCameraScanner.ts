@@ -3,6 +3,7 @@ import { Alert } from 'react-native'
 import { parseQRCode } from '@/src/utils/send/qrCodeParser'
 import { useSendStore } from '@/src/store/sendStore'
 import { useRouter } from 'expo-router'
+import { validateAddress } from '@/src/utils/validation'
 
 export interface CameraScannerResult {
   address : string
@@ -23,16 +24,24 @@ export const useCameraScanner = () => {
     setIsScanning(false) // Prevent multiple scans
     
     try {
-      // Parse the QR code data
-      const parsedData = parseQRCode(data)
+      const { address, amount } = parseQRCode(data)
       
-      // Store the address in the send store
-      setAddress(parsedData.address)
+      // Validate the address
+      const validationResult = validateAddress(address)
       
-      // If we have an amount from the QR code, save that too
-      if (parsedData.amount) {
-        const amountString = parsedData.amount.toString()
-        setAmount(amountString)
+      if (!validationResult.isValid) {
+        Alert.alert(
+          'Invalid Address',
+          'The scanned QR code does not contain a valid Bitcoin address.',
+          [ { text: 'OK' } ]
+        )
+        return
+      }
+      
+      // Store the validated address and amount
+      setAddress(address)
+      if (amount) {
+        setAmount(amount.toString())
       }
       
       // Navigate back to the send screen
@@ -40,9 +49,9 @@ export const useCameraScanner = () => {
       
     } catch (_error) {
       Alert.alert(
-        'Invalid QR Code',
-        'The scanned QR code does not contain a valid Bitcoin address.',
-        [ { text: 'Try Again', onPress: () => setIsScanning(true) } ]
+        'Error',
+        'Failed to parse QR code. Please try again.',
+        [ { text: 'OK' } ]
       )
     }
   }, [ isScanning, router, setAddress, setAmount ])
@@ -50,9 +59,9 @@ export const useCameraScanner = () => {
   // Handle camera permission errors
   const handleCameraError = useCallback(() => {
     Alert.alert(
-      'Camera Permission',
-      'Please allow camera access to scan QR codes.',
-      [ { text: 'OK', onPress: () => router.back() } ]
+      'Camera Error',
+      'Failed to access camera. Please check your camera permissions.',
+      [ { text: 'OK' } ]
     )
   }, [ router ])
   
