@@ -1,6 +1,6 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Alert, PermissionsAndroid, Platform } from 'react-native'
-import { Camera, CameraType } from 'react-native-camera-kit'
+import React, { useCallback, useState, useEffect } from 'react'
+import { StyleSheet, View, TouchableOpacity } from 'react-native'
+import { Camera, CameraType, BarCodeScanner } from 'expo-camera'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
@@ -8,54 +8,30 @@ import { ThemedText } from '@/src/components/ui/Text'
 interface AddressCameraProps {
   onScanSuccess: (data: string) => void
   onClose: () => void
-  onError?: () => void
 }
 
 export const AddressCamera: React.FC<AddressCameraProps> = ({
   onScanSuccess,
   onClose,
-  onError
 }) => {
   const insets = useSafeAreaInsets()
-  const cameraRef = useRef<any>(null)
-  const [ scanned, setScanned ] = useState(false)
   const [ hasPermission, setHasPermission ] = useState<boolean | null>(null)
+  const [ scanned, setScanned ] = useState(false)
 
   // Request camera permissions
   useEffect(() => {
-    const requestCameraPermission = async () => {
-      try {
-        if (Platform.OS === 'android') {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.CAMERA,
-            {
-              title          : 'Camera Permission',
-              message        : 'App needs camera permission to scan QR codes',
-              buttonNeutral  : 'Ask Me Later',
-              buttonNegative : 'Cancel',
-              buttonPositive : 'OK',
-            }
-          )
-          setHasPermission(granted === PermissionsAndroid.RESULTS.GRANTED)
-        } else {
-          // For iOS, permissions are handled through Info.plist
-          setHasPermission(true)
-        }
-      } catch (err) {
-        console.error('Error requesting camera permission:', err)
-        setHasPermission(false)
-      }
+    const getBarCodeScannerPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync()
+      setHasPermission(status === 'granted')
     }
 
-    requestCameraPermission()
+    getBarCodeScannerPermissions()
   }, [])
 
-  const handleFrameRead = useCallback((event: { nativeEvent: { codeStringValue: string } }) => {
-    const { codeStringValue } = event.nativeEvent
-    
-    if (codeStringValue && !scanned) {
+  const handleBarCodeScanned = useCallback(({ data }: { data: string }) => {
+    if (data && !scanned) {
       setScanned(true)
-      onScanSuccess(codeStringValue)
+      onScanSuccess(data)
     }
   }, [ onScanSuccess, scanned ])
 
@@ -94,24 +70,12 @@ export const AddressCamera: React.FC<AddressCameraProps> = ({
     try {
       return (
         <Camera
-          ref={cameraRef}
           style={styles.camera}
-          scanBarcode={true}
-          onReadCode={handleFrameRead}
-          cameraType={CameraType.Back}
-          flashMode="auto"
-          onError={(error) => {
-            console.error('Camera error:', error)
-            if (onError) {
-              onError()
-            } else {
-              Alert.alert(
-                'Camera Error',
-                'Unable to access camera. Please check permissions and try again.',
-                [ { text: 'OK', onPress: onClose } ]
-              )
-            }
+          type={CameraType.back}
+          barCodeScannerSettings={{
+            barCodeTypes: [ BarCodeScanner.Constants.BarCodeType.qr ],
           }}
+          onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
         />
       )
     } catch (error) {
@@ -175,27 +139,27 @@ const styles = StyleSheet.create({
     flex : 1,
   },
   cameraError : {
-    flex            : 1,
+    flex : 1,
     backgroundColor : '#333',
-    justifyContent  : 'center',
-    alignItems      : 'center',
-    padding         : 20,
+    justifyContent : 'center',
+    alignItems : 'center',
+    padding : 20,
   },
   errorText : {
-    color        : 'white',
-    fontSize     : 16,
-    textAlign    : 'center',
+    color : 'white',
+    fontSize : 16,
+    textAlign : 'center',
     marginBottom : 20,
   },
   retryButton : {
-    backgroundColor   : '#FF0000',
-    paddingVertical   : 12,
+    backgroundColor : '#FF0000',
+    paddingVertical : 12,
     paddingHorizontal : 24,
-    borderRadius      : 8,
+    borderRadius : 8,
   },
   retryButtonText : {
-    color      : 'white',
-    fontSize   : 16,
+    color : 'white',
+    fontSize : 16,
     fontWeight : '600',
   },
   overlay : {
@@ -203,44 +167,44 @@ const styles = StyleSheet.create({
     justifyContent : 'space-between',
   },
   header : {
-    flexDirection  : 'row',
+    flexDirection : 'row',
     justifyContent : 'flex-end',
-    padding        : 16,
+    padding : 16,
   },
   closeButton : {
-    width           : 40,
-    height          : 40,
-    borderRadius    : 20,
+    width : 40,
+    height : 40,
+    borderRadius : 20,
     backgroundColor : 'rgba(0, 0, 0, 0.3)',
-    justifyContent  : 'center',
-    alignItems      : 'center',
+    justifyContent : 'center',
+    alignItems : 'center',
   },
   scannerInfoContainer : {
-    padding      : 20,
+    padding : 20,
     marginBottom : 50,
-    alignItems   : 'center',
+    alignItems : 'center',
   },
   scannerText : {
-    color           : 'white',
-    fontSize        : 16,
-    fontWeight      : '600',
-    textAlign       : 'center',
+    color : 'white',
+    fontSize : 16,
+    fontWeight : '600',
+    textAlign : 'center',
     backgroundColor : 'rgba(0, 0, 0, 0.6)',
-    padding         : 16,
-    borderRadius    : 8,
+    padding : 16,
+    borderRadius : 8,
   },
   scanAgainContainer : {
-    alignItems   : 'center',
+    alignItems : 'center',
     marginBottom : 30,
   },
   scanAgainButton : {
-    backgroundColor   : 'rgba(255, 255, 255, 0.2)',
-    paddingVertical   : 10,
+    backgroundColor : 'rgba(255, 255, 255, 0.2)',
+    paddingVertical : 10,
     paddingHorizontal : 20,
-    borderRadius      : 20,
+    borderRadius : 20,
   },
   scanAgainText : {
-    color    : 'white',
+    color : 'white',
     fontSize : 16,
   },
 })
