@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
     flex            : 1,
     backgroundColor : 'white',
     padding         : 20,
+    paddingBottom   : 100,
   },
   topRightIcon : {
     position        : 'absolute',
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
   actionButtonsContainer : {
     flexDirection  : 'row',
     justifyContent : 'space-between',
-    marginBottom   : 80,
+    marginBottom   : 20,
   },
   actionButton : {
     backgroundColor : 'red',

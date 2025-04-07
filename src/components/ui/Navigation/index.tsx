@@ -2,6 +2,7 @@ import React from 'react'
 import { usePathname, useRouter } from 'expo-router'
 import { CreditCard, Home, Bitcoin, Clock } from 'lucide-react-native'
 import { Pressable, StyleSheet, View, Text } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 // Define valid route paths
 type ValidRoutes = '/' | '/waitlist' | '/price' | '/activity'
@@ -33,6 +34,7 @@ const TABS = [
 export function BottomNavigation() {
   const router = useRouter()
   const pathname = usePathname()
+  const insets = useSafeAreaInsets()
 
   const handleNavigation = (path: string) => {
     // Type assertion to tell TypeScript this is a valid route
@@ -40,7 +42,14 @@ export function BottomNavigation() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      {
+        // Adjust bottom position based on safe area to ensure consistent positioning
+        bottom        : Math.max(insets.bottom, 20),
+        paddingBottom : insets.bottom > 0 ? insets.bottom - 15 : 0
+      }
+    ]}>
       <View style={styles.tabBar}>
         {TABS.map(({ path, title, icon: Icon }) => {
           // Check if current path matches this tab's path
@@ -75,9 +84,9 @@ export function BottomNavigation() {
 const styles = StyleSheet.create({
   container : {
     position : 'absolute',
-    bottom   : 20,
     left     : 20,
     right    : 20,
+    // bottom is now dynamic and set in the component
   },
   tabBar : {
     flexDirection   : 'row',

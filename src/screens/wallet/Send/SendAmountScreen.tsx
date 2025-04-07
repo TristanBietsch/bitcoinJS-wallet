@@ -41,11 +41,13 @@ export default function SendAmountScreen() {
       />
       
       {/* Currency Selector */}
-      <CurrencySelector
-        currency={currency}
-        isLoading={isLoading}
-        onCurrencyChange={handleCurrencyChange}
-      />
+      <View style={styles.currencySelectorContainer}>
+        <CurrencySelector
+          currency={currency}
+          isLoading={isLoading}
+          onCurrencyChange={handleCurrencyChange}
+        />
+      </View>
       
       <View style={styles.footerContainer}>
         {/* Continue Button */}
@@ -82,6 +84,11 @@ const styles = StyleSheet.create({
     borderRadius   : 20,
     justifyContent : 'center',
     alignItems     : 'center',
+  },
+  currencySelectorContainer : {
+    alignItems     : 'center',
+    justifyContent : 'center',
+    width          : '100%',
   },
   footerContainer : {
     position      : 'absolute',

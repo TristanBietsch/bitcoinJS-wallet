@@ -15,12 +15,13 @@ import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { initSentry } from '@/src/services/logging/sentryService'
 import { StyleSheet } from 'react-native'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
 
 // Routes where bottom navigation should be hidden
-const HIDDEN_NAV_ROUTES = [ '/receive', '/send', '/transaction' ]
+const HIDDEN_NAV_ROUTES = [ '/receive', '/send', '/transaction', '/onboarding' ]
 
 export default function RootLayout() {
   const pathname = usePathname()
@@ -54,23 +55,27 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <AppProvider>
-        <View style={styles.content}>
-          <Slot />
-        </View>
-        {!shouldHideNav && <BottomNavigation />}
-        <StatusBar style="auto" />
-      </AppProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={styles.container}>
+        <AppProvider>
+          <View style={styles.content}>
+            <Slot />
+          </View>
+          {!shouldHideNav && <BottomNavigation />}
+          <StatusBar style="auto" />
+        </AppProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   )
 }
 
 const styles = StyleSheet.create({
   container : {
-    flex : 1,
+    flex            : 1,
+    backgroundColor : '#ffffff',
   },
   content : {
-    flex : 1,
+    flex            : 1,
+    backgroundColor : '#ffffff',
   },
 })
