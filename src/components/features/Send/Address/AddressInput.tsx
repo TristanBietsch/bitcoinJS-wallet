@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { QrCode } from 'lucide-react-native'
 
 interface AddressInputProps {
   value: string
@@ -34,8 +35,9 @@ export const AddressInput: React.FC<AddressInputProps> = ({
         <TouchableOpacity 
           style={styles.qrButton}
           onPress={onQRPress}
+          accessibilityLabel="Scan QR Code"
         >
-          <View style={styles.qrIcon} />
+          <QrCode size={24} color="#fff" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
       {error && (
@@ -79,11 +81,5 @@ const styles = StyleSheet.create({
     borderRadius    : 12,
     justifyContent  : 'center',
     alignItems      : 'center'
-  },
-  qrIcon : {
-    width           : 24,
-    height          : 24,
-    backgroundColor : '#fff',
-    borderRadius    : 6
   }
 }) 

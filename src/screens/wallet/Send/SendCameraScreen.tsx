@@ -1,17 +1,15 @@
 import React from 'react'
-import { StyleSheet, View, TouchableOpacity } from 'react-native'
-import { Stack, useRouter } from 'expo-router'
-import { ThemedText } from '@/src/components/ui/Text'
-import { ChevronLeft } from 'lucide-react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { StyleSheet, View } from 'react-native'
+import { Stack } from 'expo-router'
+import { AddressCamera } from '@/src/components/features/Send/Address/AddressCamera'
+import { useCameraScanner } from '@/src/hooks/send/useCameraScanner'
 
 export default function SendCameraScreen() {
-  const insets = useSafeAreaInsets()
-  const router = useRouter()
-
-  const handleBackPress = () => {
-    router.back()
-  }
+  const {
+    handleQRCodeScanned,
+    handleCameraError,
+    handleClose
+  } = useCameraScanner()
 
   return (
     <View style={styles.container}>
@@ -20,24 +18,12 @@ export default function SendCameraScreen() {
           headerShown : false
         }} 
       />
-
-      {/* Camera will be implemented later */}
-      <View style={styles.cameraPlaceholder}>
-        <ThemedText>Camera functionality will be implemented later</ThemedText>
-      </View>
-
-      {/* Back Button */}
-      <TouchableOpacity 
-        style={[
-          styles.backButton,
-          {
-            top : insets.top + 10
-          }
-        ]} 
-        onPress={handleBackPress}
-      >
-        <ChevronLeft size={24} color="white" />
-      </TouchableOpacity>
+      
+      <AddressCamera 
+        onScanSuccess={handleQRCodeScanned}
+        onClose={handleClose}
+        onError={handleCameraError}
+      />
     </View>
   )
 }
@@ -46,22 +32,5 @@ const styles = StyleSheet.create({
   container : {
     flex            : 1,
     backgroundColor : '#000'
-  },
-  cameraPlaceholder : {
-    flex            : 1,
-    justifyContent  : 'center',
-    alignItems      : 'center',
-    backgroundColor : '#333'
-  },
-  backButton : {
-    position        : 'absolute',
-    left            : 20,
-    zIndex          : 10,
-    width           : 40,
-    height          : 40,
-    borderRadius    : 20,
-    justifyContent  : 'center',
-    alignItems      : 'center',
-    backgroundColor : 'rgba(0, 0, 0, 0.3)'
   }
 }) 

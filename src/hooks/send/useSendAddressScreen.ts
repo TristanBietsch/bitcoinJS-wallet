@@ -73,9 +73,8 @@ export const useSendAddressScreen = () => {
   }, [ storedAddress, storedSpeed, storedCustomFee ])
 
   const handleQRScan = () => {
-    router.push({
-      pathname : '/send/camera' as any
-    })
+    // Navigate to the QR scanner screen
+    router.push('/send/camera' as any)
   }
 
   const handleBackPress = () => {

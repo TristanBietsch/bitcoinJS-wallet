@@ -12,6 +12,10 @@ declare module "expo-router" {
       speed: string;
     };
     
+    // Camera routes
+    "/send/camera": {};
+    "/send/qr-scanner": {};
+    
     // Transaction route
     "/transaction/[id]": {
       id: string;
