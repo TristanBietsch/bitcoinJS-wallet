@@ -1,9 +1,16 @@
 import React, { useCallback, useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, TouchableOpacity, Dimensions } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+
+// Get screen dimensions for the frame
+const SCREEN_WIDTH = Dimensions.get('window').width
+const FRAME_WIDTH = SCREEN_WIDTH * 0.7 // 70% of screen width
+const FRAME_HEIGHT = FRAME_WIDTH
+const FRAME_BORDER_WIDTH = 3
+const FRAME_CORNER_SIZE = 20
 
 interface AddressCameraProps {
   onScanSuccess: (data: string) => void
@@ -35,6 +42,37 @@ export const AddressCamera: React.FC<AddressCameraProps> = ({
   const handleScanAgain = useCallback(() => {
     setScanned(false)
   }, [])
+
+  // Render QR code frame corners
+  const renderFrameCorners = () => {
+    return (
+      <View style={styles.frameContainer}>
+        {/* Top left corner */}
+        <View style={[ styles.corner, styles.topLeft ]}>
+          <View style={[ styles.cornerBorder, styles.cornerBorderTop ]} />
+          <View style={[ styles.cornerBorder, styles.cornerBorderLeft ]} />
+        </View>
+        
+        {/* Top right corner */}
+        <View style={[ styles.corner, styles.topRight ]}>
+          <View style={[ styles.cornerBorder, styles.cornerBorderTop ]} />
+          <View style={[ styles.cornerBorder, styles.cornerBorderRight ]} />
+        </View>
+        
+        {/* Bottom left corner */}
+        <View style={[ styles.corner, styles.bottomLeft ]}>
+          <View style={[ styles.cornerBorder, styles.cornerBorderBottom ]} />
+          <View style={[ styles.cornerBorder, styles.cornerBorderLeft ]} />
+        </View>
+        
+        {/* Bottom right corner */}
+        <View style={[ styles.corner, styles.bottomRight ]}>
+          <View style={[ styles.cornerBorder, styles.cornerBorderBottom ]} />
+          <View style={[ styles.cornerBorder, styles.cornerBorderRight ]} />
+        </View>
+      </View>
+    )
+  }
 
   // Render camera or error message based on permission status
   const renderCamera = () => {
@@ -107,6 +145,8 @@ export const AddressCamera: React.FC<AddressCameraProps> = ({
           </TouchableOpacity>
         </View>
         
+        {renderFrameCorners()}
+        
         <View style={styles.scannerInfoContainer}>
           <ThemedText style={styles.scannerText}>
             {scanned ? 'QR Code Scanned!' : 'Align QR code within frame'}
@@ -175,6 +215,62 @@ const styles = StyleSheet.create({
     backgroundColor : 'rgba(0, 0, 0, 0.3)',
     justifyContent  : 'center',
     alignItems      : 'center',
+  },
+  frameContainer : {
+    position  : 'absolute',
+    top       : '50%',
+    left      : '50%',
+    width     : FRAME_WIDTH,
+    height    : FRAME_HEIGHT,
+    transform : [
+      { translateX: -FRAME_WIDTH / 2 },
+      { translateY: -FRAME_HEIGHT / 2 }
+    ],
+  },
+  corner : {
+    position : 'absolute',
+    width    : FRAME_CORNER_SIZE,
+    height   : FRAME_CORNER_SIZE,
+  },
+  cornerBorder : {
+    position        : 'absolute',
+    backgroundColor : 'white',
+  },
+  cornerBorderTop : {
+    top    : 0,
+    width  : FRAME_CORNER_SIZE,
+    height : FRAME_BORDER_WIDTH,
+  },
+  cornerBorderBottom : {
+    bottom : 0,
+    width  : FRAME_CORNER_SIZE,
+    height : FRAME_BORDER_WIDTH,
+  },
+  cornerBorderLeft : {
+    left   : 0,
+    width  : FRAME_BORDER_WIDTH,
+    height : FRAME_CORNER_SIZE,
+  },
+  cornerBorderRight : {
+    right  : 0,
+    width  : FRAME_BORDER_WIDTH,
+    height : FRAME_CORNER_SIZE,
+  },
+  topLeft : {
+    top  : 0,
+    left : 0,
+  },
+  topRight : {
+    top   : 0,
+    right : 0,
+  },
+  bottomLeft : {
+    bottom : 0,
+    left   : 0,
+  },
+  bottomRight : {
+    bottom : 0,
+    right  : 0,
   },
   scannerInfoContainer : {
     padding      : 20,
