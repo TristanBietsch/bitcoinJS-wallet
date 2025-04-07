@@ -24,6 +24,7 @@ export const useCustomFee = () => {
   // Validate the pending input
   const isInputValid = pendingInput !== '' && 
     !isNaN(parseInt(pendingInput)) && 
+    parseInt(pendingInput) > 0 && // Must be greater than zero
     parseInt(pendingInput) >= MIN_FEE_SATS
     
   // Reset the input when opening the modal
@@ -46,7 +47,6 @@ export const useCustomFee = () => {
     // Use the functional form to ensure we're using the latest state
     setPendingInput((prev) => {
       let newValue = prev
-      setFeeError(null) // Clear error when user is typing
       
       if (num === 'backspace') {
         // Handle backspace - remove the last character
@@ -58,22 +58,33 @@ export const useCustomFee = () => {
         console.log('Number pressed:', num, 'new value:', newValue)
       }
       
+      // Handle empty input case
+      if (!newValue || newValue === '') {
+        setFeeError('Please enter a fee amount')
+        return newValue
+      }
+      
       // Update the fee calculation if we have a valid number
-      if (newValue && newValue !== '') {
-        const totalSats = parseInt(newValue)
-        if (!isNaN(totalSats)) {
-          // Validate against minimum
-          if (totalSats < MIN_FEE_SATS) {
-            setFeeError(`Minimum fee is ${MIN_FEE_SATS} sats`)
-          }
-          
-          const feeRate = transactionFees.calculateRateFromTime(totalSats)
-          setCustomFee({
-            totalSats,
-            feeRate,
-            confirmationTime : transactionFees.estimateConfirmationTime(feeRate)
-          })
+      const totalSats = parseInt(newValue)
+      if (!isNaN(totalSats)) {
+        // Set custom fee first so UI updates properly
+        const feeRate = transactionFees.calculateRateFromTime(totalSats)
+        setCustomFee({
+          totalSats,
+          feeRate,
+          confirmationTime : transactionFees.estimateConfirmationTime(feeRate)
+        })
+
+        // Then validate and show errors
+        if (totalSats === 0) {
+          setFeeError('Fee cannot be zero')
+        } else if (totalSats < MIN_FEE_SATS) {
+          setFeeError(`Minimum fee is ${MIN_FEE_SATS} sats`)
+        } else {
+          setFeeError(null)
         }
+      } else {
+        setFeeError('Invalid fee amount')
       }
       
       return newValue
@@ -108,6 +119,13 @@ export const useCustomFee = () => {
       return // Don't proceed if input is invalid
     }
     
+    // Check for zero input first
+    if (totalSats === 0) {
+      setFeeError('Fee cannot be zero')
+      return // Don't proceed if zero
+    }
+    
+    // Then check for minimum fee
     if (totalSats < MIN_FEE_SATS) {
       setFeeError(`Minimum fee is ${MIN_FEE_SATS} sats`)
       return // Don't proceed if below minimum
