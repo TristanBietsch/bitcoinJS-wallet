@@ -70,3 +70,6 @@ coverage/
 
 # Jest
 .jest/
+
+# Misc
+NOTE.md

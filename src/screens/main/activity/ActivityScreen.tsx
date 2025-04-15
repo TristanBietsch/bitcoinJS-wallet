@@ -5,34 +5,7 @@ import { ActivityGroup } from '@/src/components/features/Transaction/List/Activi
 import { Transaction, mockTransactions } from '@/tests/mockData/transactionData'
 import { useRouter } from 'expo-router'
 import { fonts } from '@/src/constants/fonts'
-
-// Helper function to get the start of a date
-const getStartOfDay = (date: Date): number => {
-  const newDate = new Date(date)
-  newDate.setHours(0, 0, 0, 0)
-  return newDate.getTime()
-}
-
-// Helper function to check if a date is today
-const isToday = (timestamp: number): boolean => {
-  const today = getStartOfDay(new Date())
-  const date = getStartOfDay(new Date(timestamp))
-  return date === today
-}
-
-// Helper function to check if a date is in the past week
-const isThisWeek = (timestamp: number): boolean => {
-  const today = getStartOfDay(new Date())
-  const date = getStartOfDay(new Date(timestamp))
-  const oneWeekAgo = today - (7 * 24 * 60 * 60 * 1000)
-  return date >= oneWeekAgo && date < today
-}
-
-// Helper function to get month and year of a timestamp
-const getMonthYear = (timestamp: number): string => {
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-}
+import { isToday, isThisWeek, getMonthYear } from '../../../utils/helpers/dateHelpers'
 
 // Component to display a section divider
 const SectionDivider = () => (
