@@ -1,13 +1,15 @@
 import React from 'react'
 import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
-import { ChevronLeft } from 'lucide-react-native'
+import { ChevronLeft, Check } from 'lucide-react-native'
 import { useTransactionDetails } from '@/src/hooks/transaction'
-import { 
-  TransactionHeader, 
-  AmountDisplay, 
-  TransactionDetails as TransactionDetailsComponent
-} from '@/src/components/features/Transaction/Details'
+import { TransactionDetails as TransactionDetailsComponent } from '@/src/components/features/Transaction/Details'
+
+const BackButton = ({ onPress }: { onPress: () => void }) => (
+  <TouchableOpacity style={styles.backButton} onPress={onPress}>
+    <ChevronLeft size={24} color="black" />
+  </TouchableOpacity>
+)
 
 export default function TransactionDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -22,9 +24,7 @@ export default function TransactionDetailsScreen() {
   if (loading) {
     return (
       <View style={ [ styles.container, styles.loadingContainer ] }>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <ChevronLeft size={24} color="black" />
-        </TouchableOpacity>
+        <BackButton onPress={handleBackPress} />
         <ActivityIndicator size="large" color="#2196F3" />
       </View>
     )
@@ -34,9 +34,7 @@ export default function TransactionDetailsScreen() {
   if (error || !transaction) {
     return (
       <View style={ [ styles.container, styles.errorContainer ] }>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <ChevronLeft size={24} color="black" />
-        </TouchableOpacity>
+        <BackButton onPress={handleBackPress} />
         <Text style={styles.errorText}>
           {error ? 'Error loading transaction' : 'Transaction not found'}
         </Text>
@@ -44,40 +42,21 @@ export default function TransactionDetailsScreen() {
     )
   }
 
-  // For this example, we're assuming this is a send transaction (per the image)
-  const displayAmount = `${transaction.amount} ${transaction.currency}`
-  const fiatEquivalent = `$${(transaction.amount * 0.00023).toFixed(2)} USD`
-  
-  // Calculate the total amount (amount + fee)
-  const totalAmount = transaction.fee 
-    ? Number(transaction.amount) + Number(transaction.fee)
-    : transaction.amount
-  // We'll use totalFiatEquivalent in future enhancements
-  const _totalFiatEquivalent = `$${(totalAmount * 0.00023).toFixed(2)} USD`
-
   return (
     <View style={styles.container}>
-      {/* Custom Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <ChevronLeft size={24} color="black" />
-      </TouchableOpacity>
+      <BackButton onPress={handleBackPress} />
       
       <ScrollView style={styles.scrollView}>
         <View style={styles.card}>
           {/* Transaction Header */}
-          <TransactionHeader 
-            type={transaction.type} 
-            showSuccessIcon={true}
-          />
-
-          {/* Amount Display */}
-          <AmountDisplay 
-            amount={transaction.amount} 
-            displayAmount={displayAmount}
-            currency={transaction.currency} 
-            type={transaction.type} 
-            fiatEquivalent={fiatEquivalent}
-          />
+          <View style={styles.headerContainer}>
+            <View style={styles.iconContainer}>
+              <Check size={28} color="#FFFFFF" />
+            </View>
+            <Text style={styles.headerTitle}>
+              {transaction.type === 'send' ? 'Sent' : 'Received'}
+            </Text>
+          </View>
 
           {/* Transaction Details */}
           <TransactionDetailsComponent 
@@ -136,5 +115,32 @@ const styles = StyleSheet.create({
     shadowOpacity : 0.1,
     shadowRadius  : 3.84,
     elevation     : 5,
+  },
+  headerContainer : {
+    alignItems     : 'center',
+    justifyContent : 'center',
+    marginBottom   : 32,
+    marginTop      : 16,
+  },
+  iconContainer : {
+    width           : 64,
+    height          : 64,
+    borderRadius    : 32,
+    backgroundColor : '#00C853',
+    justifyContent  : 'center',
+    alignItems      : 'center',
+    marginBottom    : 16,
+    borderWidth     : 0,
+    borderColor     : '#00C853',
+    shadowColor     : '#000',
+    shadowOffset    : { width: 0, height: 1 },
+    shadowOpacity   : 0.2,
+    shadowRadius    : 2,
+    elevation       : 3,
+  },
+  headerTitle : {
+    fontSize   : 24,
+    fontWeight : 'bold',
+    color      : '#000000',
   },
 }) 

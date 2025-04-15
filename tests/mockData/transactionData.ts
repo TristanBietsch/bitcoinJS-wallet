@@ -298,3 +298,28 @@ export const transactionFees = {
     return Math.max(1, Math.round(200 / minutes))
   }
 }
+
+// Detailed transaction for the transaction details screen
+export const mockTransactionDetails = {
+  id          : 'tx-001',
+  type        : 'send',
+  amount      : 10000,
+  currency    : 'sats',
+  status      : 'completed',
+  recipient   : 'b3289asjklasdfasdlfjasdfj8f7uas8987f89asd7f89asdfasdfF7asduf89asdfas0×84',
+  fee         : 100,
+  feePriority : 'standard',
+  feeRate     : '5 sat/vbyte',
+  total       : 10100, // amount + fee
+  
+  // Additional UI display values
+  fiatAmount : '$2.37 USD',
+  fiatFee    : '$0.02 USD',
+  fiatTotal  : '$2.39 USD',
+  
+  confirmations    : 3,
+  confirmationTime : '10 minutes',
+  date             : new Date('2023-04-15T14:30:00'),
+  txid             : 'a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d',
+  memo             : 'Payment for coffee'
+}

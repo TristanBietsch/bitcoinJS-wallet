@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Transaction } from '@/src/types/transaction'
-import { getTransactionById } from '@/src/services/transaction'
+import { mockTransactionDetails } from '@/tests/mockData/transactionData'
 
 /**
  * Hook for fetching and managing transaction details
@@ -24,8 +24,12 @@ export function useTransactionDetails(transactionId: string | undefined) {
       }
       
       try {
-        const txData = await getTransactionById(transactionId)
-        setTransaction(txData)
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // In a real app, we would fetch transaction data from an API
+        // For now, we're just using mock data
+        setTransaction(mockTransactionDetails as unknown as Transaction)
       } catch (err) {
         console.error('Error fetching transaction:', err)
         setError(err instanceof Error ? err : new Error('Failed to fetch transaction'))

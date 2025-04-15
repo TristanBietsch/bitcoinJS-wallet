@@ -15,4 +15,13 @@ export interface Transaction {
   memo?: string;
   txid?: string; 
   confirmations?: number;
+  
+  // Additional UI display fields
+  fiatAmount?: string;
+  fiatFee?: string;
+  fiatTotal?: string;
+  total?: number;
+  feePriority?: string;
+  feeRate?: string;
+  confirmationTime?: string;
 } 
