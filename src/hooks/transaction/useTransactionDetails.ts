@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Transaction } from '@/src/types/transaction'
-import { mockTransactionDetails } from '@/tests/mockData/transactionData'
+import { mockTransactions } from '@/tests/mockData/transactionData'
+
+// Mock conversion rate: 1 USD = 42105.26 sats (approximately $23,750 per BTC)
+const USD_TO_SATS_RATE = 42105.26
 
 /**
  * Hook for fetching and managing transaction details
@@ -27,9 +30,38 @@ export function useTransactionDetails(transactionId: string | undefined) {
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 500))
         
-        // In a real app, we would fetch transaction data from an API
-        // For now, we're just using mock data
-        setTransaction(mockTransactionDetails as unknown as Transaction)
+        // Find the transaction in mockTransactions
+        const foundTransaction = mockTransactions.find(tx => tx.id === transactionId)
+        
+        if (!foundTransaction) {
+          throw new Error('Transaction not found')
+        }
+
+        // Convert USD amounts to sats
+        const amountInSats = Math.round(foundTransaction.amount * USD_TO_SATS_RATE)
+        const feeInSats = foundTransaction.fee ? Math.round(foundTransaction.fee * USD_TO_SATS_RATE) : undefined
+        const totalInSats = feeInSats ? amountInSats + feeInSats : amountInSats
+
+        // Transform the transaction data to match the UI needs
+        const transformedTransaction: Transaction = {
+          id         : foundTransaction.id,
+          type       : foundTransaction.type,
+          amount     : amountInSats,
+          currency   : 'sats',
+          date       : new Date(foundTransaction.timestamp),
+          recipient  : foundTransaction.address,
+          status     : foundTransaction.status === 'confirmed' ? 'completed' : foundTransaction.status,
+          fee        : feeInSats,
+          txid       : foundTransaction.hash,
+          // Original USD values
+          fiatAmount : `= $${foundTransaction.amount.toFixed(2)} USD`,
+          fiatFee    : foundTransaction.fee ? `= $${foundTransaction.fee.toFixed(2)} USD` : undefined,
+          fiatTotal  : `= $${(foundTransaction.amount + (foundTransaction.fee || 0)).toFixed(2)} USD`,
+          total      : totalInSats,
+          feeRate    : feeInSats ? '5 sat/vbyte' : undefined,
+        }
+        
+        setTransaction(transformedTransaction)
       } catch (err) {
         console.error('Error fetching transaction:', err)
         setError(err instanceof Error ? err : new Error('Failed to fetch transaction'))

@@ -1,7 +1,8 @@
 import React from 'react'
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native'
-import { useRouter } from 'expo-router'
-import { ChevronLeft, ExternalLink } from 'lucide-react-native'
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator, Linking } from 'react-native'
+import { useRouter, useLocalSearchParams } from 'expo-router'
+import { ChevronLeft, ExternalLink, ArrowUpRight, ArrowDownLeft, ArrowRight } from 'lucide-react-native'
+import { useTransactionDetails } from '@/src/hooks/transaction'
 
 const BackButton = ({ onPress }: { onPress: () => void }) => (
   <TouchableOpacity style={styles.backButton} onPress={onPress}>
@@ -9,44 +10,91 @@ const BackButton = ({ onPress }: { onPress: () => void }) => (
   </TouchableOpacity>
 )
 
-const StatusIcon = () => (
+const StatusIcon = ({ type }: { type: 'send' | 'receive' }) => (
   <View style={styles.statusIconContainer}>
-    <View style={styles.statusIcon}>
-      <Text style={styles.checkmark}>✓</Text>
+    <View style={[ styles.statusIcon, type === 'receive' ? styles.receiveIcon : styles.sendIcon ]}>
+      {type === 'send' ? (
+        <ArrowUpRight size={32} color="#FFFFFF" />
+      ) : (
+        <ArrowDownLeft size={32} color="#FFFFFF" />
+      )}
     </View>
-    <Text style={styles.statusText}>Sent</Text>
+    <Text style={styles.statusText}>{type === 'send' ? 'Sent' : 'Received'}</Text>
   </View>
 )
 
-const TransactionField = ({ label, value, subValue, isAddress = false }: {
+const TransactionField = ({ label, value, subValue, isAddress = false, showArrow = false }: {
   label: string
   value: string | number
   subValue?: string
   isAddress?: boolean
+  showArrow?: boolean
 }) => (
   <View style={styles.field}>
     <View style={styles.fieldRow}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <View style={styles.fieldValueWrapper}>
-        <Text style={[ styles.fieldValue, isAddress && styles.addressText ]}>{value}</Text>
+        <View style={styles.valueRow}>
+          <Text style={[ styles.fieldValue, isAddress && styles.addressText ]}>{value}</Text>
+          {showArrow && <ArrowRight size={16} color="#000000" style={styles.arrowIcon} />}
+        </View>
         {subValue && <Text style={styles.subValue}>{subValue}</Text>}
       </View>
     </View>
   </View>
 )
 
-const MempoolButton = () => (
-  <TouchableOpacity style={styles.mempoolButton}>
-    <Text style={styles.mempoolButtonText}>View on Mempool</Text>
-    <ExternalLink size={16} color="#000" />
-  </TouchableOpacity>
-)
+const MempoolButton = ({ txid }: { txid?: string }) => {
+  const handlePress = () => {
+    if (txid) {
+      Linking.openURL(`https://mempool.space/tx/${txid}`)
+    }
+  }
+  
+  return (
+    <TouchableOpacity 
+      style={styles.mempoolButton} 
+      onPress={handlePress}
+      disabled={!txid}
+    >
+      <Text style={styles.mempoolButtonText}>View on Mempool</Text>
+      <ExternalLink size={16} color="#000" />
+    </TouchableOpacity>
+  )
+}
+
+const formatNumber = (num: number | undefined): string => {
+  if (num === undefined) return '0'
+  return num.toLocaleString('en-US')
+}
 
 export default function TransactionDetailsScreen() {
   const router = useRouter()
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const { transaction, loading, error } = useTransactionDetails(id)
   
   const handleBackPress = () => {
     router.back()
+  }
+
+  if (loading) {
+    return (
+      <View style={[ styles.container, styles.centerContent ]}>
+        <BackButton onPress={handleBackPress} />
+        <ActivityIndicator size="large" color="#2196F3" />
+      </View>
+    )
+  }
+
+  if (error || !transaction) {
+    return (
+      <View style={[ styles.container, styles.centerContent ]}>
+        <BackButton onPress={handleBackPress} />
+        <Text style={styles.errorText}>
+          {error ? 'Error loading transaction' : 'Transaction not found'}
+        </Text>
+      </View>
+    )
   }
 
   return (
@@ -55,35 +103,39 @@ export default function TransactionDetailsScreen() {
       
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          <StatusIcon />
+          <StatusIcon type={transaction.type} />
           
           <View style={styles.detailsContainer}>
             <TransactionField 
-              label="Amount" 
-              value="10000 sats"
-              subValue="= $2.37 USD"
+              label={transaction.type === 'send' ? 'Amount Sent' : 'Amount Received'}
+              value={`${formatNumber(transaction.amount)} ${transaction.currency}`}
+              subValue={transaction.fiatAmount}
             />
             
             <TransactionField 
-              label="To address" 
-              value="b3289asjklasdfasdlfjasdfj8f7uas8987f89asd7f89asdfasdff7asduf89asdfas0×84"
+              label={transaction.type === 'send' ? 'To Address' : 'From Address'}
+              value={transaction.recipient || ''}
               isAddress
             />
             
-            <TransactionField 
-              label="Fee" 
-              value="100 sats"
-              subValue="xxxx sat/vbyte"
-            />
+            <View style={styles.fieldFee}>
+              <TransactionField 
+                label="Fee" 
+                value="100 sats"
+                subValue="xxxx sat/byte"
+              />
+            </View>
             
-            <TransactionField 
-              label="Total" 
-              value="10100 sats"
-              subValue="= 3.37 USD"
-            />
+            <View style={styles.fieldTotal}>
+              <TransactionField 
+                label="Total" 
+                value={`${formatNumber(transaction.total)} ${transaction.currency}`}
+                subValue={transaction.fiatTotal}
+              />
+            </View>
           </View>
           
-          <MempoolButton />
+          <MempoolButton txid={transaction.txid} />
         </View>
       </ScrollView>
     </View>
@@ -93,7 +145,17 @@ export default function TransactionDetailsScreen() {
 const styles = StyleSheet.create({
   container : {
     flex            : 1,
-    backgroundColor : '#FFFFFF'
+    backgroundColor : '#FFFFFF',
+  },
+  centerContent : {
+    justifyContent : 'center',
+    alignItems     : 'center',
+  },
+  errorText : {
+    fontSize  : 16,
+    color     : '#F44336',
+    textAlign : 'center',
+    marginTop : 16,
   },
   backButton : {
     position       : 'absolute',
@@ -104,7 +166,7 @@ const styles = StyleSheet.create({
     height         : 40,
     borderRadius   : 20,
     justifyContent : 'center',
-    alignItems     : 'center'
+    alignItems     : 'center',
   },
   scrollView : {
     flex      : 1,
@@ -118,20 +180,22 @@ const styles = StyleSheet.create({
   },
   statusIconContainer : {
     alignItems   : 'center',
-    marginBottom : 40,
+    marginBottom : 48,
   },
   statusIcon : {
     width           : 64,
     height          : 64,
     borderRadius    : 32,
-    backgroundColor : '#4CAF50',
+    backgroundColor : '#000000',
     justifyContent  : 'center',
     alignItems      : 'center',
     marginBottom    : 16,
   },
-  checkmark : {
-    color    : '#FFFFFF',
-    fontSize : 32,
+  sendIcon : {
+    backgroundColor : '#000000',
+  },
+  receiveIcon : {
+    backgroundColor : '#000000',
   },
   statusText : {
     fontSize   : 24,
@@ -139,30 +203,47 @@ const styles = StyleSheet.create({
   },
   detailsContainer : {
     width             : '100%',
-    marginBottom      : 40,
+    marginBottom      : 48,
     paddingHorizontal : 16,
   },
   field : {
-    marginBottom : 32,
-    width        : '100%',
+    marginBottom : 40,
+    width       : '100%',
   },
-  fieldRow : {
+  fieldFee : {
+    width          : '100%',
+    marginBottom   : 16,
+    marginTop      : 16
+  },
+  fieldTotal : {
+    width       : '100%',
+    marginTop   : 16,
+  },
+  fieldRow: {
     flexDirection  : 'row',
     alignItems     : 'flex-start',
     justifyContent : 'space-between',
-    gap            : 20,
+    gap           : 20,
   },
-  fieldLabel : {
+  valueRow: {
+    flexDirection : 'row',
+    alignItems    : 'center',
+    gap          : 4,
+  },
+  arrowIcon: {
+    marginLeft : 4,
+  },
+  fieldLabel: {
     fontSize   : 16,
     color      : '#666666',
     flex       : 1,
     paddingTop : 4,
   },
-  fieldValueWrapper : {
+  fieldValueWrapper: {
     flex       : 2,
     alignItems : 'flex-end',
   },
-  fieldValue : {
+  fieldValue: {
     fontSize   : 18,
     fontWeight : '500',
     textAlign  : 'right',
@@ -184,8 +265,9 @@ const styles = StyleSheet.create({
   mempoolButton : {
     flexDirection   : 'row',
     alignItems      : 'center',
-    gap             : 8,
-    paddingVertical : 12,
+    gap            : 8,
+    paddingVertical : 16,
+    marginTop       : 8,
   },
   mempoolButtonText : {
     fontSize   : 16,
