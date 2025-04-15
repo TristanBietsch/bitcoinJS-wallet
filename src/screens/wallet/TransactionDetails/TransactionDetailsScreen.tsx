@@ -1,9 +1,7 @@
 import React from 'react'
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Text } from 'react-native'
-import { useRouter, useLocalSearchParams } from 'expo-router'
-import { ChevronLeft, Check } from 'lucide-react-native'
-import { useTransactionDetails } from '@/src/hooks/transaction'
-import { TransactionDetails as TransactionDetailsComponent } from '@/src/components/features/Transaction/Details'
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native'
+import { useRouter } from 'expo-router'
+import { ChevronLeft, ExternalLink } from 'lucide-react-native'
 
 const BackButton = ({ onPress }: { onPress: () => void }) => (
   <TouchableOpacity style={styles.backButton} onPress={onPress}>
@@ -11,35 +9,44 @@ const BackButton = ({ onPress }: { onPress: () => void }) => (
   </TouchableOpacity>
 )
 
+const StatusIcon = () => (
+  <View style={styles.statusIconContainer}>
+    <View style={styles.statusIcon}>
+      <Text style={styles.checkmark}>✓</Text>
+    </View>
+    <Text style={styles.statusText}>Sent</Text>
+  </View>
+)
+
+const TransactionField = ({ label, value, subValue, isAddress = false }: {
+  label: string
+  value: string | number
+  subValue?: string
+  isAddress?: boolean
+}) => (
+  <View style={styles.field}>
+    <View style={styles.fieldRow}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.fieldValueWrapper}>
+        <Text style={[ styles.fieldValue, isAddress && styles.addressText ]}>{value}</Text>
+        {subValue && <Text style={styles.subValue}>{subValue}</Text>}
+      </View>
+    </View>
+  </View>
+)
+
+const MempoolButton = () => (
+  <TouchableOpacity style={styles.mempoolButton}>
+    <Text style={styles.mempoolButtonText}>View on Mempool</Text>
+    <ExternalLink size={16} color="#000" />
+  </TouchableOpacity>
+)
+
 export default function TransactionDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { transaction, loading, error } = useTransactionDetails(id)
   
   const handleBackPress = () => {
     router.back()
-  }
-  
-  // Show loading state
-  if (loading) {
-    return (
-      <View style={ [ styles.container, styles.loadingContainer ] }>
-        <BackButton onPress={handleBackPress} />
-        <ActivityIndicator size="large" color="#2196F3" />
-      </View>
-    )
-  }
-  
-  // Show error state if transaction not found or error occurred
-  if (error || !transaction) {
-    return (
-      <View style={ [ styles.container, styles.errorContainer ] }>
-        <BackButton onPress={handleBackPress} />
-        <Text style={styles.errorText}>
-          {error ? 'Error loading transaction' : 'Transaction not found'}
-        </Text>
-      </View>
-    )
   }
 
   return (
@@ -47,22 +54,36 @@ export default function TransactionDetailsScreen() {
       <BackButton onPress={handleBackPress} />
       
       <ScrollView style={styles.scrollView}>
-        <View style={styles.card}>
-          {/* Transaction Header */}
-          <View style={styles.headerContainer}>
-            <View style={styles.iconContainer}>
-              <Check size={28} color="#FFFFFF" />
-            </View>
-            <Text style={styles.headerTitle}>
-              {transaction.type === 'send' ? 'Sent' : 'Received'}
-            </Text>
+        <View style={styles.content}>
+          <StatusIcon />
+          
+          <View style={styles.detailsContainer}>
+            <TransactionField 
+              label="Amount" 
+              value="10000 sats"
+              subValue="= $2.37 USD"
+            />
+            
+            <TransactionField 
+              label="To address" 
+              value="b3289asjklasdfasdlfjasdfj8f7uas8987f89asd7f89asdfasdff7asduf89asdfas0×84"
+              isAddress
+            />
+            
+            <TransactionField 
+              label="Fee" 
+              value="100 sats"
+              subValue="xxxx sat/vbyte"
+            />
+            
+            <TransactionField 
+              label="Total" 
+              value="10100 sats"
+              subValue="= 3.37 USD"
+            />
           </View>
-
-          {/* Transaction Details */}
-          <TransactionDetailsComponent 
-            transaction={transaction}
-            showFee={true}
-          />
+          
+          <MempoolButton />
         </View>
       </ScrollView>
     </View>
@@ -72,20 +93,7 @@ export default function TransactionDetailsScreen() {
 const styles = StyleSheet.create({
   container : {
     flex            : 1,
-    backgroundColor : '#F8F9FA',
-  },
-  loadingContainer : {
-    justifyContent : 'center',
-    alignItems     : 'center',
-  },
-  errorContainer : {
-    justifyContent : 'center',
-    alignItems     : 'center',
-  },
-  errorText : {
-    fontSize   : 18,
-    color      : '#F44336',
-    fontWeight : '500',
+    backgroundColor : '#FFFFFF'
   },
   backButton : {
     position       : 'absolute',
@@ -96,51 +104,91 @@ const styles = StyleSheet.create({
     height         : 40,
     borderRadius   : 20,
     justifyContent : 'center',
-    alignItems     : 'center',
+    alignItems     : 'center'
   },
   scrollView : {
     flex      : 1,
     marginTop : 70,
   },
-  card : {
-    margin          : 16,
-    backgroundColor : '#FFFFFF',
-    borderRadius    : 12,
-    padding         : 16,
-    shadowColor     : '#000',
-    shadowOffset    : {
-      width  : 0,
-      height : 2,
-    },
-    shadowOpacity : 0.1,
-    shadowRadius  : 3.84,
-    elevation     : 5,
+  content : {
+    flex              : 1,
+    alignItems        : 'center',
+    paddingHorizontal : 20,
+    paddingTop        : 40,
   },
-  headerContainer : {
-    alignItems     : 'center',
-    justifyContent : 'center',
-    marginBottom   : 32,
-    marginTop      : 16,
+  statusIconContainer : {
+    alignItems   : 'center',
+    marginBottom : 40,
   },
-  iconContainer : {
+  statusIcon : {
     width           : 64,
     height          : 64,
     borderRadius    : 32,
-    backgroundColor : '#00C853',
+    backgroundColor : '#4CAF50',
     justifyContent  : 'center',
     alignItems      : 'center',
     marginBottom    : 16,
-    borderWidth     : 0,
-    borderColor     : '#00C853',
-    shadowColor     : '#000',
-    shadowOffset    : { width: 0, height: 1 },
-    shadowOpacity   : 0.2,
-    shadowRadius    : 2,
-    elevation       : 3,
   },
-  headerTitle : {
+  checkmark : {
+    color    : '#FFFFFF',
+    fontSize : 32,
+  },
+  statusText : {
     fontSize   : 24,
-    fontWeight : 'bold',
-    color      : '#000000',
+    fontWeight : '600',
+  },
+  detailsContainer : {
+    width             : '100%',
+    marginBottom      : 40,
+    paddingHorizontal : 16,
+  },
+  field : {
+    marginBottom : 32,
+    width        : '100%',
+  },
+  fieldRow : {
+    flexDirection  : 'row',
+    alignItems     : 'flex-start',
+    justifyContent : 'space-between',
+    gap            : 20,
+  },
+  fieldLabel : {
+    fontSize   : 16,
+    color      : '#666666',
+    flex       : 1,
+    paddingTop : 4,
+  },
+  fieldValueWrapper : {
+    flex       : 2,
+    alignItems : 'flex-end',
+  },
+  fieldValue : {
+    fontSize   : 18,
+    fontWeight : '500',
+    textAlign  : 'right',
+    lineHeight : 24,
+  },
+  addressText : {
+    fontSize   : 14,
+    width      : '100%',
+    flexWrap   : 'wrap',
+    lineHeight : 20,
+  },
+  subValue : {
+    fontSize  : 14,
+    color     : '#666666',
+    marginTop : 4,
+    textAlign : 'right',
+    opacity   : 0.8,
+  },
+  mempoolButton : {
+    flexDirection   : 'row',
+    alignItems      : 'center',
+    gap             : 8,
+    paddingVertical : 12,
+  },
+  mempoolButtonText : {
+    fontSize   : 16,
+    fontWeight : '500',
   },
 }) 

@@ -3,7 +3,7 @@ import { View, Modal, TouchableOpacity, StyleSheet, Text } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'  
 import { ChevronLeft } from 'lucide-react-native'
 import { CustomFee } from '@/src/types/transaction/send.types'
-import { NumberPad } from '@/src/components/features/Send/Amount/NumberPad'
+import { NumberPad } from '@/src/components/Send/Amount/NumberPad'
 import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
 
 interface CustomFeeModalProps {
