@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
-import { useBitcoinPrice, CurrencyType } from './useBitcoinPrice'
+import { useBitcoinPriceConverter, CurrencyType } from '@/src/hooks/send'
 
 export const useSendAmount = () => {
   const router = useRouter()
@@ -18,7 +18,7 @@ export const useSendAmount = () => {
   const [ conversionDisabled, setConversionDisabled ] = useState(false)
   
   // Get Bitcoin price and conversion utilities
-  const { isLoading, error, convertAmount } = useBitcoinPrice()
+  const { isLoading, error, convertAmount } = useBitcoinPriceConverter()
   
   // Dummy balance for display
   const balance = '$2,257.65'

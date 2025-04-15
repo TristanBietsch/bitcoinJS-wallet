@@ -7,7 +7,7 @@ export type CurrencyType = 'USD' | 'BTC' | 'SATS'
 // Constants
 const SATS_PER_BTC = 100000000 // 1 BTC = 100,000,000 SATS (this is a fixed value)
 
-export const useBitcoinPrice = () => {
+export const useBitcoinPriceConverter = () => {
   const [ btcPrice, setBtcPrice ] = useState<number | null>(null)
   const [ isLoading, setIsLoading ] = useState(false)
   const [ error, setError ] = useState<string | null>(null)

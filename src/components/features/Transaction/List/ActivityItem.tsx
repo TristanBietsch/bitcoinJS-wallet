@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Transaction } from '@/tests/mockData/transactionData'
 import { fonts } from '@/src/constants/fonts'
+import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native'
 
 // Helper function to truncate blockchain addresses
 const truncateAddress = (address: string): string => {
@@ -39,7 +40,13 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
       activeOpacity={onPress ? 0.7 : 1}
     >
       <View style={styles.iconContainer}>
-        <View style={styles.icon} />
+        <View style={[ styles.icon, type === 'receive' ? styles.receiveIcon : styles.sendIcon ]}>
+          {type === 'send' ? (
+            <ArrowUpRight size={20} color="#F44336" />
+          ) : (
+            <ArrowDownLeft size={20} color="#4CAF50" />
+          )}
+        </View>
       </View>
       
       <View style={styles.detailsContainer}>
@@ -74,9 +81,15 @@ const styles = StyleSheet.create({
     width           : 40,
     height          : 40,
     borderRadius    : 20,
-    backgroundColor : '#E0E0E0',
+    backgroundColor : '#FFFFFF',
     justifyContent  : 'center',
     alignItems      : 'center',
+  },
+  sendIcon : {
+    backgroundColor : '#FFEBEE',
+  },
+  receiveIcon : {
+    backgroundColor : '#E8F5E9',
   },
   detailsContainer : {
     flex           : 1,

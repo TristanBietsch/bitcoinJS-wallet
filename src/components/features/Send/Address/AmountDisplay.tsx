@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { CurrencyType } from '@/src/hooks/send/useBitcoinPrice'
+import { CurrencyType } from '@/src/hooks/send/useBitcoinPriceConverter'
 
 interface AmountDisplayProps {
   amount: string

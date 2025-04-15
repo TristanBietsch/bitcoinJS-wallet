@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet, ActivityIndicator } from 'react-native'
 import Dropdown from '@/src/components/ui/Dropdown'
-import { CurrencyType } from '@/src/hooks/send/useBitcoinPrice'
+import { CurrencyType } from '@/src/hooks/send/useBitcoinPriceConverter'
 
 // Currency options for the dropdown
 const CURRENCY_OPTIONS = [

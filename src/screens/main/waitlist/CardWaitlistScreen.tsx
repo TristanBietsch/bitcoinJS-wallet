@@ -14,7 +14,7 @@ import { ArrowRight } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ThemedView } from '@/src/components/ui/View'
 import { FeatureChips } from '@/src/components/features/Card/FeatureChips'
-import { useWaitlist } from '@/src/hooks/useWaitlist'
+import { useWaitlist } from '@/src/hooks/useWaitlist/useWaitlist'
 import { Colors } from '@/src/constants/colors'
 import useColorScheme from '@/src/hooks/ui/useColorScheme'
 

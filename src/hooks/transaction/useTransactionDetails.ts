@@ -58,7 +58,7 @@ export function useTransactionDetails(transactionId: string | undefined) {
           fiatFee    : foundTransaction.fee ? `= $${foundTransaction.fee.toFixed(2)} USD` : undefined,
           fiatTotal  : `= $${(foundTransaction.amount + (foundTransaction.fee || 0)).toFixed(2)} USD`,
           total      : totalInSats,
-          feeRate    : feeInSats ? '5 sat/vbyte' : undefined,
+          feeRate    : feeInSats ? '5' : undefined,
         }
         
         setTransaction(transformedTransaction)
