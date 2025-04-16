@@ -4,7 +4,7 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ChevronLeft, ExternalLink } from 'lucide-react-native'
 import { useSendStore } from '@/src/store/sendStore'
-import { transactionFees } from '@/tests/mockData/transactionData'
+import { transactionFees, mockTransactions } from '@/tests/mockData/transactionData'
 import { formatCurrency } from '@/tests/mockData/walletData'
 
 // Speed options with their fees (matching SendAddressScreen)
@@ -143,7 +143,14 @@ export default function SendConfirmScreen() {
       {/* Send Button */}
       <TouchableOpacity 
         style={styles.sendButton}
-        onPress={() => console.log('Sending transaction...')}
+        onPress={() => {
+          // For now, simulate a successful transaction
+          const newTransactionId = (mockTransactions.length + 1).toString()
+          router.replace({
+            pathname : '/wallet/success',
+            params   : { transactionId: newTransactionId }
+          } as any)
+        }}
       >
         <ThemedText style={styles.sendButtonText}>Send</ThemedText>
       </TouchableOpacity>
