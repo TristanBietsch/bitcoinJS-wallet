@@ -1,16 +1,16 @@
 import React from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import { Stack } from 'expo-router'
-import { ThemedText } from '@/src/components/ui/Text'
-import { ChevronLeft } from 'lucide-react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
+import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
+import ScreenFooter from '@/src/components/layout/ScreenFooter'
+import ActionButton from '@/src/components/ui/Button/ActionButton'
 import { AddressInput } from '@/src/components/features/Send/Address/AddressInput'
 import { SpeedSelection } from '@/src/components/features/Send/Fees/SpeedSelection'
 import { useSendAddressScreen } from '@/src/hooks/send/useSendAddressScreen'
 
 export default function SendAddressScreen() {
-  const insets = useSafeAreaInsets()
-  
   const {
     // State
     address,
@@ -39,13 +39,7 @@ export default function SendAddressScreen() {
   } = useSendAddressScreen()
 
   return (
-    <View style={[
-      styles.container,
-      {
-        paddingTop    : insets.top,
-        paddingBottom : insets.bottom
-      }
-    ]}>
+    <SafeAreaContainer>
       <Stack.Screen 
         options={{
           headerShown : false
@@ -53,17 +47,7 @@ export default function SendAddressScreen() {
       />
 
       {/* Custom Back Button */}
-      <TouchableOpacity 
-        style={[
-          styles.backButton,
-          {
-            top : insets.top + 10
-          }
-        ]} 
-        onPress={handleBackPress}
-      >
-        <ChevronLeft size={24} color="black" />
-      </TouchableOpacity>
+      <BackButton onPress={handleBackPress} />
 
       <View style={styles.content}>
         {/* Address Input Section */}
@@ -94,53 +78,22 @@ export default function SendAddressScreen() {
         />
       </View>
 
-      {/* Next Button */}
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[ styles.nextButton, !address && styles.nextButtonDisabled ]}
+      {/* Next Button in Footer */}
+      <ScreenFooter>
+        <ActionButton
+          title="Next"
           onPress={handleNextPress}
           disabled={!address}
-        >
-          <ThemedText style={styles.nextButtonText}>Next</ThemedText>
-        </TouchableOpacity>
-      </View>
-    </View>
+        />
+      </ScreenFooter>
+    </SafeAreaContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex            : 1,
-    backgroundColor : '#fff'
-  },
   content : {
     flex      : 1,
     padding   : 20,
     marginTop : 80
-  },
-  footer : {
-    padding         : 20,
-    backgroundColor : '#fff',
-    borderTopWidth  : 1,
-    borderTopColor  : '#F0F0F0'
-  },
-  nextButton : {
-    backgroundColor : '#FF0000',
-    borderRadius    : 12,
-    height          : 56,
-    justifyContent  : 'center',
-    alignItems      : 'center'
-  },
-  nextButtonDisabled : {
-    opacity : 0.5
-  },
-  nextButtonText : {
-    color      : '#fff',
-    fontSize   : 16,
-    fontWeight : '600'
-  },
-  backButton : {
-    position : 'absolute',
-    left     : 10
   }
 }) 
