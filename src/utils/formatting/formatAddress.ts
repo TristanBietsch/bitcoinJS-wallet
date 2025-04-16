@@ -15,4 +15,23 @@ export const truncateAddress = (
   if (address.length <= startChars + endChars) return address
   
   return `${address.slice(0, startChars)}...${address.slice(-endChars)}`
+}
+
+/**
+ * Formats a Bitcoin address into multiple lines for readable display
+ * @param address The full Bitcoin address
+ * @param lineLength Length of each line (default: 20)
+ * @returns Array of address segments split into lines
+ */
+export const formatAddressIntoLines = (
+  address: string,
+  lineLength: number = 20
+): string[] => {
+  if (!address) return []
+  
+  return [
+    address.slice(0, lineLength),
+    address.slice(lineLength, lineLength * 2),
+    address.slice(lineLength * 2)
+  ].filter(Boolean)
 } 
