@@ -1,21 +1,26 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
-import { Stack, useRouter } from 'expo-router'
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
 import { Check } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
 import { mockTransactions } from '@/tests/mockData/transactionData'
 
-export default function SuccessScreen() {
+type SuccessScreenParams = {
+  transactionId?: string
+}
+
+export default function SendSuccessScreen() {
   const router = useRouter()
+  const params = useLocalSearchParams<SuccessScreenParams>()
 
   const handleGoHome = () => {
     router.replace('/')
   }
 
   const handleViewDetails = () => {
-    // For now, we'll use the first mock transaction's ID if none provided
-    const targetId = mockTransactions[0].id
+    // Use the provided transaction ID or find the first send transaction
+    const targetId = params.transactionId || mockTransactions.find(tx => tx.type === 'send')?.id || '2'
     router.push({
       pathname : '/transaction/[id]',
       params   : { id: targetId }

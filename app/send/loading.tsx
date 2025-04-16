@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router'
-import SuccessScreen from '@/src/screens/wallet/Send/SendSuccessScreen'
+import SendLoadingScreen from '@/src/screens/wallet/Send/SendLoadingScreen'
 
-export default function SuccessPage() {
+export default function LoadingPage() {
   return (
     <>
       <Stack.Screen
@@ -9,7 +9,7 @@ export default function SuccessPage() {
           headerShown : false
         }}
       />
-      <SuccessScreen />
+      <SendLoadingScreen />
     </>
   )
 } 

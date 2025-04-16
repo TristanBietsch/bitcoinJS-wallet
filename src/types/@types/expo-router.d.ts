@@ -11,6 +11,10 @@ declare module "expo-router" {
       address: string;
       speed: string;
     };
+    "/send/loading": {};
+    "/send/success": {
+      transactionId: string;
+    };
     
     // Camera routes
     "/send/camera": {};
@@ -19,6 +23,11 @@ declare module "expo-router" {
     // Transaction route
     "/transaction/[id]": {
       id: string;
+    };
+    
+    // Wallet routes
+    "/wallet/success": {
+      transactionId: string;
     };
   }
 }
