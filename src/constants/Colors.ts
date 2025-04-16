@@ -23,6 +23,16 @@ export const Colors = {
     errorRed        : '#FF4A6E',          // Error Red
     inactiveGray    : '#6F7390',      // Inactive Gray
     subtleBorder    : '#3B3E4A',      // Subtle Border
+    transaction     : {
+      send : {
+        icon       : '#F44336',
+        background : '#FFEBEE',
+      },
+      receive : {
+        icon       : '#4CAF50',
+        background : '#E8F5E9',
+      },
+    },
   },
   dark : {
     text            : '#ECEDEE',
@@ -31,5 +41,17 @@ export const Colors = {
     icon            : '#9BA1A6',
     tabIconDefault  : '#9BA1A6',
     tabIconSelected : tintColorDark,
+    transaction     : {
+      send : {
+        icon       : '#F44336',
+        background : '#FFEBEE',
+      },
+      receive : {
+        icon       : '#4CAF50',
+        background : '#E8F5E9',
+      },
+    },
   },
 }
+
+export const colors = Colors

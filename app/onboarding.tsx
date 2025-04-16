@@ -1,10 +1,16 @@
 import React from 'react'
 import OnboardingScreen from '@/src/screens/onboarding/OnboardingScreen'
+import { router } from 'expo-router'
+import { setOnboardingComplete } from '@/src/utils/storage'
 
-interface OnboardingProps {
-  onComplete: () => void;
-}
+export default function Onboarding() {
+  const handleOnboardingComplete = async () => {
+    // Mark onboarding as complete in storage
+    await setOnboardingComplete()
+    
+    // Navigate to home screen
+    router.replace('/' as any)
+  }
 
-export default function Onboarding({ onComplete }: OnboardingProps) {
-  return <OnboardingScreen onComplete={onComplete} />
+  return <OnboardingScreen onComplete={handleOnboardingComplete} />
 } 

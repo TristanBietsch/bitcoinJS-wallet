@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { OnboardingScreenProps } from '@/src/types/onboarding'
+import { OnboardingScreenProps } from '@/src/types/onboarding.types'
 import WelcomeScreen from './start/WelcomeScreen'
 import WalletChoiceScreen from './start/WalletChoiceScreen'
 import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen'

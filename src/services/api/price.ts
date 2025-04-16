@@ -3,11 +3,19 @@
  */
 import { TimeframePeriod, ChartDataResponse } from '@/src/types/price.types'
 import { EARLIEST_BITCOIN_TIMESTAMP } from '@/src/config/price'
+import { mockCurrentPriceResponse, mockHistoricalPriceResponse } from '@/tests/mockData/priceData'
+
+// Configuration for using mock data
+export const USE_MOCK_PRICE_DATA = true
 
 /**
  * Fetches current Bitcoin price from CoinGecko
  */
 export const fetchCurrentPrice = async (): Promise<number> => {
+  if (USE_MOCK_PRICE_DATA) {
+    return mockCurrentPriceResponse.bitcoin.usd
+  }
+
   const response = await fetch(
     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
   )
@@ -29,6 +37,10 @@ export const fetchCurrentPrice = async (): Promise<number> => {
  * Fetches historical Bitcoin price data from CoinGecko
  */
 export const fetchHistoricalPrices = async (timeframe: TimeframePeriod): Promise<ChartDataResponse> => {
+  if (USE_MOCK_PRICE_DATA) {
+    return mockHistoricalPriceResponse(timeframe)
+  }
+
   const nowTimestamp = Math.floor(Date.now() / 1000)
   let fromTimestamp = nowTimestamp
   

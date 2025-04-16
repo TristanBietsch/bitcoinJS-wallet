@@ -248,3 +248,78 @@ export const mockTransactions: Transaction[] = [
     hash      : 'z1x2c3v4b5n6m7a8s9d0f1g2h3j4k5l6'
   }
 ]
+
+// Mock data for transaction fees
+export const transactionFees = {
+  // Standard fee tiers
+  tiers : {
+    economy : {
+      sats                      : 3000,
+      usd                       : 2.13,
+      feeRate                   : 3,
+      estimatedConfirmationTime : 120 // in minutes
+    },
+    standard : {
+      sats                      : 5000,
+      usd                       : 3.55,
+      feeRate                   : 5,
+      estimatedConfirmationTime : 60 // in minutes
+    },
+    express : {
+      sats                      : 8000,
+      usd                       : 5.68,
+      feeRate                   : 8,
+      estimatedConfirmationTime : 20 // in minutes
+    }
+  },
+  
+  // Fee rate conversion factors
+  conversion : {
+    // Simplified conversion rates for calculations
+    satToDollar     : 0.00071, // 1 sat = $0.00071 USD
+    vbyteMultiplier : 400, // Simplified factor to convert sat/vbyte to total sats for avg tx
+    timeMultiplier  : 0.25 // Factor for time to fee rate conversion
+  },
+
+  // Calculate fee based on rate (sat/vbyte)
+  calculateFeeFromRate : (rate: number) => {
+    return Math.round(rate * 400) // Simple calculation assuming 400 vbytes per tx
+  },
+
+  // Estimate confirmation time from fee rate
+  estimateConfirmationTime : (feeRate: number) => {
+    // Higher fee rate = faster confirmation (simplified model)
+    return Math.max(10, Math.round(200 / feeRate))
+  },
+  
+  // Calculate fee rate from confirmation time
+  calculateRateFromTime : (minutes: number) => {
+    // Simple inverse relationship (faster = higher rate)
+    return Math.max(1, Math.round(200 / minutes))
+  }
+}
+
+// Detailed transaction for the transaction details screen
+export const mockTransactionDetails = {
+  id          : 'tx-001',
+  type        : 'send',
+  amount      : 10000,
+  currency    : 'sats',
+  status      : 'completed',
+  recipient   : 'b3289asjklasdfasdlfjasdfj8f7uas8987f89asd7f89asdfasdfF7asduf89asdfas0×84',
+  fee         : 100,
+  feePriority : 'standard',
+  feeRate     : '5 sat/vbyte',
+  total       : 10100, // amount + fee
+  
+  // Additional UI display values
+  fiatAmount : '$2.37 USD',
+  fiatFee    : '$0.02 USD',
+  fiatTotal  : '$2.39 USD',
+  
+  confirmations    : 3,
+  confirmationTime : '10 minutes',
+  date             : new Date('2023-04-15T14:30:00'),
+  txid             : 'a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d',
+  memo             : 'Payment for coffee'
+}

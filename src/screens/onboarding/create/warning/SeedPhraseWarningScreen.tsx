@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
-import { ThemedText } from '@/src/components/ThemedText'
-import { ThemedView } from '@/src/components/ThemedView'
+import { ThemedText } from '@/src/components/ui/Text'
+import { ThemedView } from '@/src/components/ui/View'
 
 interface SeedPhraseWarningScreenProps {
   onComplete: () => void;

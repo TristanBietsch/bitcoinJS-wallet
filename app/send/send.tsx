@@ -1,6 +1,6 @@
 import React from 'react'
-import SendBitcoinScreen from '@/src/screens/wallet/Send/SendScreen'
+import SendAddressScreen from '@/src/screens/wallet/Send/SendAddressScreen'
 
 export default function Send() {
-  return <SendBitcoinScreen />
+  return <SendAddressScreen />
 } 
