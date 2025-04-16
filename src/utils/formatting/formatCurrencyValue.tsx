@@ -1,8 +1,17 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { formatCurrency } from '@/tests/mockData/walletData'
 import { CurrencyType } from '@/src/types/currency.types'
+
+/**
+ * Formats a currency amount with the specified currency symbol
+ * @param amount The amount to format
+ * @param currencySymbol The currency symbol to use (defaults to $)
+ * @returns Formatted currency string
+ */
+export const formatCurrency = (amount: number, currencySymbol: string = '$'): string => {
+  return `${currencySymbol}${amount.toFixed(2)}`
+}
 
 /**
  * Formats currency values for display with proper styling 

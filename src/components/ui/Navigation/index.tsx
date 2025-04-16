@@ -31,7 +31,22 @@ const TABS = [
   },
 ]
 
-export function BottomNavigation() {
+// Simple container for bottom navigation
+// This maintains compatibility with imports from '@/src/components/ui/BottomNavigation'
+interface BottomNavigationContainerProps {
+  children?: React.ReactNode;
+}
+
+export const BottomNavigation: React.FC<BottomNavigationContainerProps> = ({ children }) => {
+  return (
+    <View style={containerStyles.container}>
+      {children}
+    </View>
+  )
+}
+
+// Main navigation component with tabs
+export function TabBottomNavigation() {
   const router = useRouter()
   const pathname = usePathname()
   const insets = useSafeAreaInsets()
@@ -80,6 +95,18 @@ export function BottomNavigation() {
     </View>
   )
 }
+
+const containerStyles = StyleSheet.create({
+  container : {
+    flexDirection   : 'row',
+    justifyContent  : 'space-around',
+    alignItems      : 'center',
+    height          : 60,
+    backgroundColor : '#fff',
+    borderTopWidth  : 1,
+    borderTopColor  : '#eee',
+  },
+})
 
 const styles = StyleSheet.create({
   container : {

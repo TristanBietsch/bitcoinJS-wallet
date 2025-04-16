@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar'
 import { StyleSheet } from 'react-native'
 import 'react-native-reanimated'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { BottomNavigation } from '@/src/components/ui/BottomNavigation'
+import { BottomNavigation } from '@/src/components/ui/Navigation'
 
 export default function AppNavigator() {
   return (

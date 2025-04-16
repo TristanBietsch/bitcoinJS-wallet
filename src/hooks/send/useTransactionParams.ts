@@ -4,12 +4,12 @@
 import { useLocalSearchParams } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
 import { CurrencyType } from '@/src/types/currency.types'
-import { calculateTransactionFee, getFeeInCurrency } from '@/src/utils/send/feeCalculations'
+import { calculateTransactionFee, getFeeInCurrency, TransactionFee } from '@/src/utils/send/feeCalculations'
 
 interface TransactionParams {
   amount: number
   currency: CurrencyType
-  fee: number
+  fee: TransactionFee
   feeInCurrency: number
   totalAmount: number
   address: string
@@ -21,11 +21,11 @@ interface TransactionParams {
  */
 export const useTransactionParams = (): TransactionParams => {
   const { address, speed, customFee } = useSendStore()
-  const params = useLocalSearchParams<{ amount: string; currency: string }>()
+  const params = useLocalSearchParams<Record<string, string | string[]>>()
   
   // Parse amount and currency from route params
-  const amount = parseFloat(params.amount || '0')
-  const currency = (params.currency || 'USD') as CurrencyType
+  const amount = parseFloat(params.amount as string || '0')
+  const currency = (params.currency as string || 'USD') as CurrencyType
   
   // Calculate fee based on selected speed or custom fee
   const fee = calculateTransactionFee(speed, customFee)

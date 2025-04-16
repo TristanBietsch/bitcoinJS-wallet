@@ -5,7 +5,7 @@ import React from 'react'
 import "@/global.css"
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AppProvider } from '@/src/components/layout/Container'
-import { BottomNavigation } from '@/src/components/ui/Navigation'
+import { TabBottomNavigation } from '@/src/components/ui/Navigation'
 import { View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { usePathname } from 'expo-router'
@@ -61,7 +61,7 @@ export default function RootLayout() {
           <View style={styles.content}>
             <Slot />
           </View>
-          {!shouldHideNav && <BottomNavigation />}
+          {!shouldHideNav && <TabBottomNavigation />}
           <StatusBar style="auto" />
         </AppProvider>
       </GestureHandlerRootView>

@@ -3,10 +3,6 @@
  */
 import { useRouter, useLocalSearchParams } from 'expo-router'
 
-interface TransactionNavigationParams {
-  transactionId?: string
-}
-
 interface TransactionNavigationResult {
   transactionId: string
   navigateToHome: () => void
@@ -18,10 +14,10 @@ interface TransactionNavigationResult {
  */
 export const useTransactionNavigation = (): TransactionNavigationResult => {
   const router = useRouter()
-  const params = useLocalSearchParams<TransactionNavigationParams>()
+  const params = useLocalSearchParams<Record<string, string | string[]>>()
   
   // Get transaction ID from params or use default
-  const transactionId = params.transactionId || '2' // ID 2 is a send transaction in mock data
+  const transactionId = params.transactionId as string || '2' // ID 2 is a send transaction in mock data
   
   // Navigate to home screen
   const navigateToHome = () => {
