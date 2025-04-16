@@ -5,6 +5,12 @@ import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
 import { mockTransactions } from '@/tests/mockData/transactionData'
 
+// Find an existing "send" transaction to use as reference
+const getExistingSendTransaction = () => {
+  const sendTransaction = mockTransactions.find(tx => tx.type === 'send')
+  return sendTransaction?.id || '2' // ID 2 is a send transaction in mock data
+}
+
 // Simulated transaction processing - in real app this would be a real API call
 const simulateTransaction = async () => {
   // Simulate network delay
@@ -17,8 +23,8 @@ const simulateTransaction = async () => {
     throw new Error('Transaction failed. Please try again.')
   }
   
-  // Return a new transaction ID
-  return (mockTransactions.length + 1).toString()
+  // Return an existing transaction ID that we know works
+  return getExistingSendTransaction()
 }
 
 export default function SendLoadingScreen() {

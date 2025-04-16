@@ -4,7 +4,6 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router'
 import { Check } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
-import { mockTransactions } from '@/tests/mockData/transactionData'
 
 type SuccessScreenParams = {
   transactionId?: string
@@ -19,8 +18,11 @@ export default function SendSuccessScreen() {
   }
 
   const handleViewDetails = () => {
-    // Use the provided transaction ID or find the first send transaction
-    const targetId = params.transactionId || mockTransactions.find(tx => tx.type === 'send')?.id || '2'
+    // Use the transaction ID from route params or a known valid send transaction ID
+    const targetId = params.transactionId || '2' // ID 2 is a send transaction in mock data
+    
+    console.log('Navigating to transaction details with ID:', targetId)
+    
     router.push({
       pathname : '/transaction/[id]',
       params   : { id: targetId }
