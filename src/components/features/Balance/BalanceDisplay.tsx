@@ -111,9 +111,9 @@ const styles = StyleSheet.create({
     alignItems     : 'center',
   },
   currencySelectorContainer : {
-    marginTop   : 10,
-    width       : '100%',
-    alignItems  : 'center',
+    marginTop  : 10,
+    width      : '100%',
+    alignItems : 'center',
   }
 })
 
