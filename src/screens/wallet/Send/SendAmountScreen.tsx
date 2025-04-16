@@ -1,10 +1,13 @@
 import React from 'react'
-import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Stack } from 'expo-router'
-import { ThemedText } from '@/src/components/ui/Text'
-import { ChevronLeft } from 'lucide-react-native'
-import { AmountDisplay } from '@/src/components/features/Send/Address/AmountDisplay'
-import { CurrencySelector, NumberPad } from '@/src/components/features/Send/Amount'
+
+// Import modularized components
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
+import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
+import ScreenFooter from '@/src/components/layout/ScreenFooter'
+import ActionButton from '@/src/components/ui/Button/ActionButton'
+import NumberPad from '@/src/components/ui/NumberPad'
+import AmountEntrySection from '@/src/components/features/Send/Amount/AmountEntrySection'
 import { useSendAmount } from '@/src/hooks/send/useSendAmount'
 
 export default function SendAmountScreen() {
@@ -21,7 +24,7 @@ export default function SendAmountScreen() {
   } = useSendAmount()
 
   return (
-    <View style={styles.container}>
+    <SafeAreaContainer>
       <Stack.Screen 
         options={{
           headerShown : false
@@ -29,85 +32,35 @@ export default function SendAmountScreen() {
       />
       
       {/* Custom Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <ChevronLeft size={24} color="black" />
-      </TouchableOpacity>
+      <BackButton onPress={handleBackPress} />
       
-      {/* Amount Display */}
-      <AmountDisplay
+      {/* Amount Entry Section */}
+      <AmountEntrySection
         amount={amount}
         currency={currency}
         balance={balance}
+        isLoading={isLoading}
+        onCurrencyChange={handleCurrencyChange}
       />
       
-      {/* Currency Selector */}
-      <View style={styles.currencySelectorContainer}>
-        <CurrencySelector
-          currency={currency}
-          isLoading={isLoading}
-          onCurrencyChange={handleCurrencyChange}
-        />
-      </View>
-      
-      <View style={styles.footerContainer}>
+      {/* Footer with Continue Button and Number Pad */}
+      <ScreenFooter withBorder={false}>
         {/* Continue Button */}
-        <TouchableOpacity 
-          style={styles.continueButton}
+        <ActionButton
+          title="Continue"
           onPress={handleContinue}
-        >
-          <ThemedText style={styles.continueButtonText}>Continue</ThemedText>
-        </TouchableOpacity>
+          style={{ 
+            marginBottom : 40,
+            borderRadius : 30
+          }}
+        />
         
         {/* Number Pad */}
         <NumberPad
           onNumberPress={handleNumberPress}
           onBackspace={handleBackspace}
         />
-      </View>
-    </View>
+      </ScreenFooter>
+    </SafeAreaContainer>
   )
-}
-
-const styles = StyleSheet.create({
-  container : {
-    flex            : 1,
-    backgroundColor : 'white',
-    padding         : 0,
-  },
-  backButton : {
-    position       : 'absolute',
-    top            : 70,
-    left           : 16,
-    zIndex         : 10,
-    width          : 40,
-    height         : 40,
-    borderRadius   : 20,
-    justifyContent : 'center',
-    alignItems     : 'center',
-  },
-  currencySelectorContainer : {
-    alignItems     : 'center',
-    justifyContent : 'center',
-    width          : '100%',
-  },
-  footerContainer : {
-    position      : 'absolute',
-    bottom        : 0,
-    left          : 0,
-    right         : 0,
-    paddingBottom : 32,
-  },
-  continueButton : {
-    backgroundColor  : 'red',
-    paddingVertical  : 16,
-    borderRadius     : 30,
-    marginBottom     : 40,
-    marginHorizontal : 24,
-    alignItems       : 'center',
-  },
-  continueButtonText : {
-    color      : 'white',
-    fontSize   : 16,
-    fontWeight : 'bold',
-  },
-}) 
+} 
