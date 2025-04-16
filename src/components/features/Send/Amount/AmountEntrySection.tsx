@@ -44,17 +44,17 @@ const AmountEntrySection: React.FC<AmountEntrySectionProps> = ({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    width: '100%',
+  container : {
+    alignItems     : 'center',
+    justifyContent : 'center',
+    marginTop      : 20,
+    width          : '100%',
   },
-  currencySelectorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    marginTop: 4,
+  currencySelectorContainer : {
+    alignItems     : 'center',
+    justifyContent : 'center',
+    width          : '100%',
+    marginTop      : 4,
   }
 })
 

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Stack } from 'expo-router'
 
-// Import modularized components
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
 import ScreenFooter from '@/src/components/layout/ScreenFooter'

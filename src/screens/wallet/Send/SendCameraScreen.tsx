@@ -1,9 +1,12 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
 import { Stack } from 'expo-router'
 import { AddressCamera } from '@/src/components/features/Send/Address/AddressCamera'
 import { useCameraScanner } from '@/src/hooks/send/useCameraScanner'
+import FullScreenContainer from '@/src/components/layout/FullScreenContainer'
 
+/**
+ * Camera screen for scanning QR codes with Bitcoin addresses
+ */
 export default function SendCameraScreen() {
   const {
     handleQRCodeScanned,
@@ -12,7 +15,7 @@ export default function SendCameraScreen() {
   } = useCameraScanner()
 
   return (
-    <View style={styles.container}>
+    <FullScreenContainer backgroundColor="#000">
       <Stack.Screen 
         options={{
           headerShown : false
@@ -24,13 +27,6 @@ export default function SendCameraScreen() {
         onClose={handleClose}
         onCameraError={handleCameraError}
       />
-    </View>
+    </FullScreenContainer>
   )
-}
-
-const styles = StyleSheet.create({
-  container : {
-    flex            : 1,
-    backgroundColor : '#000'
-  }
-}) 
+} 
