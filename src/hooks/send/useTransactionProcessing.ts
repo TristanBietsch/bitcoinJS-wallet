@@ -38,6 +38,16 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
   // Track processing completion
   const completedRef = useRef(false)
   
+  // Navigate to the error screen
+  const navigateToErrorScreen = () => {
+    // Still set the error state in case component is still mounted
+    setIsLoading(false)
+    setError("Error occurred during transaction")
+    
+    // Navigate to the error screen
+    router.replace('/send/error' as any)
+  }
+  
   useEffect(() => {
     // Store the initial error mode when the effect runs
     initialErrorModeRef.current = errorMode
@@ -57,18 +67,17 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
           // For validation errors, show immediately
           if (initialErrorModeRef.current === 'validation') {
             if (isMounted) {
-              setError('Transaction validation failed. This is a simulated validation error for testing purposes.')
-              setIsLoading(false)
+              // No need to set local error state, we'll navigate to error screen
               completedRef.current = true
+              navigateToErrorScreen()
             }
           } 
           // For network errors, wait then show
           else if (initialErrorModeRef.current === 'network') {
             await new Promise(resolve => setTimeout(resolve, 1500))
             if (isMounted) {
-              setError('Network error. Please check your connection and try again.')
-              setIsLoading(false)
               completedRef.current = true
+              navigateToErrorScreen()
             }
           }
           
@@ -79,9 +88,8 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
         // First check validation - this code will only run if errorMode is 'none'
         if (!isValid) {
           if (isMounted) {
-            setError(validationError)
-            setIsLoading(false)
             completedRef.current = true
+            navigateToErrorScreen()
           }
           return
         }
@@ -102,12 +110,11 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
             } as any)
           }
         }
-      } catch (err) {
-        // If we're still mounted, show error
+      } catch (_err) {
+        // If we're still mounted, navigate to error screen
         if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Transaction failed')
-          setIsLoading(false)
           completedRef.current = true
+          navigateToErrorScreen()
         }
       }
     }
