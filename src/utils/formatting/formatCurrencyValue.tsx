@@ -66,6 +66,59 @@ export const formatTotalWithUsdEquivalent = (
   )
 }
 
+/**
+ * Formats Bitcoin amounts with the appropriate number of decimal places
+ * BTC shows up to 8 decimal places, trimming trailing zeros
+ * SATS shows 0 decimal places, up to 9 digits
+ * USD shows 2 decimal places
+ * 
+ * @param amount The amount to format
+ * @param currency The currency type
+ * @returns Formatted string
+ */
+export const formatBitcoinAmount = (amount: string, currency: CurrencyType): string => {
+  // For USD, ensure 2 decimal places
+  if (currency === 'USD') {
+    const num = parseFloat(amount)
+    return num.toFixed(2)
+  }
+  
+  // For SATS, show as integer (no decimal places)
+  if (currency === 'SATS') {
+    // If there's a decimal point, only show the integer part
+    if (amount.includes('.')) {
+      return amount.split('.')[0]
+    }
+    
+    // Limit to 9 digits maximum
+    if (amount.length > 9) {
+      return amount.substring(0, 9)
+    }
+    
+    return amount
+  }
+  
+  // For BTC, show up to 8 decimal places without trailing zeros
+  const parts = amount.split('.')
+  if (parts.length === 1) {
+    return amount // No decimal point
+  }
+  
+  const integerPart = parts[0]
+  let decimalPart = parts[1]
+  
+  // Limit to 8 decimal places
+  if (decimalPart.length > 8) {
+    decimalPart = decimalPart.substring(0, 8)
+  }
+  
+  // Trim trailing zeros
+  decimalPart = decimalPart.replace(/0+$/, '')
+  
+  // Return the formatted amount
+  return decimalPart ? `${integerPart}.${decimalPart}` : integerPart
+}
+
 const styles = StyleSheet.create({
   satsContainer : {
     flexDirection : 'row',
