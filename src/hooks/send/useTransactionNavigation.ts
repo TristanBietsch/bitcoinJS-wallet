@@ -8,6 +8,7 @@ interface TransactionNavigationResult {
   transactionId: string
   navigateToHome: () => void
   navigateToDetails: () => void
+  navigateToErrorDetails: () => void
 }
 
 /**
@@ -38,9 +39,16 @@ export const useTransactionNavigation = (): TransactionNavigationResult => {
     } as any)
   }
   
+  // Navigate to error details screen
+  const navigateToErrorDetails = () => {
+    // Keep error mode when navigating to error details
+    router.push('/send/error-details' as any)
+  }
+  
   return {
     transactionId,
     navigateToHome,
-    navigateToDetails
+    navigateToDetails,
+    navigateToErrorDetails
   }
 } 

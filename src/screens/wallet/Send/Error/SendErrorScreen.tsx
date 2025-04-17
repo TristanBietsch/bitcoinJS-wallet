@@ -10,7 +10,7 @@ import { useSendStore } from '@/src/store/sendStore'
  * Screen displayed after a failed transaction
  */
 export default function SendErrorScreen() {
-  const { navigateToHome, navigateToDetails } = useTransactionNavigation()
+  const { navigateToHome, navigateToErrorDetails } = useTransactionNavigation()
   const { errorMode } = useSendStore()
   
   // Get the appropriate error message based on error mode
@@ -39,9 +39,9 @@ export default function SendErrorScreen() {
       {/* Action Buttons */}
       <ActionButtonGroup
         primaryText="Go Home"
-        secondaryText="Try Again"
+        secondaryText="Error Details"
         onPrimaryPress={navigateToHome}
-        onSecondaryPress={navigateToDetails}
+        onSecondaryPress={navigateToErrorDetails}
       />
     </StatusScreenLayout>
   )
