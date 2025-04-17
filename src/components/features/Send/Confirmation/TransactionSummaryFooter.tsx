@@ -29,15 +29,25 @@ const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
   totalAmountUsd,
   onSendPress
 }) => {
-  const { setForceError } = useSendStore()
+  const { setErrorMode } = useSendStore()
   
-  // Function to set force error flag and navigate to loading
-  const triggerErrorFlow = () => {
-    // Set the forceError flag to true in the store
-    setForceError(true)
-    
-    // Navigate to loading screen which will perform validation
-    // and show the error because forceError is true
+  // Setup handlers for each button
+  
+  // Normal send flow
+  const handleNormalSend = () => {
+    setErrorMode('none')
+    onSendPress()
+  }
+  
+  // Trigger validation error
+  const triggerValidationError = () => {
+    setErrorMode('validation')
+    onSendPress()
+  }
+  
+  // Trigger network error
+  const triggerNetworkError = () => {
+    setErrorMode('network')
     onSendPress()
   }
   
@@ -53,13 +63,25 @@ const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
         totalAmountUsd={totalAmountUsd}
       />
       
-      {/* Test Error Button */}
-      <TouchableOpacity style={styles.errorButton} onPress={triggerErrorFlow}>
-        <ThemedText style={styles.errorButtonText}>Trigger Send Error</ThemedText>
-      </TouchableOpacity>
+      {/* Test Error Buttons */}
+      <View style={styles.errorButtonsContainer}>
+        <TouchableOpacity 
+          style={[ styles.errorButton, styles.validationErrorButton ]} 
+          onPress={triggerValidationError}
+        >
+          <ThemedText style={styles.errorButtonText}>Validation Error</ThemedText>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[ styles.errorButton, styles.networkErrorButton ]} 
+          onPress={triggerNetworkError}
+        >
+          <ThemedText style={styles.errorButtonText}>Network Error</ThemedText>
+        </TouchableOpacity>
+      </View>
       
       {/* Send Button */}
-      <SendButton onPress={onSendPress} />
+      <SendButton onPress={handleNormalSend} />
     </View>
   )
 }
@@ -70,14 +92,25 @@ const styles = StyleSheet.create({
     justifyContent : 'space-between',
     paddingBottom  : 20
   },
-  errorButton : {
-    height           : 46,
-    backgroundColor  : '#FF5722',
-    borderRadius     : 23,
-    alignItems       : 'center',
-    justifyContent   : 'center',
+  errorButtonsContainer : {
+    flexDirection    : 'row',
+    justifyContent   : 'space-between',
     marginHorizontal : 20,
     marginBottom     : 10
+  },
+  errorButton : {
+    height         : 46,
+    flex           : 1,
+    borderRadius   : 23,
+    alignItems     : 'center',
+    justifyContent : 'center',
+  },
+  validationErrorButton : {
+    backgroundColor : '#FF5722',
+    marginRight     : 10
+  },
+  networkErrorButton : {
+    backgroundColor : '#E91E63'
   },
   errorButtonText : {
     color      : '#FFF',

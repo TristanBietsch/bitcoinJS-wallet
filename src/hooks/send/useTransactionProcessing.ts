@@ -1,10 +1,11 @@
 /**
  * Hook for handling transaction processing logic
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'expo-router'
 import { mockTransactions } from '@/tests/mockData/transactionData'
 import { useTransactionValidation } from '@/src/hooks/send/useTransactionValidation'
+import { useSendStore } from '@/src/store/sendStore'
 
 // Find an existing "send" transaction to use as reference
 const getExistingSendTransaction = () => {
@@ -12,25 +13,9 @@ const getExistingSendTransaction = () => {
   return sendTransaction?.id || '2' // ID 2 is a send transaction in mock data
 }
 
-// Simulated transaction processing - in real app this would be a real API call
-const simulateTransaction = async () => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  // Simulate 90% success rate (but only if validation passed)
-  const isSuccess = Math.random() < 0.9
-  
-  if (!isSuccess) {
-    throw new Error('Transaction failed. Network error occurred. Please try again.')
-  }
-  
-  // Return an existing transaction ID that we know works
-  return getExistingSendTransaction()
-}
-
 interface TransactionProcessingResult {
-  error: string | null
-  isLoading: boolean
+  error     : string | null
+  isLoading : boolean
 }
 
 /**
@@ -41,34 +26,100 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
   const [ error, setError ] = useState<string | null>(null)
   const [ isLoading, setIsLoading ] = useState(true)
   
-  // Get validation result from our validation hook
+  // Get store with initial error mode
+  const { errorMode, setErrorMode } = useSendStore()
+  
+  // Store the initial error mode when the component mounts
+  const initialErrorModeRef = useRef(errorMode)
+  
+  // Get validation result
   const { isValid, error: validationError } = useTransactionValidation()
   
+  // Track processing completion
+  const completedRef = useRef(false)
+  
   useEffect(() => {
+    // Store the initial error mode when the effect runs
+    initialErrorModeRef.current = errorMode
+    
+    // Flag to prevent state updates after unmounting
+    let isMounted = true
+    
     const processTransaction = async () => {
+      // If we've already completed processing, don't do it again
+      if (completedRef.current) {
+        return
+      }
+      
       try {
-        // First perform validation checks
-        if (!isValid) {
-          throw new Error(validationError || 'Validation failed')
+        // Skip normal processing if we're testing errors
+        if (initialErrorModeRef.current !== 'none') {
+          // For validation errors, show immediately
+          if (initialErrorModeRef.current === 'validation') {
+            if (isMounted) {
+              setError('Transaction validation failed. This is a simulated validation error for testing purposes.')
+              setIsLoading(false)
+              completedRef.current = true
+            }
+          } 
+          // For network errors, wait then show
+          else if (initialErrorModeRef.current === 'network') {
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            if (isMounted) {
+              setError('Network error. Please check your connection and try again.')
+              setIsLoading(false)
+              completedRef.current = true
+            }
+          }
+          
+          // Keep error mode set until user explicitly resets it
+          return
         }
         
-        // Then process the transaction
-        const transactionId = await simulateTransaction()
+        // First check validation - this code will only run if errorMode is 'none'
+        if (!isValid) {
+          if (isMounted) {
+            setError(validationError)
+            setIsLoading(false)
+            completedRef.current = true
+          }
+          return
+        }
         
-        // Navigate to success screen, using the app/send/success.tsx route
-        router.replace({
-          pathname : '/send/success',
-          params   : { transactionId }
-        } as any)
+        // Simulate processing time (only for normal flow)
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        // If we're still mounted and no error mode was set, navigate to success
+        if (isMounted && initialErrorModeRef.current === 'none') {
+          const transactionId = getExistingSendTransaction()
+          completedRef.current = true
+          
+          // Make sure error mode is still 'none' before navigating to success
+          if (initialErrorModeRef.current === 'none') {
+            router.replace({
+              pathname : '/send/success',
+              params   : { transactionId }
+            } as any)
+          }
+        }
       } catch (err) {
-        // If there's an error, show it and stop loading
-        setError(err instanceof Error ? err.message : 'Transaction failed')
-        setIsLoading(false)
+        // If we're still mounted, show error
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Transaction failed')
+          setIsLoading(false)
+          completedRef.current = true
+        }
       }
     }
     
+    // Start processing
     processTransaction()
-  }, [ router, isValid, validationError ])
+    
+    // Cleanup function
+    return () => {
+      isMounted = false
+    }
+  }, [ router, isValid, validationError, errorMode, setErrorMode ])
   
   return { error, isLoading }
 } 

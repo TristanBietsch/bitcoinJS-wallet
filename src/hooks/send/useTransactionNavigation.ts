@@ -16,22 +16,22 @@ interface TransactionNavigationResult {
 export const useTransactionNavigation = (): TransactionNavigationResult => {
   const router = useRouter()
   const params = useLocalSearchParams<Record<string, string | string[]>>()
-  const { setForceError } = useSendStore()
+  const { setErrorMode } = useSendStore()
   
   // Get transaction ID from params or use default
   const transactionId = params.transactionId as string || '2' // ID 2 is a send transaction in mock data
   
   // Navigate to home screen
   const navigateToHome = () => {
-    // Reset forceError flag when navigating away
-    setForceError(false)
+    // Reset error mode when navigating away
+    setErrorMode('none')
     router.replace('/')
   }
   
   // Navigate to transaction details
   const navigateToDetails = () => {
-    // Reset forceError flag when navigating away
-    setForceError(false)
+    // Reset error mode when navigating away
+    setErrorMode('none')
     router.push({
       pathname : '/transaction/[id]',
       params   : { id: transactionId }
