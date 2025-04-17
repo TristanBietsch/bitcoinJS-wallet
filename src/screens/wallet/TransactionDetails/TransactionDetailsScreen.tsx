@@ -3,7 +3,7 @@
  */
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { useTransactionDetails } from '@/src/hooks/transaction'
+import { useTransactionDetails } from '@/src/hooks/transaction/useTransactionDetails'
 import { useTransactionDetailsNavigation } from '@/src/hooks/transaction/useTransactionDetailsNavigation'
 import { 
   TransactionDetails,
