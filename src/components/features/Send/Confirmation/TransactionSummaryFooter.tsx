@@ -3,9 +3,9 @@ import { View, StyleSheet } from 'react-native'
 import { TransactionConfirmationDetails } from '@/src/components/features/Send/Confirmation/TransactionConfirmationDetails'
 import { SendButton } from '@/src/components/ui/Button/SendButton'
 import { CurrencyType } from '@/src/types/currency.types'
-import { useRouter } from 'expo-router'
 import { TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { useSendStore } from '@/src/store/sendStore'
 
 interface TransactionSummaryFooterProps {
   amount: number
@@ -29,11 +29,16 @@ const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
   totalAmountUsd,
   onSendPress
 }) => {
-  const router = useRouter()
+  const { setForceError } = useSendStore()
   
-  // Function to directly navigate to error screen (for testing)
-  const navigateToErrorScreen = () => {
-    router.replace('/send/error' as any)
+  // Function to set force error flag and navigate to loading
+  const triggerErrorFlow = () => {
+    // Set the forceError flag to true in the store
+    setForceError(true)
+    
+    // Navigate to loading screen which will perform validation
+    // and show the error because forceError is true
+    onSendPress()
   }
   
   return (
@@ -49,7 +54,7 @@ const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
       />
       
       {/* Test Error Button */}
-      <TouchableOpacity style={styles.errorButton} onPress={navigateToErrorScreen}>
+      <TouchableOpacity style={styles.errorButton} onPress={triggerErrorFlow}>
         <ThemedText style={styles.errorButtonText}>Trigger Send Error</ThemedText>
       </TouchableOpacity>
       
