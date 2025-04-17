@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
@@ -9,6 +9,8 @@ import { useFadeAnimation } from '@/src/hooks/ui/useFadeAnimation'
 import { getAmountForCurrency } from '@/src/utils/formatting/currencyUtils'
 import { formatCurrency } from '@/tests/mockData/walletData'
 import { CURRENCY_OPTIONS, CurrencyType } from '@/src/config/currency'
+import { useSendStore } from '@/src/store/sendStore'
+import { useReceiveStore } from '@/src/store/receiveStore'
 
 const HomeScreen = () => {
   // State for selected currency format
@@ -19,6 +21,16 @@ const HomeScreen = () => {
   
   // Use fade animation hook
   const { fadeAnim, fadeTransition } = useFadeAnimation()
+  
+  // Get access to store reset functions
+  const resetSendStore = useSendStore(state => state.reset)
+  const resetReceiveStore = useReceiveStore(state => state.resetState)
+  
+  // Reset any stored send and receive data when component mounts
+  useEffect(() => {
+    resetSendStore()
+    resetReceiveStore()
+  }, [])
   
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
