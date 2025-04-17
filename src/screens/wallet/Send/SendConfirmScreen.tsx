@@ -17,7 +17,8 @@ export default function SendConfirmScreen() {
     address, 
     fee, 
     currency, 
-    totalAmount 
+    totalAmount,
+    totalAmountUsd
   } = useTransactionParams()
   
   return (
@@ -34,6 +35,7 @@ export default function SendConfirmScreen() {
         fee={fee}
         currency={currency}
         totalAmount={totalAmount}
+        totalAmountUsd={totalAmountUsd}
         onSendPress={navigateToSendLoading}
       />
     </SafeAreaContainer>

@@ -9,7 +9,13 @@ import { CurrencyType } from '@/src/types/currency.types'
  * @param currencySymbol The currency symbol to use (defaults to $)
  * @returns Formatted currency string
  */
-export const formatCurrency = (amount: number, currencySymbol: string = '$'): string => {
+export const formatCurrency = (amount: number, currencyType: string = 'USD'): string => {
+  let currencySymbol = '$'
+  
+  if (currencyType === 'BTC') {
+    currencySymbol = 'BTC'
+  }
+  
   return `${currencySymbol}${amount.toFixed(2)}`
 }
 
@@ -31,7 +37,33 @@ export const formatConfirmationValue = (amount: number, currency: CurrencyType) 
       </View>
     )
   }
-  return <ThemedText style={styles.value}>{formatCurrency(amount, currency)}</ThemedText>
+  
+  if (currency === 'USD') {
+    return <ThemedText style={styles.value}>${amount.toFixed(2)}</ThemedText>
+  }
+  
+  return <ThemedText style={styles.value}>{amount.toFixed(8)} {currency}</ThemedText>
+}
+
+/**
+ * Formats the total amount with USD equivalent in subtext
+ * @param amount The main amount to display
+ * @param currency The currency type of the main amount
+ * @param usdEquivalent The USD equivalent amount
+ */
+export const formatTotalWithUsdEquivalent = (
+  amount: number, 
+  currency: CurrencyType,
+  usdEquivalent: number
+) => {
+  return (
+    <View style={styles.valueContainer}>
+      {formatConfirmationValue(amount, currency)}
+      {currency !== 'USD' && (
+        <ThemedText style={styles.subtextUsd}>${usdEquivalent.toFixed(2)}</ThemedText>
+      )}
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -48,5 +80,13 @@ const styles = StyleSheet.create({
     fontSize  : 16,
     color     : '#000',
     textAlign : 'right'
+  },
+  valueContainer : {
+    alignItems : 'flex-end'
+  },
+  subtextUsd : {
+    fontSize  : 14,
+    color     : '#666',
+    marginTop : 4
   }
 }) 

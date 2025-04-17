@@ -10,6 +10,7 @@ interface TransactionSummaryFooterProps {
   fee: any // Using 'any' temporarily to match the TransactionConfirmationDetails interface
   currency: CurrencyType
   totalAmount: number
+  totalAmountUsd?: number
   onSendPress: () => void
 }
 
@@ -22,6 +23,7 @@ const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
   fee,
   currency,
   totalAmount,
+  totalAmountUsd,
   onSendPress
 }) => {
   return (
@@ -33,6 +35,7 @@ const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
         fee={fee}
         currency={currency}
         totalAmount={totalAmount}
+        totalAmountUsd={totalAmountUsd}
       />
       
       {/* Send Button */}

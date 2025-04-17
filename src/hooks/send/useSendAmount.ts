@@ -67,13 +67,12 @@ export const useSendAmount = () => {
   
   // Handle continue
   const handleContinue = () => {
-    router.push({
-      pathname : '/send/confirm' as any,
-      params   : {
-        amount   : amount,
-        currency : currency
-      }
-    })
+    // Ensure the store is updated with the latest values
+    setAmount(amount)
+    setCurrency(currency)
+    
+    // Navigate to confirmation screen without sending params
+    router.push('/send/confirm' as any)
   }
   
   // Format displayed amount based on currency
