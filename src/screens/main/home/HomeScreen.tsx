@@ -51,9 +51,9 @@ const HomeScreen = () => {
   const handlePressSend = () => router.push('/send/send' as any)
   const handlePressReceive = () => router.push('/receive/receive' as any)
   
-  // Handle menu press (does nothing for now)
+  // Handle menu press - Navigate to the menu screen
   const handleMenuPress = () => {
-    // No action for now
+    router.push('/main/menu' as any)
   }
 
   // Currency dropdown component
