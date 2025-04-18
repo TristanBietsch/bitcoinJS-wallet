@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, ViewStyle, Dimensions } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Copy } from 'lucide-react-native'
 import { Colors } from '@/src/constants/colors'
@@ -18,11 +18,15 @@ const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
   onCopy,
   style
 }) => {
+  // Calculate dynamic button width based on screen size
+  const screenWidth = Dimensions.get('window').width
+  const shareButtonWidth = screenWidth * 0.6 // 60% of screen width
+  
   return (
     <View style={[ styles.container, style ]}>
       {/* Share Button */}
       <TouchableOpacity 
-        style={styles.shareButton}
+        style={[ styles.shareButton, { width: shareButtonWidth } ]}
         onPress={onShare}
       >
         <ThemedText style={styles.shareButtonText}>Share</ThemedText>
@@ -33,7 +37,7 @@ const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
         style={styles.copyButton}
         onPress={onCopy}
       >
-        <Copy size={20} color="#000" />
+        <Copy size={24} color="#000" />
       </TouchableOpacity>
     </View>
   )
@@ -41,36 +45,49 @@ const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
 
 const styles = StyleSheet.create({
   container : {
-    flexDirection  : 'row',
-    alignItems     : 'center',
-    justifyContent : 'center',
-    marginVertical : 24,
-    width          : '80%'
-  },
-  shareButton : {
-    backgroundColor   : Colors.light.buttons.primary,
-    borderRadius      : 50,
-    paddingVertical   : 12,
-    paddingHorizontal : 40,
     flexDirection     : 'row',
     alignItems        : 'center',
     justifyContent    : 'center',
-    marginRight       : 8
+    marginTop         : 40,
+    width             : '100%',
+    position          : 'absolute',
+    bottom            : 20,
+    left              : 0,
+    paddingHorizontal : 16
+  },
+  shareButton : {
+    backgroundColor : Colors.light.buttons.primary,
+    borderRadius    : 50,
+    paddingVertical : 16,
+    flexDirection   : 'row',
+    alignItems      : 'center',
+    justifyContent  : 'center',
+    marginRight     : 12,
+    elevation       : 2,
+    shadowColor     : '#000',
+    shadowOffset    : { width: 0, height: 2 },
+    shadowOpacity   : 0.1,
+    shadowRadius    : 4
   },
   shareButtonText : {
     color      : Colors.light.buttons.text,
-    fontSize   : 16,
+    fontSize   : 18,
     fontWeight : 'bold'
   },
   copyButton : {
     backgroundColor : 'white',
     borderWidth     : 1,
     borderColor     : '#E0E0E0',
-    borderRadius    : 24,
-    width           : 48,
-    height          : 48,
+    borderRadius    : 30,
+    width           : 56,
+    height          : 56,
     alignItems      : 'center',
-    justifyContent  : 'center'
+    justifyContent  : 'center',
+    elevation       : 2,
+    shadowColor     : '#000',
+    shadowOffset    : { width: 0, height: 2 },
+    shadowOpacity   : 0.1,
+    shadowRadius    : 4
   }
 })
 

@@ -32,27 +32,30 @@ const InvoiceContent: React.FC<InvoiceContentProps> = ({
   
   return (
     <View style={[ styles.container, style ]}>
-      {/* QR Code */}
-      <View style={styles.qrContainer}>
-        <QRCodeDisplay 
-          value={qrValue} 
-          size={200}
+      {/* Main content container */}
+      <View style={styles.contentContainer}>
+        {/* QR Code with Address Display directly below */}
+        <View style={styles.qrContainer}>
+          <QRCodeDisplay 
+            value={qrValue}
+            horizontalPadding={30}
+          />
+          
+          {/* Display address directly below QR code */}
+          <AddressDisplay 
+            address={address}
+            showLabel={false}
+          />
+        </View>
+        
+        {/* Amount Display */}
+        <InvoiceAmountDisplay
+          satsAmount={satsAmount}
+          usdAmount={usdAmount}
         />
       </View>
       
-      {/* Amount Display */}
-      <InvoiceAmountDisplay
-        satsAmount={satsAmount}
-        usdAmount={usdAmount}
-      />
-      
-      {/* Address Display */}
-      <AddressDisplay 
-        address={address}
-        label="on-chain address:"
-      />
-      
-      {/* Action Buttons */}
+      {/* Action Buttons - now positioned at bottom with absolute positioning */}
       <InvoiceActionButtons 
         onCopy={onCopy}
         onShare={onShare}
@@ -63,14 +66,23 @@ const InvoiceContent: React.FC<InvoiceContentProps> = ({
 
 const styles = StyleSheet.create({
   container : {
-    width           : '100%',
-    alignItems      : 'center',
-    justifyContent  : 'center',
-    paddingVertical : 16
+    width          : '100%',
+    alignItems     : 'center',
+    justifyContent : 'flex-start',
+    paddingTop     : 16, 
+    flex           : 1,
+    position       : 'relative'
+  },
+  contentContainer : {
+    width         : '100%',
+    alignItems    : 'center',
+    paddingBottom : 140 // Add padding at the bottom to account for buttons
   },
   qrContainer : {
-    marginTop    : 40,
-    marginBottom : 20
+    marginTop    : 16,
+    marginBottom : 0,
+    alignItems   : 'center',
+    width        : '100%'
   }
 })
 

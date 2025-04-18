@@ -1,13 +1,13 @@
 import React, { ReactNode } from 'react'
-import { View, StyleSheet, ViewStyle, ScrollView } from 'react-native'
+import { StyleSheet, ViewStyle, ScrollView } from 'react-native'
 import { Stack } from 'expo-router'
 import SafeAreaContainer from './SafeAreaContainer'
-import HeaderBackButton from '@/src/components/ui/Navigation/HeaderBackButton'
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 
 interface InvoiceScreenLayoutProps {
   children: ReactNode
   onBackPress: () => void
-  headerStyle?: ViewStyle
+  _headerStyle?: ViewStyle
   contentStyle?: ViewStyle
 }
 
@@ -17,16 +17,14 @@ interface InvoiceScreenLayoutProps {
 const InvoiceScreenLayout: React.FC<InvoiceScreenLayoutProps> = ({
   children,
   onBackPress,
-  headerStyle,
+  _headerStyle,
   contentStyle
 }) => {
   return (
     <SafeAreaContainer style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[ styles.header, headerStyle ]}>
-        <HeaderBackButton onPress={onBackPress} />
-      </View>
+      <BackButton onPress={onBackPress} />
       
       <ScrollView 
         contentContainerStyle={[ styles.scrollContent, contentStyle ]}
@@ -43,17 +41,12 @@ const styles = StyleSheet.create({
     flex            : 1,
     backgroundColor : 'white',
   },
-  header : {
-    paddingHorizontal : 16,
-    paddingTop        : 12,
-    paddingBottom     : 0,
-    height            : 56,
-  },
   scrollContent : {
     flexGrow          : 1,
     alignItems        : 'center',
     paddingHorizontal : 24,
     paddingBottom     : 40,
+    paddingTop        : 30,
   }
 })
 

@@ -21,9 +21,12 @@ const InvoiceAmountDisplay: React.FC<InvoiceAmountDisplayProps> = ({
   return (
     <View style={[ styles.container, style ]}>
       <ThemedText style={styles.label}>{label}</ThemedText>
-      <ThemedText style={styles.amount}>
-        {satsAmount} <ThemedText style={styles.unit}>Sats</ThemedText>
-      </ThemedText>
+      <View style={styles.amountWrapper}>
+        <ThemedText style={styles.amount}>
+          {satsAmount}
+        </ThemedText>
+        <ThemedText style={styles.unit}>Sats</ThemedText>
+      </View>
       <ThemedText style={styles.usdAmount}>≈ ${usdAmount} USD</ThemedText>
     </View>
   )
@@ -31,27 +34,39 @@ const InvoiceAmountDisplay: React.FC<InvoiceAmountDisplayProps> = ({
 
 const styles = StyleSheet.create({
   container : {
-    alignItems   : 'center',
-    marginBottom : 20,
-    width        : '100%'
+    alignItems        : 'center',
+    marginTop         : 56,
+    marginBottom      : 8,
+    width             : '100%',
+    paddingHorizontal : 20
   },
   label : {
-    fontSize     : 14,
+    fontSize     : 16,
     color        : '#666',
-    marginBottom : 8
+    marginBottom : 12,
+    fontWeight   : '500'
+  },
+  amountWrapper : {
+    flexDirection : 'row',
+    alignItems    : 'baseline',
+    marginBottom  : 8
   },
   amount : {
-    fontSize     : 28,
-    fontWeight   : 'bold',
-    marginBottom : 4
+    fontSize    : 36,
+    fontWeight  : 'bold',
+    marginRight : 6
   },
   unit : {
-    fontSize   : 28,
-    fontWeight : 'bold'
+    fontSize   : 24,
+    fontWeight : '600',
+    color      : '#444',
+    marginLeft : 2
   },
   usdAmount : {
-    fontSize : 14,
-    color    : '#666'
+    fontSize   : 16,
+    color      : '#666',
+    marginTop  : 4,
+    fontWeight : '500'
   }
 })
 
