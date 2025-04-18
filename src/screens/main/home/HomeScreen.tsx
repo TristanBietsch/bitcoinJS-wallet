@@ -12,6 +12,7 @@ import { CURRENCY_OPTIONS, CurrencyType } from '@/src/config/currency'
 import { useSendStore } from '@/src/store/sendStore'
 import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
+import AppHeader from '@/src/components/ui/Header/AppHeader'
 
 const HomeScreen = () => {
   // State for selected currency format
@@ -49,6 +50,11 @@ const HomeScreen = () => {
   // Navigation handlers
   const handlePressSend = () => router.push('/send/send' as any)
   const handlePressReceive = () => router.push('/receive/receive' as any)
+  
+  // Handle menu press (does nothing for now)
+  const handleMenuPress = () => {
+    // No action for now
+  }
 
   // Currency dropdown component
   const currencySelector = (
@@ -65,6 +71,9 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
+      {/* Header with menu icon */}
+      <AppHeader showMenuIcon={true} onMenuPress={handleMenuPress} />
+      
       {/* Balance Display Section with dropdown inside */}
       <BalanceDisplay
         isLoading={isLoading}
@@ -89,7 +98,7 @@ const styles = StyleSheet.create({
   container : {
     flex            : 1,
     backgroundColor : 'white',
-    padding         : 20,
+    padding         : 0,
     paddingBottom   : 100,
   },
 })

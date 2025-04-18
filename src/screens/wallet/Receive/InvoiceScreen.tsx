@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react'
-import { View, StyleSheet, SafeAreaView } from 'react-native'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { BackButton } from '@/src/components/ui/Navigation/BackButton'
-import BitcoinAddressDisplay from '@/src/components/features/Receive/BitcoinAddressDisplay'
-import RequestAmountDisplay from '@/src/components/features/Wallet/RequestAmountDisplay'
-import ShareButton from '@/src/components/ui/Button/ShareButton'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+
+// Import modularized components
+import InvoiceScreenLayout from '@/src/components/layout/InvoiceScreenLayout'
+import RequestAmountCard from '@/src/components/features/Wallet/RequestAmountCard'
+import BitcoinQRDisplay from '@/src/components/features/Receive/BitcoinQRDisplay'
+
+// Import hooks and services
 import { useConvertBitcoin } from '@/src/hooks/bitcoin/useConvertBitcoin'
 import { generateBitcoinAddress } from '@/src/services/bitcoin/addressService'
 import { useClipboard } from '@/src/hooks/ui/useClipboard'
-import CopyButton from '@/src/components/ui/Button/CopyButton'
 
 export default function InvoiceScreen() {
   const router = useRouter()
@@ -48,95 +49,33 @@ export default function InvoiceScreen() {
     router.back()
   }
   
+  // Handle copy to clipboard
+  const handleCopy = () => {
+    copyToClipboard(address)
+  }
+  
   // Create share message
   const shareMessage = `Bitcoin Payment Request\nAmount: ${params.amount} ${params.currency}\nAddress: ${address}`
   
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <InvoiceScreenLayout onBackPress={handleBackPress}>
+      {/* Amount Display */}
+      <RequestAmountCard
+        satsAmount={amounts.sats}
+        usdAmount={amounts.usd}
+        title="Payment Request"
+      />
       
-      {/* Back Button */}
-      <View style={styles.header}>
-        <BackButton onPress={handleBackPress} accessibilityLabel="Go back" />
-      </View>
-      
-      <View style={styles.content}>
-        {/* Amount Display */}
-        <View style={styles.amountSection}>
-          <RequestAmountDisplay 
-            satsAmount={amounts.sats}
-            usdAmount={amounts.usd}
-          />
-        </View>
-        
-        {/* Bitcoin Address Display with QR */}
-        <View style={styles.addressSection}>
-          <BitcoinAddressDisplay 
-            address={address} 
-            showCopyButton={false}
-            qrSize={180}
-            label="bitcoin address:"
-          />
-        </View>
-        
-        {/* Buttons Row */}
-        <View style={styles.buttonsRow}>
-          <CopyButton 
-            onPress={() => copyToClipboard(address)}
-            copied={copied}
-            style={styles.actionButton}
-          />
-          <ShareButton 
-            message={shareMessage}
-            title="Bitcoin Payment Request"
-            style={styles.actionButton}
-          />
-        </View>
-      </View>
-    </SafeAreaView>
+      {/* Bitcoin Address Display with QR and Action Buttons */}
+      <BitcoinQRDisplay
+        address={address}
+        qrSize={180}
+        label="bitcoin address:"
+        onCopy={handleCopy}
+        copied={copied}
+        shareMessage={shareMessage}
+        shareTitle="Bitcoin Payment Request"
+      />
+    </InvoiceScreenLayout>
   )
-}
-
-const styles = StyleSheet.create({
-  container : {
-    flex            : 1,
-    backgroundColor : 'white',
-  },
-  header : {
-    paddingHorizontal : 16,
-    paddingTop        : 12,
-    paddingBottom     : 0,
-  },
-  content : {
-    flex              : 1,
-    justifyContent    : 'flex-start',
-    alignItems        : 'center',
-    paddingHorizontal : 24,
-    paddingBottom     : 20,
-  },
-  amountSection : {
-    width      : '100%',
-    alignItems : 'center',
-    marginTop  : 10,
-  },
-  addressSection : {
-    width      : '100%',
-    alignItems : 'center',
-    marginTop  : 12,
-  },
-  buttonsRow : {
-    flexDirection  : 'row',
-    justifyContent : 'center',
-    gap            : 16,
-    marginTop      : 12,
-    marginBottom   : 16,
-  },
-  actionButton : {
-    width          : 48,
-    height         : 48,
-    padding        : 0,
-    borderRadius   : 24,
-    alignItems     : 'center',
-    justifyContent : 'center',
-  },
-}) 
+} 
