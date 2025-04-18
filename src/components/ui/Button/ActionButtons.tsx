@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
 
 interface ActionButtonsProps {
   onPressSend: () => void
@@ -47,13 +48,13 @@ const styles = StyleSheet.create({
     width : '48%',
   },
   actionButton : {
-    backgroundColor : 'red',
+    backgroundColor : Colors.light.buttons.primary,
     borderRadius    : 30,
     paddingVertical : 16,
     alignItems      : 'center',
   },
   actionButtonText : {
-    color      : 'white',
+    color      : Colors.light.buttons.text,
     fontWeight : 'bold',
     fontSize   : 18,
   },

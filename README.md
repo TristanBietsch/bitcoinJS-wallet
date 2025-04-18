@@ -30,7 +30,7 @@ Nummus is built using the following technologies:
 - **Expo** - React Native development platform
 - **TypeScript** - Statically typed JavaScript
 - **NativeWind/Tailwind CSS** - Utility-first CSS framework
-- **Gluestack UI** - UI component library
+- **NativeWind** - UI component library
 - **Supabase** - Backend as a service platform
 - **Mempool.space API** - Bitcoin mempool data and fee estimation
 - **Bitcoin Development Kit (BDK)** - For Bitcoin wallet functionality

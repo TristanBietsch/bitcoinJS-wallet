@@ -4,6 +4,7 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
+import { Colors } from '@/src/constants/colors'
 
 // Import modularized components and hooks
 import ErrorDetailsLayout from '@/src/components/layout/ErrorDetailsLayout'
@@ -86,10 +87,10 @@ export default function SendErrorDetailsScreen() {
 
 const styles = StyleSheet.create({
   actionButtonActive : {
-    backgroundColor : '#4CAF50',
-    borderColor     : '#4CAF50'
+    backgroundColor : Colors.light.buttons.success,
+    borderColor     : Colors.light.buttons.success
   },
   actionButtonTextActive : {
-    color : '#FFFFFF'
+    color : Colors.light.buttons.text
   }
 })

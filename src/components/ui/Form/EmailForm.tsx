@@ -48,18 +48,18 @@ const EmailForm: React.FC<EmailFormProps> = ({
       <TouchableOpacity
         style={[
           styles.submitButton,
-          { backgroundColor: colorScheme === 'light' ? Colors.light.errorRed : colors.tint }
+          { backgroundColor: Colors.light.buttons.primary }
         ]}
         onPress={onSubmit}
         disabled={isLoading}
         activeOpacity={0.8}
       >
         {isLoading ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={Colors.light.buttons.text} />
         ) : (
           <>
             <ThemedText style={styles.buttonText}>{buttonText}</ThemedText>
-            <ArrowRight size={20} color="#FFFFFF" />
+            <ArrowRight size={20} color={Colors.light.buttons.text} />
           </>
         )}
       </TouchableOpacity>
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent : 'center',
   },
   buttonText : {
-    color       : '#FFFFFF',
+    color       : Colors.light.buttons.text,
     fontSize    : 16,
     fontWeight  : '600',
     marginRight : 8,

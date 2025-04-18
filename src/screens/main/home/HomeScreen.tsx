@@ -11,6 +11,7 @@ import { formatCurrency } from '@/tests/mockData/walletData'
 import { CURRENCY_OPTIONS, CurrencyType } from '@/src/config/currency'
 import { useSendStore } from '@/src/store/sendStore'
 import { useReceiveStore } from '@/src/store/receiveStore'
+import { Colors } from '@/src/constants/colors'
 
 const HomeScreen = () => {
   // State for selected currency format
@@ -57,7 +58,7 @@ const HomeScreen = () => {
       onSelect={handleCurrencyChange}
       title="Select Currency"
       cancelButtonLabel="Cancel"
-      backgroundColor="red"
+      backgroundColor={Colors.light.buttons.primary}
       disabled={isLoading || !!error}
     />
   )

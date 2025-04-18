@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet, ViewStyle, TextStyle } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
 
 interface ActionButton {
   label: string
@@ -80,11 +81,11 @@ const styles = StyleSheet.create({
     color    : '#333'
   },
   activeButton : {
-    backgroundColor : '#4CAF50',
-    borderColor     : '#4CAF50'
+    backgroundColor : Colors.light.buttons.success,
+    borderColor     : Colors.light.buttons.success
   },
   activeButtonText : {
-    color : '#FFFFFF'
+    color : Colors.light.buttons.text
   }
 })
 

@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Modal, TouchableOpacity, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Clock, X } from 'lucide-react-native'
+import { Colors } from '@/src/constants/colors'
 
 interface SpeedInfoModalProps {
   visible: boolean
@@ -32,7 +33,7 @@ export const SpeedInfoModal: React.FC<SpeedInfoModalProps> = ({
           
           <View style={styles.infoModalContent}>
             <View style={styles.infoIconContainer}>
-              <Clock size={40} color="#FF0000" />
+              <Clock size={40} color={Colors.light.buttons.primary} />
             </View>
             
             <ThemedText style={styles.infoModalText}>
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
     color      : '#555'
   },
   infoModalButton : {
-    backgroundColor : '#FF0000',
+    backgroundColor : Colors.light.buttons.primary,
     borderRadius    : 12,
     height          : 50,
     justifyContent  : 'center',
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     marginTop       : 10
   },
   infoModalButtonText : {
-    color      : '#fff',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600'
   }

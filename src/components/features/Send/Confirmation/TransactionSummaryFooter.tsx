@@ -6,6 +6,7 @@ import { CurrencyType } from '@/src/types/currency.types'
 import { TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { useSendStore } from '@/src/store/sendStore'
+import { Colors } from '@/src/constants/colors'
 
 interface TransactionSummaryFooterProps {
   amount: number
@@ -106,14 +107,14 @@ const styles = StyleSheet.create({
     justifyContent : 'center',
   },
   validationErrorButton : {
-    backgroundColor : '#FF5722',
+    backgroundColor : Colors.light.buttons.warning,
     marginRight     : 10
   },
   networkErrorButton : {
-    backgroundColor : '#E91E63'
+    backgroundColor : Colors.light.buttons.danger
   },
   errorButtonText : {
-    color      : '#FFF',
+    color      : Colors.light.buttons.text,
     fontSize   : 14,
     fontWeight : '600'
   }

@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Colors } from '@/src/constants/colors'
 
 interface SecureBackupPromptProps {
   onBackupNow: () => void;
@@ -55,7 +56,7 @@ const styles = StyleSheet.create({
   card : {
     backgroundColor  : '#FFF5F5',
     borderLeftWidth  : 4,
-    borderLeftColor  : '#FF4A6E',
+    borderLeftColor  : Colors.light.buttons.danger,
     marginHorizontal : 16,
     marginVertical   : 16,
     padding          : 16,
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
   warningTitle : {
     fontSize   : 18,
     fontWeight : 'bold',
-    color      : '#FF4A6E',
+    color      : Colors.light.buttons.danger,
   },
   warningText : {
     fontSize     : 14,
@@ -94,20 +95,20 @@ const styles = StyleSheet.create({
     justifyContent : 'center',
   },
   primaryButton : {
-    backgroundColor : '#0085FF',
+    backgroundColor : Colors.light.buttons.primary,
   },
   outlineButton : {
     backgroundColor : 'transparent',
     borderWidth     : 1,
-    borderColor     : '#0085FF',
+    borderColor     : Colors.light.buttons.primary,
   },
   buttonText : {
-    color      : '#FFFFFF',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600',
   },
   outlineButtonText : {
-    color : '#0085FF',
+    color : Colors.light.buttons.primary,
   },
 })
 

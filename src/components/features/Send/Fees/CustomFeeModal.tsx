@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { CustomFee } from '@/src/types/transaction/send.types'
 import { NumberPad } from '@/src/components/features/Send/Amount/NumberPad'
 import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
+import { Colors } from '@/src/constants/colors'
 
 interface CustomFeeModalProps {
   visible: boolean
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
     backgroundColor : '#FFFFFF'
   },
   confirmButton : {
-    backgroundColor : '#FF0000',
+    backgroundColor : Colors.light.buttons.primary,
     borderRadius    : 12,
     height          : 56,
     justifyContent  : 'center',
@@ -243,16 +244,16 @@ const styles = StyleSheet.create({
     marginTop       : 16
   },
   confirmButtonText : {
-    color      : '#fff',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600'
   },
   errorInput : {
-    borderColor : '#FF0000',
+    borderColor : Colors.light.buttons.danger,
     borderWidth : 1
   },
   errorText : {
-    color     : '#FF0000',
+    color     : Colors.light.buttons.danger,
     fontSize  : 12,
     marginTop : 4,
     textAlign : 'right'

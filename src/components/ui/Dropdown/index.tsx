@@ -8,6 +8,7 @@ import {
   FlatList,
   TouchableWithoutFeedback
 } from 'react-native'
+import { Colors } from '@/src/constants/colors'
 
 type DropdownOption = {
   label: string;
@@ -31,8 +32,8 @@ const Dropdown = ({
   selectedValue, 
   onSelect, 
   placeholder = 'Select an option',
-  backgroundColor = 'red',
-  textColor = 'white',
+  backgroundColor = Colors.light.buttons.primary,
+  textColor = Colors.light.buttons.text,
   disabled = false,
   title = 'Select an option',
   cancelButtonLabel = 'Cancel'

@@ -50,13 +50,13 @@ const styles = StyleSheet.create({
   primaryButton : {
     width           : '100%',
     height          : 56,
-    backgroundColor : Colors.light.electricBlue,
+    backgroundColor : Colors.light.buttons.primary,
     borderRadius    : 28,
     alignItems      : 'center',
     justifyContent  : 'center',
   },
   primaryButtonText : {
-    color      : '#FFF',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600',
   },
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     justifyContent : 'center',
   },
   secondaryButtonText : {
-    color      : Colors.light.electricBlue,
+    color      : Colors.light.buttons.primary,
     fontSize   : 16,
     fontWeight : '600',
   },

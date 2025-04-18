@@ -75,8 +75,8 @@ const CardWaitlistScreen = () => {
 
 const styles = StyleSheet.create({
   container : {
-    marginTop : 70,
-    flex      : 1,
+    marginTop     : 70,
+    flex          : 1,
     paddingBottom : 100, // Add padding for bottom navigation
   },
   scrollContent : {

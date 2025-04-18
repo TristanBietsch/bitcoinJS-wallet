@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ThemedView } from '@/src/components/ui/View'
+import { Colors } from '@/src/constants/colors'
 
 interface ErrorScreenProps {
   onRetry: () => void;
@@ -43,7 +44,7 @@ const styles = StyleSheet.create({
     fontWeight   : 'bold',
     marginBottom : 10,
     textAlign    : 'center',
-    color        : '#FF3B30',
+    color        : Colors.light.buttons.danger,
   },
   message : {
     textAlign    : 'center',
@@ -51,14 +52,14 @@ const styles = StyleSheet.create({
     opacity      : 0.7,
   },
   button : {
-    backgroundColor : '#000',
+    backgroundColor : Colors.light.buttons.primary,
     padding         : 16,
     borderRadius    : 12,
     alignItems      : 'center',
     width           : '100%',
   },
   buttonText : {
-    color    : '#fff',
+    color    : Colors.light.buttons.text,
     fontSize : 16,
   },
 }) 

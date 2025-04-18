@@ -1,11 +1,11 @@
 import React from 'react'
 import { usePathname, useRouter } from 'expo-router'
-import { CreditCard, Home, Bitcoin, Clock } from 'lucide-react-native'
+import { CreditCard, Home, Clock } from 'lucide-react-native'
 import { Pressable, StyleSheet, View, Text } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 // Define valid route paths
-type ValidRoutes = '/' | '/waitlist' | '/price' | '/activity'
+type ValidRoutes = '/' | '/waitlist' | '/activity'
 
 // Define tabs configuration
 const TABS = [
@@ -18,11 +18,6 @@ const TABS = [
     path  : '/' as ValidRoutes,
     title : 'Home',
     icon  : Home,
-  },
-  {
-    path  : '/price' as ValidRoutes,
-    title : 'Price',
-    icon  : Bitcoin,
   },
   {
     path  : '/activity' as ValidRoutes,

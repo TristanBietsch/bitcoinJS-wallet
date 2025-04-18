@@ -2,6 +2,7 @@ import React from 'react'
 import { View, StyleSheet, ActivityIndicator } from 'react-native'
 import Dropdown from '@/src/components/ui/Dropdown'
 import { CurrencyType } from '@/src/hooks/send/useBitcoinPriceConverter'
+import { Colors } from '@/src/constants/colors'
 
 // Currency options for the dropdown
 const CURRENCY_OPTIONS = [
@@ -24,14 +25,14 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   return (
     <View style={styles.currencyToggleContainer}>
       {isLoading ? (
-        <ActivityIndicator size="small" color="red" />
+        <ActivityIndicator size="small" color={Colors.light.buttons.primary} />
       ) : (
         <Dropdown
           options={CURRENCY_OPTIONS}
           selectedValue={currency}
           onSelect={onCurrencyChange}
           placeholder="Select Currency"
-          backgroundColor="red"
+          backgroundColor={Colors.light.buttons.primary}
         />
       )}
     </View>
