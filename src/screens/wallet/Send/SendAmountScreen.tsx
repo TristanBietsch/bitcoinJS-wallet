@@ -55,7 +55,7 @@ export default function SendAmountScreen() {
           style={{ 
             marginBottom : 40,
             borderRadius : 30,
-            opacity : isAmountZero ? 0.5 : 1
+            opacity      : isAmountZero ? 0.5 : 1
           }}
         />
         
