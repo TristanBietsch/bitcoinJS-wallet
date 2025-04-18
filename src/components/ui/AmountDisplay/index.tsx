@@ -5,6 +5,7 @@ import Dropdown from '@/src/components/ui/Dropdown'
 import { CurrencyType } from '@/src/types/currency.types'
 import { CURRENCY_OPTIONS } from '@/src/constants/currency'
 import { formatAmount } from '@/src/utils/currency/conversion'
+import { Colors } from '@/src/constants/colors'
 
 interface AmountDisplayProps {
   amount: string
@@ -41,7 +42,7 @@ const AmountDisplay: React.FC<AmountDisplayProps> = ({
       {/* Currency Toggle */}
       <View style={styles.currencyToggleContainer}>
         {isLoading ? (
-          <ActivityIndicator size="small" color="red" />
+          <ActivityIndicator size="small" color={Colors.light.buttons.primary} />
         ) : (
           <Dropdown
             options={CURRENCY_OPTIONS}
@@ -49,7 +50,7 @@ const AmountDisplay: React.FC<AmountDisplayProps> = ({
             onSelect={onCurrencyChange}
             title="Select Currency"
             cancelButtonLabel="Cancel"
-            backgroundColor="red"
+            backgroundColor={Colors.light.buttons.primary}
           />
         )}
       </View>

@@ -1,6 +1,5 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
 
 // Import modularized components
 import ReceiveScreenLayout from '@/src/components/layout/ReceiveScreenLayout'
@@ -11,10 +10,10 @@ import NumberPad from '@/src/components/ui/NumberPad'
 // Import hooks and stores
 import { useReceiveStore } from '@/src/store/receiveStore'
 import { useBitcoinPrice } from '@/src/hooks/bitcoin/useBitcoinPrice'
+import { useReceiveHandlers } from '@/src/handlers/receiveHandlers'
+import { getWalletBalanceDisplay } from '@/src/utils/mockData/walletMockData'
 
 export default function ReceiveScreen() {
-  const router = useRouter()
-  
   // Use our custom hook for Bitcoin price
   const { btcPrice, isLoading } = useBitcoinPrice()
   
@@ -27,23 +26,11 @@ export default function ReceiveScreen() {
     handleCurrencyChange 
   } = useReceiveStore()
   
-  // Dummy balance for display
-  const balance = '$2,257.65'
+  // Use handlers for receive operations
+  const { handleBackPress, handleGenerateQR, isAmountValid } = useReceiveHandlers()
   
-  // Navigate back to home
-  const handleBackPress = () => {
-    router.push('/')
-  }
-  
-  const handleGenerateQR = () => {
-    router.push({
-      pathname : '/receive/invoice' as any,
-      params   : {
-        amount,
-        currency
-      }
-    })
-  }
+  // Get mock balance for display from our mock data
+  const balance = getWalletBalanceDisplay()
   
   return (
     <ReceiveScreenLayout onBackPress={handleBackPress}>
@@ -65,6 +52,7 @@ export default function ReceiveScreen() {
             label="Generate Invoice"
             onPress={handleGenerateQR}
             style={styles.continueButton}
+            disabled={!isAmountValid()}
           />
         </View>
         

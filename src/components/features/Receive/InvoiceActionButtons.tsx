@@ -2,6 +2,7 @@ import React from 'react'
 import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Copy } from 'lucide-react-native'
+import { Colors } from '@/src/constants/colors'
 
 interface InvoiceActionButtonsProps {
   onShare: () => void
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
     width          : '80%'
   },
   shareButton : {
-    backgroundColor   : '#FF3B30',
+    backgroundColor   : Colors.light.buttons.primary,
     borderRadius      : 50,
     paddingVertical   : 12,
     paddingHorizontal : 40,
@@ -57,7 +58,7 @@ const styles = StyleSheet.create({
     marginRight       : 8
   },
   shareButtonText : {
-    color      : 'white',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : 'bold'
   },
