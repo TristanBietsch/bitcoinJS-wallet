@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react'
-import { View, StyleSheet, ViewStyle } from 'react-native'
+import { View, StyleSheet, ViewStyle, ScrollView } from 'react-native'
 import { Stack } from 'expo-router'
 import SafeAreaContainer from './SafeAreaContainer'
 import HeaderBackButton from '@/src/components/ui/Navigation/HeaderBackButton'
@@ -12,7 +12,7 @@ interface InvoiceScreenLayoutProps {
 }
 
 /**
- * Layout component for invoice display screens
+ * Layout component for invoice display screens, optimized for the payment request flow
  */
 const InvoiceScreenLayout: React.FC<InvoiceScreenLayoutProps> = ({
   children,
@@ -28,9 +28,12 @@ const InvoiceScreenLayout: React.FC<InvoiceScreenLayoutProps> = ({
         <HeaderBackButton onPress={onBackPress} />
       </View>
       
-      <View style={[ styles.content, contentStyle ]}>
+      <ScrollView 
+        contentContainerStyle={[ styles.scrollContent, contentStyle ]}
+        showsVerticalScrollIndicator={false}
+      >
         {children}
-      </View>
+      </ScrollView>
     </SafeAreaContainer>
   )
 }
@@ -46,12 +49,11 @@ const styles = StyleSheet.create({
     paddingBottom     : 0,
     height            : 56,
   },
-  content : {
-    flex              : 1,
-    justifyContent    : 'flex-start',
+  scrollContent : {
+    flexGrow          : 1,
     alignItems        : 'center',
     paddingHorizontal : 24,
-    paddingBottom     : 20,
+    paddingBottom     : 40,
   }
 })
 

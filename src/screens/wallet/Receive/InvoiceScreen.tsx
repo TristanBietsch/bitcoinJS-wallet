@@ -1,15 +1,19 @@
 import React, { useEffect } from 'react'
+import { View, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 
 // Import modularized components
 import InvoiceScreenLayout from '@/src/components/layout/InvoiceScreenLayout'
-import RequestAmountCard from '@/src/components/features/Wallet/RequestAmountCard'
-import BitcoinQRDisplay from '@/src/components/features/Receive/BitcoinQRDisplay'
+import QRCodeDisplay from '@/src/components/features/Receive/QRCodeDisplay'
+import AddressDisplay from '@/src/components/features/Receive/AddressDisplay'
+import InvoiceActionButtons from '@/src/components/features/Receive/InvoiceActionButtons'
+import { ThemedText } from '@/src/components/ui/Text'
 
 // Import hooks and services
 import { useConvertBitcoin } from '@/src/hooks/bitcoin/useConvertBitcoin'
 import { generateBitcoinAddress } from '@/src/services/bitcoin/addressService'
 import { useClipboard } from '@/src/hooks/ui/useClipboard'
+import { shareContent } from '@/src/utils/file/fileSharing'
 
 export default function InvoiceScreen() {
   const router = useRouter()
@@ -22,7 +26,7 @@ export default function InvoiceScreen() {
   const [ address, setAddress ] = React.useState<string>('')
   
   // Clipboard functionality
-  const { copied, copyToClipboard } = useClipboard()
+  const { copyToClipboard } = useClipboard()
   
   // Fetch Bitcoin address
   useEffect(() => {
@@ -54,28 +58,71 @@ export default function InvoiceScreen() {
     copyToClipboard(address)
   }
   
-  // Create share message
-  const shareMessage = `Bitcoin Payment Request\nAmount: ${params.amount} ${params.currency}\nAddress: ${address}`
+  // Handle sharing of address
+  const handleShare = () => {
+    const shareMessage = `Bitcoin Payment Request\nAmount: ${amounts.sats} SATS (≈$${amounts.usd} USD)\nAddress: ${address}`
+    shareContent(shareMessage, 'Bitcoin Invoice')
+  }
   
   return (
     <InvoiceScreenLayout onBackPress={handleBackPress}>
-      {/* Amount Display */}
-      <RequestAmountCard
-        satsAmount={amounts.sats}
-        usdAmount={amounts.usd}
-        title="Payment Request"
+      {/* QR Code */}
+      <View style={styles.qrContainer}>
+        <QRCodeDisplay 
+          value={address} 
+          size={200}
+        />
+      </View>
+      
+      {/* Requesting Amount */}
+      <View style={styles.amountContainer}>
+        <ThemedText style={styles.amountLabel}>Requesting Amount:</ThemedText>
+        <ThemedText style={styles.amountValue}>
+          {amounts.sats} <ThemedText style={styles.amountUnit}>Sats</ThemedText>
+        </ThemedText>
+        <ThemedText style={styles.usdValue}>≈ ${amounts.usd} USD</ThemedText>
+      </View>
+      
+      {/* Address Display */}
+      <AddressDisplay 
+        address={address}
+        label="on-chain address:"
       />
       
-      {/* Bitcoin Address Display with QR and Action Buttons */}
-      <BitcoinQRDisplay
-        address={address}
-        qrSize={180}
-        label="bitcoin address:"
+      {/* Action Buttons */}
+      <InvoiceActionButtons 
         onCopy={handleCopy}
-        copied={copied}
-        shareMessage={shareMessage}
-        shareTitle="Bitcoin Payment Request"
+        onShare={handleShare}
       />
     </InvoiceScreenLayout>
   )
-} 
+}
+
+const styles = StyleSheet.create({
+  qrContainer : {
+    marginTop    : 40,
+    marginBottom : 20
+  },
+  amountContainer : {
+    alignItems   : 'center',
+    marginBottom : 20
+  },
+  amountLabel : {
+    fontSize     : 14,
+    color        : '#666',
+    marginBottom : 8
+  },
+  amountValue : {
+    fontSize     : 28,
+    fontWeight   : 'bold',
+    marginBottom : 4
+  },
+  amountUnit : {
+    fontSize   : 28,
+    fontWeight : 'bold'
+  },
+  usdValue : {
+    fontSize : 14,
+    color    : '#666'
+  }
+}) 

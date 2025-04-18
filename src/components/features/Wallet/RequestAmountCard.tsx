@@ -37,12 +37,10 @@ const RequestAmountCard: React.FC<RequestAmountCardProps> = ({
 
 const styles = StyleSheet.create({
   container : {
-    width           : '100%',
-    alignItems      : 'center',
-    padding         : 16,
-    backgroundColor : '#F8F9FA',
-    borderRadius    : 12,
-    marginVertical  : 16,
+    width          : '100%',
+    alignItems     : 'center',
+    padding        : 16,
+    marginVertical : 16,
   },
   title : {
     fontSize     : 16,
