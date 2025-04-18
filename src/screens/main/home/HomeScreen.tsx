@@ -85,11 +85,13 @@ const HomeScreen = () => {
         currencySelector={currencySelector}
       />
       
-      {/* Action Buttons */}
-      <ActionButtons
-        onPressSend={handlePressSend}
-        onPressReceive={handlePressReceive}
-      />
+      {/* Action Buttons - Positioned above the navbar */}
+      <View style={styles.actionButtonsWrapper}>
+        <ActionButtons
+          onPressSend={handlePressSend}
+          onPressReceive={handlePressReceive}
+        />
+      </View>
     </View>
   )
 }
@@ -100,6 +102,12 @@ const styles = StyleSheet.create({
     backgroundColor : 'white',
     padding         : 0,
     paddingBottom   : 100,
+  },
+  actionButtonsWrapper : {
+    position : 'absolute',
+    bottom   : 160,
+    left     : 0,
+    right    : 0,
   },
 })
 
