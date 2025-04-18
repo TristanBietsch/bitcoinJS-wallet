@@ -49,9 +49,20 @@ export const useSendAmount = () => {
     }
     
     setLocalAmount(prev => {
+      // Prevent negative numbers
+      if (num === '-' || (prev === '0' && num === '0')) {
+        return prev
+      }
+      
       const newAmount = prev === '0' && num !== '.' ? num :
         num === '.' && prev.includes('.') ? prev :
         prev + num
+      
+      // Don't allow zero amount
+      if (newAmount === '0' || newAmount === '0.') {
+        return prev
+      }
+      
       setAmount(newAmount)
       return newAmount
     })

@@ -22,6 +22,9 @@ export default function SendAmountScreen() {
     handleContinue
   } = useSendAmount()
 
+  // Convert amount to number and check if it's 0 or empty
+  const isAmountZero = !amount || Number(amount.replace(/[^0-9.]/g, '')) === 0
+
   return (
     <SafeAreaContainer>
       <Stack.Screen 
@@ -48,9 +51,11 @@ export default function SendAmountScreen() {
         <ActionButton
           title="Continue"
           onPress={handleContinue}
+          disabled={isAmountZero}
           style={{ 
             marginBottom : 40,
-            borderRadius : 30
+            borderRadius : 30,
+            opacity : isAmountZero ? 0.5 : 1
           }}
         />
         

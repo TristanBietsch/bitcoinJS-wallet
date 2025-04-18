@@ -16,6 +16,12 @@ export const AddressInput: React.FC<AddressInputProps> = ({
   onChangeText,
   onQRPress
 }) => {
+  const handleTextChange = (text: string) => {
+    // Only allow alphanumeric characters
+    const filteredText = text.replace(/[^a-zA-Z0-9]/g, '')
+    onChangeText(filteredText)
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.addressSection}>
@@ -26,7 +32,7 @@ export const AddressInput: React.FC<AddressInputProps> = ({
           ]}
           placeholder="Bitcoin Address"
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleTextChange}
           placeholderTextColor="#999"
           autoCapitalize="none"
           autoCorrect={false}
