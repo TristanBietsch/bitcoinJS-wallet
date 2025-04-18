@@ -39,11 +39,11 @@ export default function TransactionDetailsScreen() {
 
   return (
     <SafeAreaContainer backgroundColor={Colors.light.background}>
-      <View style={styles.container}>
-        <BackButton 
-          onPress={navigateBack} 
-          accessibilityLabel={TransactionConstants.accessibility.backButton}
-        />
+      <BackButton 
+        onPress={navigateBack} 
+        accessibilityLabel={TransactionConstants.accessibility.backButton}
+      />
+      <View style={styles.content}>
         <TransactionDetails transaction={transaction} />
       </View>
     </SafeAreaContainer>
@@ -51,8 +51,9 @@ export default function TransactionDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex  : 1,
-    width : '100%',
+  content : {
+    flex      : 1,
+    width     : '100%',
+    marginTop : 30,
   }
 }) 

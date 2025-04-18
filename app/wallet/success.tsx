@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router'
-import SuccessScreen from '@/src/screens/wallet/Send/SendSuccessScreen'
+import SuccessScreen from '@/src/screens/wallet/Receive/Send/SendSuccessScreen'
 
 export default function SuccessPage() {
   return (
