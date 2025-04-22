@@ -27,6 +27,10 @@ const HIDDEN_NAV_ROUTES = [
   '/transaction', 
   '/onboarding', 
   '/about', 
+  '/settings',
+  '/support',
+  '/feedback',
+  '/legal',
   '/main/menu'
  ]
 
