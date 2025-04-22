@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   menuText : {
     fontSize   : 32,
-    fontWeight : '500',
+    fontWeight : '600',
   }
 })
 
