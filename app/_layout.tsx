@@ -21,7 +21,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 SplashScreen.preventAutoHideAsync()
 
 // Routes where bottom navigation should be hidden
-const HIDDEN_NAV_ROUTES = [ '/receive', '/send', '/transaction', '/onboarding' ]
+const HIDDEN_NAV_ROUTES = [ 
+  '/receive', 
+  '/send', 
+  '/transaction', 
+  '/onboarding', 
+  '/about', 
+  '/main/menu'
+ ]
 
 export default function RootLayout() {
   const pathname = usePathname()
