@@ -5,11 +5,6 @@ import { MenuItemData } from "@/src/components/features/Menu/MenuItemList"
  */
 export const MENU_ITEMS: MenuItemData[] = [
   {
-    label  : 'About',
-    route  : '/about',
-    testID : 'menu-item-about'
-  },
-  {
     label  : 'Settings',
     route  : '/settings',
     testID : 'menu-item-settings'
@@ -23,6 +18,11 @@ export const MENU_ITEMS: MenuItemData[] = [
     label  : 'Feedback',
     route  : '/feedback',
     testID : 'menu-item-feedback'
+  },
+  {
+    label  : 'About',
+    route  : '/about',
+    testID : 'menu-item-about'
   },
   {
     label  : 'Legal',
