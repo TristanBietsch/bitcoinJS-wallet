@@ -19,7 +19,7 @@ const SupportOption: React.FC<SupportOptionProps> = ({
 }) => {
   return (
     <TouchableOpacity style={styles.optionContainer} onPress={onPress}>
-      <View style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}>
+      <View style={[ styles.iconContainer, { backgroundColor: iconBackgroundColor } ]}>
         {icon}
       </View>
       <View style={styles.textContainer}>
