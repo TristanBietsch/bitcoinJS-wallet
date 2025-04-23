@@ -18,6 +18,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     setCurrentStep('choice')
   }
 
+  const handleBackToWelcome = () => {
+    setCurrentStep('welcome')
+  }
+
   const handleCreateWallet = () => {
     setCurrentStep('warning')
   }
@@ -61,6 +65,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         <WalletChoiceScreen
           onCreateWallet={handleCreateWallet}
           onImportWallet={handleImportWallet}
+          onBack={handleBackToWelcome}
         />
       )
     case 'warning':

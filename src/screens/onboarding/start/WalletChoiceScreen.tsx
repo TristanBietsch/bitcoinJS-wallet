@@ -1,91 +1,63 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
-import { ThemedText } from '@/src/components/ui/Text'
-import { ThemedView } from '@/src/components/ui/View'
+import { OnboardingContainer, OnboardingTitle, OnboardingDescription } from '@/src/components/ui/OnboardingScreen'
+import { Plus, Download } from 'lucide-react-native'
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
+import { WalletOptionButton } from '@/src/components/ui/Button'
+import { ButtonsContainer } from '@/src/components/ui/Layout'
 
 interface WalletChoiceScreenProps {
   onCreateWallet: () => void;
   onImportWallet: () => void;
+  onBack: () => void;
 }
 
-export default function WalletChoiceScreen({ onCreateWallet, onImportWallet }: WalletChoiceScreenProps) {
+export default function WalletChoiceScreen({ 
+  onCreateWallet, 
+  onImportWallet,
+  onBack 
+}: WalletChoiceScreenProps) {
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        Set Up Your Wallet
-      </ThemedText>
-      <ThemedText type="default" style={styles.subtitle}>
-        Choose how you want to start with Nummus
-      </ThemedText>
+    <OnboardingContainer>
+      <BackButton onPress={onBack} />
+      
+      <View style={styles.content}>
+        <OnboardingTitle>
+          Set Up Your Wallet
+        </OnboardingTitle>
+        
+        <OnboardingDescription>
+          Choose how you want to start with Nummus
+        </OnboardingDescription>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={[ styles.button, styles.primaryButton ]} 
-          onPress={onCreateWallet}
-        >
-          <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-            Create New Wallet
-          </ThemedText>
-          <ThemedText type="default" style={styles.buttonSubtext}>
-            Start fresh with a new Bitcoin wallet
-          </ThemedText>
-        </TouchableOpacity>
+        <ButtonsContainer>
+          <WalletOptionButton
+            type="primary"
+            icon={<Plus />}
+            title="Create New Wallet"
+            description="Start fresh with a new Bitcoin wallet"
+            onPress={onCreateWallet}
+          />
 
-        <TouchableOpacity 
-          style={[ styles.button, styles.secondaryButton ]} 
-          onPress={onImportWallet}
-        >
-          <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-            Import Existing Wallet
-          </ThemedText>
-          <ThemedText type="default" style={styles.buttonSubtext}>
-            Restore your wallet using seed phrase
-          </ThemedText>
-        </TouchableOpacity>
+          <WalletOptionButton
+            type="secondary"
+            icon={<Download />}
+            title="Import Existing Wallet"
+            description="Restore a wallet via seed phrase"
+            onPress={onImportWallet}
+          />
+        </ButtonsContainer>
       </View>
-    </ThemedView>
+    </OnboardingContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container : {
+  content : {
     flex           : 1,
-    padding        : 20,
+    alignItems     : 'center',
     justifyContent : 'center',
-  },
-  title : {
-    fontSize     : 28,
-    fontWeight   : 'bold',
-    marginBottom : 10,
-    textAlign    : 'center',
-  },
-  subtitle : {
-    textAlign    : 'center',
-    marginBottom : 40,
-    opacity      : 0.7,
-  },
-  buttonContainer : {
-    gap : 20,
-  },
-  button : {
-    padding      : 20,
-    borderRadius : 12,
-    alignItems   : 'center',
-  },
-  primaryButton : {
-    backgroundColor : '#000',
-  },
-  secondaryButton : {
-    backgroundColor : '#fff',
-    borderWidth     : 1,
-    borderColor     : '#000',
-  },
-  buttonText : {
-    fontSize     : 18,
-    marginBottom : 4,
-  },
-  buttonSubtext : {
-    opacity : 0.7,
-  },
+    width          : '100%',
+    paddingTop     : 40,
+  }
 }) 
