@@ -23,10 +23,5 @@ export const MENU_ITEMS: MenuItemData[] = [
     label  : 'About',
     route  : '/about',
     testID : 'menu-item-about'
-  },
-  {
-    label  : 'Legal',
-    route  : '/legal',
-    testID : 'menu-item-legal'
   }
 ] 

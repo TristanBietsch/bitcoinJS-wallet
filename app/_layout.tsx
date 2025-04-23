@@ -30,7 +30,6 @@ const HIDDEN_NAV_ROUTES = [
   '/settings',
   '/support',
   '/feedback',
-  '/legal',
   '/main/menu'
  ]
 
