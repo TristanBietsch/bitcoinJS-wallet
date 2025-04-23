@@ -9,6 +9,13 @@ import { validationMessages } from '@/src/constants/validationMessages'
 import { normalizeMnemonic } from '@/src/constants/validationMessages'
 import { isWordInWordlist, getWordlistSuggestion } from '@/src/utils/validation'
 import { Check } from 'lucide-react-native'
+import { 
+  setupSeedPhraseProtection, 
+  secureSeedPhraseInputOptions,
+  secureStoreSeedPhrase,
+  clearSeedPhraseFromMemory
+} from '@/src/utils/security/seedPhraseProtection'
+import { createSecureDataContainer } from '@/src/utils/security/memoryProtection'
 
 interface ImportWalletScreenProps {
   onComplete: () => void;
@@ -70,6 +77,38 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
   const [ showValidation, setShowValidation ] = useState(false)
   const [ wordValidations, setWordValidations ] = useState<WordValidation[]>([])
   const [ successAnim ] = useState(new Animated.Value(0))
+  
+  // Create secure container for seed phrase
+  const [ secureContainer ] = useState(() => createSecureDataContainer<string>(''))
+  
+  // Set up security protections when screen mounts
+  useEffect(() => {
+    let cleanup: (() => Promise<void>) | null = null
+    
+    // Set up security protections
+    const setupProtection = async () => {
+      try {
+        cleanup = await setupSeedPhraseProtection()
+      } catch (error) {
+        console.error('Failed to set up screen protection:', error)
+      }
+    }
+    
+    setupProtection()
+    
+    // Clean up security protections when unmounting
+    return () => {
+      if (cleanup) {
+        cleanup().catch(err => console.error('Error during cleanup:', err))
+      }
+      
+      // Clear seed phrase from memory
+      if (seedPhrase) {
+        clearSeedPhraseFromMemory(seedPhrase)
+        secureContainer.clear()
+      }
+    }
+  }, [])
   
   // Word-by-word validation
   useEffect(() => {
@@ -138,6 +177,9 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
             useNativeDriver : true
           })
         ]).start()
+        
+        // Store the seed phrase securely in our container 
+        secureContainer.setValue(normalizedPhrase)
       }
     } else {
       // For partial input, just count words
@@ -176,10 +218,36 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     }
   }
 
-  const handleImport = () => {
+  const handleImport = async () => {
     // Only proceed if the seed phrase is valid
     if (validationResult.isValid) {
-      onComplete()
+      try {
+        // Get the seed phrase from the secure container
+        const securePhrase = secureContainer.getValue()
+        
+        if (securePhrase) {
+          // Store it securely with a unique ID (in a real app, this would be more robust)
+          const seedPhraseId = `wallet_seed_${Date.now()}`
+          await secureStoreSeedPhrase(seedPhraseId, securePhrase)
+          
+          // Clear it from memory
+          clearSeedPhraseFromMemory(seedPhrase)
+          secureContainer.clear()
+          setSeedPhrase('')
+          
+          // Complete the import
+          onComplete()
+        }
+      } catch (error) {
+        console.error('Failed to securely store seed phrase:', error)
+        // Show error to user (in a real app, handle this better)
+        setValidationResult(prev => ({
+          ...prev,
+          isValid : false,
+          errorMessage : 'Failed to securely store seed phrase. Please try again.'
+        }))
+        setShowValidation(true)
+      }
     } else {
       // Force show validation if user tries to submit invalid phrase
       setShowValidation(true)
@@ -233,11 +301,12 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
             </ScrollView>
           )}
           
-          {/* Text input for typing */}
+          {/* Text input for typing with secure options */}
           <TextInput
             style={[
               styles.input,
-              showValidation && !validationResult.isValid && styles.inputError
+              showValidation && !validationResult.isValid && styles.inputError,
+              secureSeedPhraseInputOptions.style
             ]}
             multiline
             numberOfLines={6}
@@ -245,8 +314,13 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
             placeholderTextColor="#BBBBBB"
             value={seedPhrase}
             onChangeText={handleSeedPhraseChange}
-            autoCapitalize="none"
-            autoCorrect={false}
+            autoCorrect={secureSeedPhraseInputOptions.autoCorrect}
+            autoComplete={secureSeedPhraseInputOptions.autoComplete}
+            autoCapitalize={secureSeedPhraseInputOptions.autoCapitalize}
+            secureTextEntry={secureSeedPhraseInputOptions.secureTextEntry}
+            spellCheck={secureSeedPhraseInputOptions.spellCheck}
+            selectTextOnFocus={secureSeedPhraseInputOptions.selectTextOnFocus}
+            keyboardType={secureSeedPhraseInputOptions.keyboardType}
             textAlignVertical="top"
             returnKeyType="done"
             blurOnSubmit={true}

@@ -5801,6 +5801,16 @@ expo-router@~4.0.17:
     semver "~7.6.3"
     server-only "^0.0.1"
 
+expo-screen-capture@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/expo-screen-capture/-/expo-screen-capture-7.0.1.tgz#0828aae429dd72c208eb20507a253943f1be715e"
+  integrity sha512-9VAiusz2S3lEXW5XZNg6kVCo1+HrjSkFO7/0L9b94+xCo7SxTu4SSt9aXEDzpivoeha33P3P4qCFg8TwgIl+Ow==
+
+expo-secure-store@^14.0.1:
+  version "14.0.1"
+  resolved "https://registry.yarnpkg.com/expo-secure-store/-/expo-secure-store-14.0.1.tgz#8953d5966430f5ff262f4d99e7551205870078d7"
+  integrity sha512-QUS+j4+UG4jRQalgnpmTvvrFnMVLqPiUZRzYPnG3+JrZ5kwVW2w6YS3WWerPoR7C6g3y/a2htRxRSylsDs+TaQ==
+
 expo-sharing@^13.0.1:
   version "13.0.1"
   resolved "https://registry.yarnpkg.com/expo-sharing/-/expo-sharing-13.0.1.tgz#f5221ce44190a12649a6639e619d83e318c768a1"
