@@ -22,6 +22,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     setCurrentStep('welcome')
   }
 
+  const handleBackToChoice = () => {
+    setCurrentStep('choice')
+  }
+
   const handleCreateWallet = () => {
     setCurrentStep('warning')
   }
@@ -73,7 +77,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     case 'confirm-seed':
       return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} />
     case 'import':
-      return <ImportWalletScreen onComplete={handleImportComplete} />
+      return <ImportWalletScreen 
+        onComplete={handleImportComplete} 
+        onBack={handleBackToChoice} 
+      />
     case 'success':
       return <SuccessScreen onComplete={handleSuccess} />
     case 'error':

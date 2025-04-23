@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
-import { View, StyleSheet, TextInput } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
+import { OnboardingContainer, OnboardingTitle } from '@/src/components/ui/OnboardingScreen'
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import { ThemedText } from '@/src/components/ui/Text'
-import { ThemedView } from '@/src/components/ui/View'
+import { Colors } from '@/src/constants/colors'
 
 interface ImportWalletScreenProps {
   onComplete: () => void;
+  onBack: () => void;
 }
 
-export default function ImportWalletScreen({ onComplete }: ImportWalletScreenProps) {
+export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletScreenProps) {
   const [ seedPhrase, setSeedPhrase ] = useState('')
 
   const handleImport = () => {
@@ -17,88 +19,98 @@ export default function ImportWalletScreen({ onComplete }: ImportWalletScreenPro
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        Import Wallet
-      </ThemedText>
-      <ThemedText type="default" style={styles.subtitle}>
-        Enter your 12-word seed phrase to restore your wallet
-      </ThemedText>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          multiline
-          numberOfLines={4}
-          placeholder="Enter your seed phrase, with words separated by spaces"
-          value={seedPhrase}
-          onChangeText={setSeedPhrase}
-          autoCapitalize="none"
-          autoCorrect={false}
-          textAlignVertical="top"
-        />
-        <ThemedText type="default" style={styles.hint}>
-          Typically 12 words separated by single spaces
+    <OnboardingContainer>
+      <BackButton onPress={onBack} />
+      
+      <View style={styles.content}>
+        <OnboardingTitle>
+          Import Wallet
+        </OnboardingTitle>
+        
+        <ThemedText style={styles.description}>
+          Enter your seed phrase to import your wallet. Separate each word by a space.
         </ThemedText>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            multiline
+            numberOfLines={6}
+            placeholder="Enter seed phrase..."
+            placeholderTextColor="#BBBBBB"
+            value={seedPhrase}
+            onChangeText={setSeedPhrase}
+            autoCapitalize="none"
+            autoCorrect={false}
+            textAlignVertical="top"
+          />
+        </View>
       </View>
 
-      <TouchableOpacity 
-        style={[ styles.button, !seedPhrase && styles.buttonDisabled ]} 
-        onPress={handleImport}
-        disabled={!seedPhrase}
-      >
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-          Import Wallet
-        </ThemedText>
-      </TouchableOpacity>
-    </ThemedView>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.button,
+            !seedPhrase.trim() && styles.buttonDisabled
+          ]}
+          onPress={handleImport}
+          disabled={!seedPhrase.trim()}
+        >
+          <ThemedText style={styles.buttonText}>
+            Import
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+    </OnboardingContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex    : 1,
-    padding : 20,
+  content : {
+    flex           : 1,
+    alignItems     : 'center',
+    justifyContent : 'flex-start',
+    width          : '100%',
+    paddingTop     : 140,
   },
-  title : {
-    fontSize     : 28,
-    fontWeight   : 'bold',
-    marginBottom : 10,
-    textAlign    : 'center',
-  },
-  subtitle : {
-    textAlign    : 'center',
-    marginBottom : 40,
-    opacity      : 0.7,
+  description : {
+    fontSize          : 16,
+    textAlign         : 'center',
+    marginBottom      : 32,
+    paddingHorizontal : 30,
+    opacity           : 0.7,
   },
   inputContainer : {
-    marginBottom : 40,
+    width             : '100%',
+    paddingHorizontal : 20,
   },
   input : {
-    backgroundColor : '#f5f5f5',
+    backgroundColor : '#F5F5F5',
     borderRadius    : 12,
     padding         : 16,
-    minHeight       : 120,
+    minHeight       : 160,
+    width           : '100%',
     fontSize        : 16,
-    marginBottom    : 8,
+    color           : '#333333',
   },
-  hint : {
-    fontSize  : 14,
-    opacity   : 0.7,
-    textAlign : 'center',
+  buttonContainer : {
+    width             : '100%',
+    paddingHorizontal : 20,
+    marginBottom      : 40,
   },
   button : {
-    backgroundColor : '#000',
-    padding         : 16,
-    borderRadius    : 12,
+    backgroundColor : Colors.light.buttons.primary,
+    width           : '100%',
+    borderRadius    : 30,
+    paddingVertical : 16,
     alignItems      : 'center',
-    marginTop       : 'auto',
   },
   buttonDisabled : {
     opacity : 0.5,
   },
   buttonText : {
-    color    : '#fff',
-    fontSize : 16,
-  },
+    color      : Colors.light.buttons.text,
+    fontSize   : 16,
+    fontWeight : 'bold',
+  }
 }) 
