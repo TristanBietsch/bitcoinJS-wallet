@@ -124,13 +124,12 @@ export function isWordInWordlist(
 
 /**
  * Find the closest matching word in the wordlist for a given input
- * Uses the fastest-levenshtein library for optimal performance
  * 
  * @param word - The input word to find a match for
  * @param language - The language wordlist to use
  * @returns The closest matching word from the wordlist
  */
-export function findClosestWord(
+export function getSuggestionForInvalidWord(
   word: string,
   language: WordlistLanguage = DEFAULT_WORDLIST_LANGUAGE
 ): string {

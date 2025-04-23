@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native'
 import { OnboardingContainer, OnboardingTitle } from '@/src/components/ui/OnboardingScreen'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import { ThemedText } from '@/src/components/ui/Text'
@@ -7,26 +7,95 @@ import { Colors } from '@/src/constants/colors'
 import { validateSeedPhraseWithDetails } from '@/src/utils/validation/seedPhraseValidation'
 import { validationMessages } from '@/src/constants/validationMessages'
 import { normalizeMnemonic } from '@/src/constants/validationMessages'
+import { isWordInWordlist, getWordlistSuggestion } from '@/src/utils/validation'
+import { Check } from 'lucide-react-native'
 
 interface ImportWalletScreenProps {
   onComplete: () => void;
   onBack: () => void;
 }
 
+interface WordValidation {
+  word: string;
+  isValid: boolean;
+  suggestion?: string;
+}
+
+const WordBadge = ({ 
+  wordValidation,
+  index 
+}: { 
+  wordValidation: WordValidation; 
+  index: number 
+}) => {
+  // Style based on word validity
+  const badgeStyle = wordValidation.isValid 
+    ? styles.validWordBadge 
+    : styles.invalidWordBadge
+  
+  const textStyle = wordValidation.isValid 
+    ? styles.validWordText 
+    : styles.invalidWordText
+  
+  // Add slight position offset based on index for a small staggered effect
+  const position = index % 2 === 0 ? 0 : 2
+  
+  return (
+    <View 
+      style={[ 
+        styles.wordBadge, 
+        badgeStyle,
+        { marginTop: position }
+      ]}
+      accessibilityLabel={`Word ${index + 1}: ${wordValidation.word}`}
+    >
+      <ThemedText style={textStyle}>
+        {wordValidation.word}
+      </ThemedText>
+    </View>
+  )
+}
+
 export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletScreenProps) {
   const [ seedPhrase, setSeedPhrase ] = useState('')
   const [ validationResult, setValidationResult ] = useState<{
-    isValid: boolean;
-    errorMessage: string;
-    wordCount: number;
+    isValid      : boolean;
+    errorMessage : string;
+    wordCount    : number;
   }>({
     isValid      : false,
     errorMessage : '',
     wordCount    : 0
   })
   const [ showValidation, setShowValidation ] = useState(false)
+  const [ wordValidations, setWordValidations ] = useState<WordValidation[]>([])
+  const [ successAnim ] = useState(new Animated.Value(0))
+  
+  // Word-by-word validation
+  useEffect(() => {
+    if (!seedPhrase.trim()) {
+      setWordValidations([])
+      return
+    }
+    
+    const normalizedPhrase = normalizeMnemonic(seedPhrase)
+    const words = normalizedPhrase.split(' ').filter(Boolean)
+    
+    const validations = words.map(word => {
+      const isValid = isWordInWordlist(word)
+      const suggestion = isValid ? undefined : getWordlistSuggestion(word)
+      
+      return {
+        word,
+        isValid,
+        suggestion
+      }
+    })
+    
+    setWordValidations(validations)
+  }, [ seedPhrase ])
 
-  // Validate the seed phrase whenever it changes
+  // Full seed phrase validation
   useEffect(() => {
     if (!seedPhrase.trim()) {
       setValidationResult({
@@ -38,7 +107,8 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     }
 
     const normalizedPhrase = normalizeMnemonic(seedPhrase)
-    const wordCount = normalizedPhrase.split(' ').filter(Boolean).length
+    const words = normalizedPhrase.split(' ').filter(Boolean)
+    const wordCount = words.length
     
     // Only perform full validation if we have enough words
     if (wordCount >= 3) {
@@ -48,6 +118,27 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
         errorMessage : result.errorMessage,
         wordCount
       })
+      
+      // Animate success state when valid
+      if (result.isValid) {
+        Animated.sequence([
+          Animated.timing(successAnim, {
+            toValue         : 1,
+            duration        : 300,
+            useNativeDriver : true
+          }),
+          Animated.timing(successAnim, {
+            toValue         : 0.8,
+            duration        : 200,
+            useNativeDriver : true
+          }),
+          Animated.timing(successAnim, {
+            toValue         : 1,
+            duration        : 200,
+            useNativeDriver : true
+          })
+        ]).start()
+      }
     } else {
       // For partial input, just count words
       setValidationResult({
@@ -98,6 +189,16 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
   // Determine button state
   const isButtonEnabled = validationResult.isValid
   const buttonOpacity = isButtonEnabled ? 1 : 0.5
+  
+  // Get specific error suggestions if there are invalid words
+  const invalidWords = wordValidations.filter(v => !v.isValid)
+  let suggestionText = ''
+  
+  if (invalidWords.length === 1 && invalidWords[0].suggestion) {
+    suggestionText = `Did you mean "${invalidWords[0].suggestion}" instead of "${invalidWords[0].word}"?`
+  } else if (invalidWords.length > 0) {
+    suggestionText = 'Check the highlighted words for errors.'
+  }
 
   return (
     <OnboardingContainer>
@@ -113,6 +214,26 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
         </ThemedText>
 
         <View style={styles.inputContainer}>
+          {/* Visual word display with validation */}
+          {wordValidations.length > 0 && (
+            <ScrollView 
+              horizontal={false} 
+              style={styles.wordsContainer}
+              contentContainerStyle={styles.wordsContentContainer}
+            >
+              <View style={styles.wordBadgesContainer}>
+                {wordValidations.map((validation, index) => (
+                  <WordBadge 
+                    key={`word-${index}`} 
+                    wordValidation={validation} 
+                    index={index} 
+                  />
+                ))}
+              </View>
+            </ScrollView>
+          )}
+          
+          {/* Text input for typing */}
           <TextInput
             style={[
               styles.input,
@@ -134,13 +255,28 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
           {showValidation && (
             <View style={styles.validationContainer}>
               {validationResult.isValid ? (
-                <ThemedText style={styles.validText}>
-                  ✓ Valid seed phrase
-                </ThemedText>
+                <Animated.View 
+                  style={[
+                    styles.successContainer,
+                    { transform: [ { scale: successAnim } ] }
+                  ]}
+                >
+                  <Check size={16} color={Colors.light.successGreen} />
+                  <ThemedText style={styles.validText}>
+                    Valid seed phrase
+                  </ThemedText>
+                </Animated.View>
               ) : (
-                <ThemedText style={styles.errorText}>
-                  {validationResult.errorMessage}
-                </ThemedText>
+                <View>
+                  <ThemedText style={styles.errorText}>
+                    {validationResult.errorMessage}
+                  </ThemedText>
+                  {suggestionText ? (
+                    <ThemedText style={styles.suggestionText}>
+                      {suggestionText}
+                    </ThemedText>
+                  ) : null}
+                </View>
               )}
               
               <ThemedText style={[
@@ -193,6 +329,45 @@ const styles = StyleSheet.create({
     width             : '100%',
     paddingHorizontal : 20,
   },
+  wordsContainer : {
+    maxHeight    : 100,
+    marginBottom : 10,
+    width        : '100%',
+  },
+  wordsContentContainer : {
+    flexGrow        : 1,
+    paddingVertical : 8,
+  },
+  wordBadgesContainer : {
+    flexDirection : 'row',
+    flexWrap      : 'wrap',
+    alignItems    : 'flex-start',
+  },
+  wordBadge : {
+    paddingHorizontal : 10,
+    paddingVertical   : 6,
+    borderRadius      : 16,
+    margin            : 4,
+    marginBottom      : 6,
+  },
+  validWordBadge : {
+    backgroundColor : Colors.light.offWhite,
+    borderWidth     : 1,
+    borderColor     : Colors.light.successGreen,
+  },
+  invalidWordBadge : {
+    backgroundColor : Colors.light.offWhite,
+    borderWidth     : 1,
+    borderColor     : Colors.light.errorRed,
+  },
+  validWordText : {
+    color    : Colors.light.successGreen,
+    fontSize : 14,
+  },
+  invalidWordText : {
+    color    : Colors.light.errorRed,
+    fontSize : 14,
+  },
   input : {
     backgroundColor : '#F5F5F5',
     borderRadius    : 12,
@@ -213,15 +388,26 @@ const styles = StyleSheet.create({
     marginBottom : 16,
     width        : '100%',
   },
+  successContainer : {
+    flexDirection : 'row',
+    alignItems    : 'center',
+    marginBottom  : 4,
+  },
   errorText : {
     color        : Colors.light.errorRed,
     fontSize     : 14,
     marginBottom : 4,
   },
+  suggestionText : {
+    color        : Colors.light.buttons.primary,
+    fontSize     : 14,
+    marginBottom : 8,
+  },
   validText : {
     color        : Colors.light.successGreen,
     fontSize     : 14,
     marginBottom : 4,
+    marginLeft   : 4,
   },
   warningText : {
     color    : Colors.light.buttons.warning,
