@@ -29,7 +29,6 @@ const HIDDEN_NAV_ROUTES = [
   '/about', 
   '/settings',
   '/support',
-  '/feedback',
   '/main/menu'
  ]
 

@@ -15,11 +15,6 @@ export const MENU_ITEMS: MenuItemData[] = [
     testID : 'menu-item-support'
   },
   {
-    label  : 'Feedback',
-    route  : '/feedback',
-    testID : 'menu-item-feedback'
-  },
-  {
     label  : 'About',
     route  : '/about',
     testID : 'menu-item-about'
