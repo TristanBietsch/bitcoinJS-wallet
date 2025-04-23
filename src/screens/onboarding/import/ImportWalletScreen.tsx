@@ -43,6 +43,8 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
             autoCapitalize="none"
             autoCorrect={false}
             textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit={true}
           />
         </View>
       </View>

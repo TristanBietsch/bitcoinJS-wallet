@@ -24,6 +24,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
+    "@scure/bip39": "^1.5.4",
     "@sentry/node": "^9.2.0",
     "@sentry/react-native": "5.5.0",
     "@shopify/flash-list": "1.7.3",
@@ -31,6 +32,8 @@
     "@types/cors": "^2.8.17",
     "axios": "^1.7.9",
     "babel-plugin-module-resolver": "^5.0.2",
+    "bip39": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.7",
     "core-js": "^3.41.0",
     "cors": "^2.8.5",
     "expo": "~52.0.37",
@@ -53,6 +56,7 @@
     "expo-web-browser": "~14.0.2",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "fastest-levenshtein": "^1.0.16",
     "helmet": "^8.0.0",
     "lottie-react-native": "7.1.0",
     "lucide-react-native": "^0.477.0",
@@ -78,7 +82,7 @@
     "sentry-expo": "~7.0.0",
     "tailwindcss": "^3.4.17",
     "zeego": "^2.0.4",
-    "zod": "^3.24.2",
+    "zod": "^3.24.3",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
