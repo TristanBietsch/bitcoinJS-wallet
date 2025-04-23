@@ -10,6 +10,13 @@ import * as SecureStore from 'expo-secure-store'
 import * as ScreenCapture from 'expo-screen-capture'
 import { bufferWipe } from './memoryProtection'
 
+// Define BufferLike interface inline to avoid import issues
+interface BufferLike {
+  length: number;
+  fill(value: number): BufferLike;
+  set?(array: Uint8Array): void;
+}
+
 // Custom error class for security operations
 export class SeedPhraseSecurityError extends Error {
   constructor(message: string, public readonly code: string) {
@@ -248,18 +255,29 @@ export async function secureDeleteSeedPhrase(id: string): Promise<void> {
  * Securely clear a seed phrase from memory
  * @param seedPhraseRef - Reference to the seed phrase string or buffer
  */
-export function clearSeedPhraseFromMemory(seedPhraseRef: string | Buffer): void {
+export function clearSeedPhraseFromMemory(seedPhraseRef: string | unknown): void {
   try {
     if (typeof seedPhraseRef === 'string') {
       // For strings, we can't truly overwrite memory in JavaScript
       // The best we can do is replace with empty string to allow garbage collection
       seedPhraseRef = ''
-    } else {
-      // For buffers, we can actually overwrite memory
-      bufferWipe(seedPhraseRef)
+    } else if (seedPhraseRef && typeof seedPhraseRef === 'object') {
+      // Check if the object has buffer-like properties before wiping
+      const bufferCandidate = seedPhraseRef as Record<string, unknown>
+      
+      if (
+        typeof bufferCandidate.length === 'number' &&
+        typeof bufferCandidate.fill === 'function'
+      ) {
+        // For Buffer-like objects, we can actually overwrite memory
+        bufferWipe(seedPhraseRef as BufferLike)
+      }
     }
   } catch (error) {
-    console.error('Failed to clear seed phrase from memory:', error instanceof Error ? error.message : String(error))
+    console.error(
+      'Failed to clear seed phrase from memory:',
+      error instanceof Error ? error.message : String(error)
+    )
     // Don't throw here as this is usually called in cleanup paths
   }
 }

@@ -5,6 +5,9 @@
  * wiping sensitive data from memory when no longer needed.
  */
 
+// Import shared type definitions
+import type { BufferLike } from './memoryTypes'
+
 // Custom error class for memory security operations
 export class MemorySecurityError extends Error {
   constructor(message: string, public readonly code: string) {
@@ -14,28 +17,82 @@ export class MemorySecurityError extends Error {
 }
 
 /**
+ * Check if we're in an environment with Node.js Buffer
+ */
+const hasBuffer = (): boolean => {
+  try {
+    return typeof Buffer !== 'undefined'
+  } catch (error) {
+    // Log the error in development environments
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('Buffer check failed:', error)
+    }
+    return false
+  }
+}
+
+/**
+ * Safely determine if an object is Buffer-like (can be wiped)
+ */
+function isWipeableBuffer(value: unknown): value is BufferLike {
+  if (!value) return false
+  
+  // Check if it's a Node.js Buffer
+  if (hasBuffer() && typeof Buffer !== 'undefined') {
+    try {
+      if (value instanceof Buffer) return true
+    } catch (error) {
+      // Log the error in development environments
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Buffer instance check failed:', error)
+      }
+    }
+  }
+  
+  // Check if it's a typed array or has buffer-like capabilities
+  const obj = value as Record<string, unknown>
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof obj.length === 'number' && 
+    typeof obj.fill === 'function'
+  )
+}
+
+/**
  * Wipe a buffer by overwriting its contents
  * This helps ensure sensitive data doesn't remain in memory
  * 
  * @param buffer - The buffer containing sensitive data to be wiped
  */
-export function bufferWipe(buffer: Buffer): void {
+export function bufferWipe(buffer: BufferLike): void {
   try {
-    if (!buffer || !(buffer instanceof Buffer)) {
+    if (!buffer || !isWipeableBuffer(buffer)) {
       return
     }
     
     // Multiple-pass overwrite with different patterns
     // First pass: zeroes
     buffer.fill(0)
+    
     // Second pass: ones
     buffer.fill(255)
+    
     // Third pass: random data
-    const randomBytes = new Uint8Array(buffer.length)
-    for (let i = 0; i < buffer.length; i++) {
-      randomBytes[i] = Math.floor(Math.random() * 256)
+    if (typeof buffer.set === 'function') {
+      const randomBytes = new Uint8Array(buffer.length)
+      for (let i = 0; i < buffer.length; i++) {
+        randomBytes[i] = Math.floor(Math.random() * 256)
+      }
+      buffer.set(randomBytes)
+    } else {
+      // Fallback if set is not available
+      for (let i = 0; i < buffer.length; i++) {
+        // @ts-ignore - We can't type this perfectly across all buffer types
+        buffer[i] = Math.floor(Math.random() * 256)
+      }
     }
-    buffer.set(randomBytes)
+    
     // Final pass: zeroes again
     buffer.fill(0)
   } catch (error) {
@@ -57,9 +114,14 @@ export function createSecureDataContainer<T>(initialValue: T) {
   
   // If the value is a string, obfuscate it immediately
   if (typeof initialValue === 'string') {
-    const result = obfuscateStringInMemory(initialValue as unknown as string)
-    value = result.obfuscatedValue as unknown as T
-    obfuscationKey = result.key
+    try {
+      const result = obfuscateStringInMemory(initialValue)
+      value = result.obfuscatedValue as unknown as T
+      obfuscationKey = result.key
+    } catch (error) {
+      console.error('Failed to initialize secure container:', 
+        error instanceof Error ? error.message : String(error))
+    }
   }
   
   return {
@@ -70,7 +132,7 @@ export function createSecureDataContainer<T>(initialValue: T) {
       try {
         // If the value is obfuscated, deobfuscate it
         if (obfuscationKey && typeof value === 'string') {
-          return deobfuscateStringInMemory(value as unknown as string, obfuscationKey) as unknown as T
+          return deobfuscateStringInMemory(value, obfuscationKey) as unknown as T
         }
         return value
       } catch (error) {
@@ -85,8 +147,8 @@ export function createSecureDataContainer<T>(initialValue: T) {
     clear : (): void => {
       try {
         // For Buffer objects, we can actively wipe
-        if (value instanceof Buffer) {
-          bufferWipe(value as unknown as Buffer)
+        if (isWipeableBuffer(value)) {
+          bufferWipe(value as unknown as BufferLike)
         } else if (typeof value === 'string') {
           // Clear any obfuscated string by replacing with empty string
           value = '' as unknown as T
@@ -94,7 +156,21 @@ export function createSecureDataContainer<T>(initialValue: T) {
         
         // Clear the obfuscation key
         if (obfuscationKey) {
-          obfuscationKey.fill(0)
+          try {
+            // Try to use a typed array for secure wiping
+            const keyArray = new Uint8Array(obfuscationKey)
+            keyArray.fill(0)
+          } catch (error) {
+            // Log issue with typed arrays in development
+            if (process.env.NODE_ENV === 'development') {
+              console.debug('TypedArray wiping failed, using fallback:', error)
+            }
+            // Fallback to manual clearing if typed arrays not supported
+            for (let i = 0; i < obfuscationKey.length; i++) {
+              obfuscationKey[i] = 0
+            }
+          }
+          
           obfuscationKey = null
         }
         
@@ -111,20 +187,34 @@ export function createSecureDataContainer<T>(initialValue: T) {
      */
     setValue : (newValue: T): void => {
       try {
-        // If current value is a buffer, wipe it first
-        if (value instanceof Buffer) {
-          bufferWipe(value as unknown as Buffer)
+        // If current value is a buffer-like object, wipe it first
+        if (isWipeableBuffer(value)) {
+          bufferWipe(value as unknown as BufferLike)
         }
         
         // Clear any existing obfuscation key
         if (obfuscationKey) {
-          obfuscationKey.fill(0)
+          try {
+            // Try to use a typed array for secure wiping
+            const keyArray = new Uint8Array(obfuscationKey)
+            keyArray.fill(0)
+          } catch (error) {
+            // Log issue with typed arrays in development
+            if (process.env.NODE_ENV === 'development') {
+              console.debug('TypedArray wiping failed, using fallback:', error)
+            }
+            // Fallback to manual clearing if typed arrays not supported
+            for (let i = 0; i < obfuscationKey.length; i++) {
+              obfuscationKey[i] = 0
+            }
+          }
+          
           obfuscationKey = null
         }
         
         // If new value is a string, obfuscate it
         if (typeof newValue === 'string') {
-          const result = obfuscateStringInMemory(newValue as unknown as string)
+          const result = obfuscateStringInMemory(newValue)
           value = result.obfuscatedValue as unknown as T
           obfuscationKey = result.key
         } else {
@@ -225,8 +315,8 @@ export async function withSecureOperation<T, R>(
   } finally {
     // Always try to clean up, regardless of success/failure
     try {
-      if (sensitiveData instanceof Buffer) {
-        bufferWipe(sensitiveData)
+      if (isWipeableBuffer(sensitiveData)) {
+        bufferWipe(sensitiveData as unknown as BufferLike)
       } else if (typeof sensitiveData === 'string' && sensitiveData.length > 0) {
         // For strings, we can't truly wipe memory in JavaScript
         // But we can try to help GC by removing references
@@ -234,7 +324,8 @@ export async function withSecureOperation<T, R>(
         sensitiveData = '' as unknown as T
       }
     } catch (cleanupError) {
-      console.error('Cleanup during secure operation failed:', cleanupError instanceof Error ? cleanupError.message : String(cleanupError))
+      console.error('Cleanup during secure operation failed:', 
+        cleanupError instanceof Error ? cleanupError.message : String(cleanupError))
     }
   }
 } 
