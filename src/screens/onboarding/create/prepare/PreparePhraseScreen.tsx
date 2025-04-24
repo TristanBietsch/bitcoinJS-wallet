@@ -41,7 +41,7 @@ export default function PreparePhraseScreen({ onComplete, onBack }: PreparePhras
       </View>
       
       <OnboardingButton
-        label="Generate Seed"
+        label="Generate My Seed"
         onPress={onComplete}
         style={styles.nextButton}
       />

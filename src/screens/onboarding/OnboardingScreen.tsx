@@ -4,12 +4,13 @@ import WelcomeScreen from './start/WelcomeScreen'
 import WalletChoiceScreen from './start/WalletChoiceScreen'
 import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen'
 import PreparePhraseScreen from './create/prepare/PreparePhraseScreen'
+import GenerateSeedWords from './create/generate/GenerateSeedWords'
 import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen'
 import ImportWalletScreen from './import/ImportWalletScreen'
 import SuccessScreen from './status/SuccessScreen'
 import ErrorScreen from './status/ErrorScreen'
 
-type WalletStep = 'welcome' | 'choice' | 'warning' | 'prepare' | 'confirm-seed' | 'import' | 'success' | 'error';
+type WalletStep = 'welcome' | 'choice' | 'warning' | 'prepare' | 'generate-seed' | 'confirm-seed' | 'import' | 'success' | 'error';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [ currentStep, setCurrentStep ] = useState<WalletStep>('welcome')
@@ -40,6 +41,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   }
 
   const handlePrepareComplete = () => {
+    setCurrentStep('generate-seed')
+  }
+
+  const handleGenerateSeedComplete = () => {
     setCurrentStep('confirm-seed')
   }
 
@@ -49,6 +54,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
   const handleBackToPrepare = () => {
     setCurrentStep('prepare')
+  }
+  
+  const handleBackToGenerateSeed = () => {
+    setCurrentStep('generate-seed')
   }
 
   const handleConfirmSeedComplete = () => {
@@ -89,8 +98,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       return <SeedPhraseWarningScreen onComplete={handleWarningComplete} onBack={handleBackToChoice} />
     case 'prepare':
       return <PreparePhraseScreen onComplete={handlePrepareComplete} onBack={handleBackToWarning} />
+    case 'generate-seed':
+      return <GenerateSeedWords onComplete={handleGenerateSeedComplete} onBack={handleBackToPrepare} />
     case 'confirm-seed':
-      return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} onBack={handleBackToPrepare} />
+      return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} onBack={handleBackToGenerateSeed} />
     case 'import':
       return <ImportWalletScreen 
         onComplete={handleImportComplete} 

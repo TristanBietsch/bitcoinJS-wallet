@@ -1,14 +1,10 @@
-import React, { useState } from 'react'
-import { View, StyleSheet, ScrollView } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import React, { useState, useEffect } from 'react'
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { ThemedView } from '@/src/components/ui/View'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
-
-interface ConfirmSeedWordsScreenProps {
-  onComplete: () => void;
-  onBack?: () => void;
-}
+import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
+import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
+import { Colors } from '@/src/constants/colors'
 
 // Mock seed phrase for demonstration
 const MOCK_SEED_PHRASE = [
@@ -16,156 +12,212 @@ const MOCK_SEED_PHRASE = [
   'absorb', 'abstract', 'absurd', 'abuse', 'access', 'accident'
 ]
 
-export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
-  const [ showSeed, setShowSeed ] = useState(false)
-  const [ step, setStep ] = useState<'view' | 'verify'>('view')
+interface ConfirmSeedWordsScreenProps {
+  onComplete: () => void;
+  onBack: () => void;
+}
 
-  const handleContinue = () => {
-    if (step === 'view') {
-      setStep('verify')
-    } else {
+export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
+  const [ selectedWords, setSelectedWords ] = useState<string[]>([])
+  const [ availableWords, setAvailableWords ] = useState<string[]>([])
+  const [ isVerified, setIsVerified ] = useState(false)
+  
+  // Shuffle and set available words
+  useEffect(() => {
+    const shuffled = [ ...MOCK_SEED_PHRASE ].sort(() => Math.random() - 0.5)
+    setAvailableWords(shuffled)
+  }, [])
+  
+  const handleWordSelect = (word: string) => {
+    setSelectedWords([ ...selectedWords, word ])
+    setAvailableWords(availableWords.filter(w => w !== word))
+    
+    // Check if all words are correctly selected
+    if (selectedWords.length === MOCK_SEED_PHRASE.length - 1) {
+      // Last word being selected
+      const updatedSelected = [ ...selectedWords, word ]
+      const isCorrect = updatedSelected.every((w, i) => w === MOCK_SEED_PHRASE[i])
+      setIsVerified(isCorrect)
+    }
+  }
+  
+  const handleWordRemove = (index: number) => {
+    const word = selectedWords[index]
+    const newSelectedWords = [ ...selectedWords ]
+    newSelectedWords.splice(index, 1)
+    setSelectedWords(newSelectedWords)
+    setAvailableWords([ ...availableWords, word ])
+    setIsVerified(false)
+  }
+  
+  const handleReset = () => {
+    setSelectedWords([])
+    setAvailableWords([ ...MOCK_SEED_PHRASE ].sort(() => Math.random() - 0.5))
+    setIsVerified(false)
+  }
+  
+  const handleComplete = () => {
+    if (isVerified) {
       onComplete()
     }
   }
-
+  
+  // Calculate button style
+  const buttonStyle = {
+    ...styles.confirmButton,
+    ...(isVerified ? {} : { opacity: 0.5 }),
+  }
+  
   return (
-    <ThemedView style={styles.container}>
-      {/* Back Button */}
-      {onBack && <BackButton onPress={onBack} />}
+    <OnboardingContainer>
+      <BackButton onPress={onBack} />
       
-      <ScrollView style={styles.scrollView}>
-        <ThemedText type="title" style={styles.title}>
-          {step === 'view' ? 'Backup Your Wallet' : 'Verify Your Backup'}
+      <View style={styles.content}>
+        <ThemedText style={styles.title}>
+          Verify Your Backup
         </ThemedText>
-        <ThemedText type="default" style={styles.subtitle}>
-          {step === 'view' 
-            ? 'Write down these 12 words in order and store them securely'
-            : 'Select the words in the correct order to verify your backup'
-          }
+        
+        <ThemedText style={styles.subtitle}>
+          Select the words in the correct order to verify your backup
         </ThemedText>
-
-        {step === 'view' ? (
-          <View style={styles.seedContainer}>
-            {!showSeed ? (
-              <TouchableOpacity 
-                style={styles.revealButton} 
-                onPress={() => setShowSeed(true)}
-              >
-                <ThemedText type="defaultSemiBold" style={styles.revealButtonText}>
-                  Tap to Reveal Seed Phrase
+        
+        {/* Selected Words Container */}
+        <View style={styles.selectedWordsContainer}>
+          {Array.from({ length: 12 }).map((_, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.wordSlot,
+                selectedWords[index] ? styles.wordSlotFilled : {}
+              ]}
+              onPress={() => selectedWords[index] && handleWordRemove(index)}
+              disabled={!selectedWords[index]}
+            >
+              {selectedWords[index] ? (
+                <ThemedText style={styles.selectedWord}>
+                  {selectedWords[index]}
                 </ThemedText>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.wordGrid}>
-                {MOCK_SEED_PHRASE.map((word, index) => (
-                  <View key={index} style={styles.wordContainer}>
-                    <ThemedText type="default" style={styles.wordNumber}>
-                      {index + 1}
-                    </ThemedText>
-                    <ThemedText type="defaultSemiBold" style={styles.word}>
-                      {word}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.verificationContainer}>
-            <ThemedText type="default" style={styles.verificationText}>
-              Verification UI would go here
-            </ThemedText>
-          </View>
-        )}
-      </ScrollView>
-
-      <TouchableOpacity 
-        style={[ styles.button, !showSeed && step === 'view' && styles.buttonDisabled ]} 
-        onPress={handleContinue}
-        disabled={!showSeed && step === 'view'}
-      >
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-          {step === 'view' ? "I've Written It Down" : 'Confirm Backup'}
-        </ThemedText>
-      </TouchableOpacity>
-    </ThemedView>
+              ) : (
+                <ThemedText style={styles.wordPlaceholder}>
+                  {index + 1}
+                </ThemedText>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* Available Words Container */}
+        <View style={styles.availableWordsContainer}>
+          {availableWords.map((word, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.availableWord}
+              onPress={() => handleWordSelect(word)}
+              disabled={selectedWords.length >= 12}
+            >
+              <ThemedText>
+                {word}
+              </ThemedText>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.resetButton} 
+          onPress={handleReset}
+          disabled={selectedWords.length === 0}
+        >
+          <ThemedText style={[
+            styles.resetButtonText,
+            selectedWords.length === 0 && { opacity: 0.5 }
+          ]}>
+            Reset
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+      
+      <OnboardingButton
+        label="Confirm"
+        onPress={handleComplete}
+        style={buttonStyle}
+      />
+    </OnboardingContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex    : 1,
-    padding : 20,
-  },
-  scrollView : {
-    flex : 1,
+  content : {
+    flex              : 1,
+    alignItems        : 'center',
+    paddingHorizontal : 16,
+    marginTop         : 60,
   },
   title : {
     fontSize     : 28,
     fontWeight   : 'bold',
-    marginBottom : 10,
     textAlign    : 'center',
+    marginBottom : 10,
   },
   subtitle : {
+    fontSize     : 16,
     textAlign    : 'center',
-    marginBottom : 40,
-    opacity      : 0.7,
+    marginBottom : 30,
   },
-  seedContainer : {
-    backgroundColor : '#f5f5f5',
-    borderRadius    : 12,
-    padding         : 20,
-    minHeight       : 200,
+  selectedWordsContainer : {
+    flexDirection   : 'row',
+    flexWrap        : 'wrap',
     justifyContent  : 'center',
+    backgroundColor : '#F5F5F5',
+    borderRadius    : 16,
+    padding         : 16,
+    width           : '100%',
+    marginBottom    : 20,
   },
-  revealButton : {
-    alignItems     : 'center',
-    justifyContent : 'center',
-    height         : 160,
+  wordSlot : {
+    width           : '45%',
+    height          : 40,
+    backgroundColor : '#E0E0E0',
+    borderRadius    : 8,
+    justifyContent  : 'center',
+    alignItems      : 'center',
+    margin          : 5,
   },
-  revealButtonText : {
-    color : '#000',
+  wordSlotFilled : {
+    backgroundColor : '#FFF',
   },
-  wordGrid : {
+  selectedWord : {
+    fontSize : 16,
+  },
+  wordPlaceholder : {
+    opacity : 0.5,
+  },
+  availableWordsContainer : {
     flexDirection  : 'row',
     flexWrap       : 'wrap',
-    justifyContent : 'space-between',
-    gap            : 12,
+    justifyContent : 'center',
+    marginBottom   : 20,
   },
-  wordContainer : {
-    width           : '30%',
-    backgroundColor : '#fff',
-    borderRadius    : 8,
-    padding         : 12,
-    alignItems      : 'center',
+  availableWord : {
+    backgroundColor   : '#F5F5F5',
+    paddingHorizontal : 16,
+    paddingVertical   : 8,
+    borderRadius      : 16,
+    margin            : 4,
   },
-  wordNumber : {
-    fontSize     : 12,
-    opacity      : 0.5,
-    marginBottom : 4,
+  resetButton : {
+    marginTop       : 10,
+    paddingVertical : 8,
   },
-  word : {
-    textAlign : 'center',
+  resetButtonText : {
+    color    : Colors.light.buttons.primary,
+    fontSize : 16,
   },
-  verificationContainer : {
-    alignItems : 'center',
-    padding    : 20,
-  },
-  verificationText : {
-    textAlign : 'center',
-  },
-  button : {
-    backgroundColor : '#000',
-    padding         : 16,
-    borderRadius    : 12,
-    alignItems      : 'center',
-    marginTop       : 20,
+  confirmButton : {
+    backgroundColor : Colors.light.buttons.primary,
+    marginBottom    : 30,
+    width           : '100%',
   },
   buttonDisabled : {
     opacity : 0.5,
-  },
-  buttonText : {
-    color    : '#fff',
-    fontSize : 16,
-  },
+  }
 }) 
