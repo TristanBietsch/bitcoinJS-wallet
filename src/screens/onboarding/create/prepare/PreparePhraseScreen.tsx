@@ -1,10 +1,12 @@
 import React from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
-import { FileLock2, ArrowRight } from 'lucide-react-native'
+import { View, StyleSheet } from 'react-native'
+import { FileLock2 } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
 import { OnboardingTitle, OnboardingDescription } from '@/src/components/ui/OnboardingScreen'
+import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
+import { Colors } from '@/src/constants/colors'
 
 interface PreparePhraseScreenProps {
   onComplete: () => void;
@@ -25,9 +27,11 @@ export default function PreparePhraseScreen({ onComplete, onBack }: PreparePhras
           We will ask you to write down your seed.
         </OnboardingDescription>
         
-        <View style={styles.iconContainer}>
-          <FileLock2 size={90} color="#FFFFFF" />
-        </View>
+        <FileLock2 
+          size={140} 
+          color={Colors.light.buttons.primary} 
+          style={styles.icon}
+        />
         
         <ThemedText style={styles.securityText}>
           Write down your seed phrase on paper. Store it somewhere safe and
@@ -36,21 +40,11 @@ export default function PreparePhraseScreen({ onComplete, onBack }: PreparePhras
         </ThemedText>
       </View>
       
-      <TouchableOpacity 
-        style={styles.nextButton} 
+      <OnboardingButton
+        label="Generate Seed"
         onPress={onComplete}
-      >
-        <View style={styles.buttonContent}>
-          <ThemedText style={styles.buttonText}>
-            I am Ready
-          </ThemedText>
-          <ArrowRight 
-            size={20} 
-            color="#FFFFFF" 
-            style={styles.buttonIcon} 
-          />
-        </View>
-      </TouchableOpacity>
+        style={styles.nextButton}
+      />
     </OnboardingContainer>
   )
 }
@@ -65,16 +59,10 @@ const styles = StyleSheet.create({
     paddingHorizontal : 24,
   },
   subtitle : {
-    marginBottom : 60,
+    marginBottom : 100,
   },
-  iconContainer : {
-    width           : 200,
-    height          : 200,
-    borderRadius    : 200,
-    backgroundColor : '#2FA558',
-    alignItems      : 'center',
-    justifyContent  : 'center',
-    marginBottom    : 48,
+  icon : {
+    marginBottom : 80,
   },
   securityText : {
     textAlign    : 'center',
@@ -83,25 +71,9 @@ const styles = StyleSheet.create({
     marginBottom : 60,
   },
   nextButton : {
-    backgroundColor  : '#24126A',
-    paddingVertical  : 16,
-    borderRadius     : 30,
+    backgroundColor  : Colors.light.buttons.primary,
     marginHorizontal : 30,
     marginBottom     : 50,
     width            : '100%',
-  },
-  buttonContent : {
-    flexDirection  : 'row',
-    alignItems     : 'center',
-    justifyContent : 'center',
-  },
-  buttonText : {
-    color       : '#FFFFFF',
-    fontSize    : 16,
-    fontWeight  : 'bold',
-    marginRight : 8,
-  },
-  buttonIcon : {
-    marginLeft : 4,
   }
 }) 
