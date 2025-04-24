@@ -1,8 +1,8 @@
 import React, { ReactNode } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import LoadingIndicator from '@/src/components/ui/LoadingIndicator'
-import ErrorDisplay from '@/src/components/ui/ErrorDisplay'
+import LoadingIndicator from '@/src/components/ui/Feedback/LoadingIndicator'
+import ErrorDisplay from '@/src/components/ui/Feedback/ErrorDisplay'
 import { CurrencyType } from '@/src/config/currency'
 
 interface BalanceDisplayProps {

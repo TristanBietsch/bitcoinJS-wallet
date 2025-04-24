@@ -3,7 +3,7 @@
  */
 import React, { ReactNode } from 'react'
 import { View, StyleSheet, ViewStyle } from 'react-native'
-import LoadingIndicator from '@/src/components/ui/LoadingIndicator'
+import LoadingIndicator from '@/src/components/ui/Feedback/LoadingIndicator'
 
 interface ScreenLayoutProps {
   children: ReactNode

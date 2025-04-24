@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
-import { ThemedText } from './Text'
+import { ThemedText } from '../Text'
 
 interface ErrorDisplayProps {
   error: string
