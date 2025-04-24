@@ -48,9 +48,8 @@ const styles = StyleSheet.create({
     textAlign    : 'center',
   },
   description : {
-    fontSize          : 16,
-    textAlign         : 'center',
-    paddingHorizontal : 40,
-    opacity           : 0.7,
+    fontSize  : 16,
+    textAlign : 'center',
+    opacity   : 0.7,
   },
 }) 

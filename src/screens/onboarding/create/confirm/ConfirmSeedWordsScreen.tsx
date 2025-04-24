@@ -3,9 +3,11 @@ import { View, StyleSheet, ScrollView } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ThemedView } from '@/src/components/ui/View'
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 
 interface ConfirmSeedWordsScreenProps {
   onComplete: () => void;
+  onBack?: () => void;
 }
 
 // Mock seed phrase for demonstration
@@ -14,7 +16,7 @@ const MOCK_SEED_PHRASE = [
   'absorb', 'abstract', 'absurd', 'abuse', 'access', 'accident'
 ]
 
-export default function ConfirmSeedWordsScreen({ onComplete }: ConfirmSeedWordsScreenProps) {
+export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
   const [ showSeed, setShowSeed ] = useState(false)
   const [ step, setStep ] = useState<'view' | 'verify'>('view')
 
@@ -28,6 +30,9 @@ export default function ConfirmSeedWordsScreen({ onComplete }: ConfirmSeedWordsS
 
   return (
     <ThemedView style={styles.container}>
+      {/* Back Button */}
+      {onBack && <BackButton onPress={onBack} />}
+      
       <ScrollView style={styles.scrollView}>
         <ThemedText type="title" style={styles.title}>
           {step === 'view' ? 'Backup Your Wallet' : 'Verify Your Backup'}

@@ -3,12 +3,13 @@ import { OnboardingScreenProps } from '@/src/types/onboarding.types'
 import WelcomeScreen from './start/WelcomeScreen'
 import WalletChoiceScreen from './start/WalletChoiceScreen'
 import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen'
+import PreparePhraseScreen from './create/prepare/PreparePhraseScreen'
 import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen'
 import ImportWalletScreen from './import/ImportWalletScreen'
 import SuccessScreen from './status/SuccessScreen'
 import ErrorScreen from './status/ErrorScreen'
 
-type WalletStep = 'welcome' | 'choice' | 'warning' | 'confirm-seed' | 'import' | 'success' | 'error';
+type WalletStep = 'welcome' | 'choice' | 'warning' | 'prepare' | 'confirm-seed' | 'import' | 'success' | 'error';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [ currentStep, setCurrentStep ] = useState<WalletStep>('welcome')
@@ -35,7 +36,19 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   }
 
   const handleWarningComplete = () => {
+    setCurrentStep('prepare')
+  }
+
+  const handlePrepareComplete = () => {
     setCurrentStep('confirm-seed')
+  }
+
+  const handleBackToWarning = () => {
+    setCurrentStep('warning')
+  }
+
+  const handleBackToPrepare = () => {
+    setCurrentStep('prepare')
   }
 
   const handleConfirmSeedComplete = () => {
@@ -74,8 +87,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       )
     case 'warning':
       return <SeedPhraseWarningScreen onComplete={handleWarningComplete} onBack={handleBackToChoice} />
+    case 'prepare':
+      return <PreparePhraseScreen onComplete={handlePrepareComplete} onBack={handleBackToWarning} />
     case 'confirm-seed':
-      return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} />
+      return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} onBack={handleBackToPrepare} />
     case 'import':
       return <ImportWalletScreen 
         onComplete={handleImportComplete} 
