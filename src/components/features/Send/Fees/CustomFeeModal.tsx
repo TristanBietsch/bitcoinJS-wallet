@@ -41,11 +41,12 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity 
-              style={styles.modalBackButton} 
+              style={[ styles.modalBackButton, !!feeError && styles.modalBackButtonDisabled ]} 
               onPress={onClose}
+              disabled={!!feeError}
             >
-              <ChevronLeft size={24} color="black" />
-              <ThemedText style={styles.modalBackText}>Back</ThemedText>
+              <ChevronLeft size={24} color={!!feeError ? "#CCCCCC" : "black"} />
+              <ThemedText style={[ styles.modalBackText, !!feeError && styles.modalBackTextDisabled ]}>Back</ThemedText>
             </TouchableOpacity>
             <ThemedText style={styles.modalTitle}>Custom fee</ThemedText>
           </View>
@@ -167,10 +168,16 @@ const styles = StyleSheet.create({
     flexDirection : 'row',
     alignItems    : 'center'
   },
+  modalBackButtonDisabled : {
+    opacity : 0.5
+  },
   modalBackText : {
     fontSize   : 16,
     fontWeight : '500',
     color      : '#000'
+  },
+  modalBackTextDisabled : {
+    color : '#CCCCCC'
   },
   modalTitle : {
     fontSize   : 18,
