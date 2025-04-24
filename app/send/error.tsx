@@ -1,5 +1,5 @@
 import React from 'react'
-import SendErrorScreen from '@/src/screens/wallet/Receive/Send/Error/SendErrorScreen'
+import SendErrorScreen from '@/src/screens/wallet/Send/Error/SendErrorScreen'
 import { useSendStore } from '@/src/store/sendStore'
 
 export default function ErrorPage() {

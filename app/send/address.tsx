@@ -1,5 +1,5 @@
 import React from 'react'
-import SendAddressScreen from '@/src/screens/wallet/Receive/Send/SendAddressScreen'
+import SendAddressScreen from '@/src/screens/wallet/Send/SendAddressScreen'
 
 const SendAddress: React.FC = () => {
   return <SendAddressScreen />

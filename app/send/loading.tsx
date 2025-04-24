@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router'
-import SendLoadingScreen from '@/src/screens/wallet/Receive/Send/SendLoadingScreen'
+import SendLoadingScreen from '@/src/screens/wallet/Send/SendLoadingScreen'
 
 export default function LoadingPage() {
   return (
