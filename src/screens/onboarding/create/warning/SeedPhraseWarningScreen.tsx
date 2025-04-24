@@ -1,130 +1,144 @@
 import React, { useState } from 'react'
-import { View, StyleSheet } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import { View, StyleSheet, TouchableOpacity, Switch } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { ThemedView } from '@/src/components/ui/View'
+import { ArrowRight } from 'lucide-react-native'
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
+import { Colors } from '@/src/constants/colors'
+import { OnboardingContainer, OnboardingTitle } from '@/src/components/ui/OnboardingScreen'
 
 interface SeedPhraseWarningScreenProps {
   onComplete: () => void;
+  onBack: () => void;
 }
 
-export default function SeedPhraseWarningScreen({ onComplete }: SeedPhraseWarningScreenProps) {
-  const [ hasConfirmed, setHasConfirmed ] = useState(false)
-
+export default function SeedPhraseWarningScreen({ onComplete, onBack }: SeedPhraseWarningScreenProps) {
+  const [ toggle1, setToggle1 ] = useState(false)
+  const [ toggle2, setToggle2 ] = useState(false)
+  
+  const canContinue = toggle1 && toggle2
+  
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        Important Warning
-      </ThemedText>
-      <ThemedText type="default" style={styles.subtitle}>
-        Please read carefully before proceeding
-      </ThemedText>
-
-      <View style={styles.warningContainer}>
-        <View style={styles.warningItem}>
-          <ThemedText type="defaultSemiBold">Your Seed Phrase is Critical</ThemedText>
-          <ThemedText type="default" style={styles.warningDescription}>
-            If you lose your seed phrase, you will permanently lose access to your funds
-          </ThemedText>
-        </View>
-
-        <View style={styles.warningItem}>
-          <ThemedText type="defaultSemiBold">Keep it Safe</ThemedText>
-          <ThemedText type="default" style={styles.warningDescription}>
-            Write down your seed phrase and store it in a secure location
-          </ThemedText>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.confirmButton} 
-          onPress={() => setHasConfirmed(!hasConfirmed)}
-        >
-          <View style={styles.checkboxContainer}>
-            <View style={[ styles.checkbox, hasConfirmed && styles.checkboxChecked ]} />
-            <ThemedText type="default" style={styles.checkboxText}>
-              I understand that if I lose my seed phrase, I will lose access to my funds
-            </ThemedText>
+    <OnboardingContainer>
+      <BackButton onPress={onBack} />
+      
+      <View style={styles.content}>
+        <OnboardingTitle style={{ marginTop: 200 }}>
+          Two things you must understand
+        </OnboardingTitle>
+        
+        <View style={styles.warningContainer}>
+          <View style={styles.warningItem}>
+            <View style={styles.warningRow}>
+              <View style={styles.warningTextContainer}>
+                <ThemedText style={styles.warningText}>
+                  With bitcoin, you are your own bank. No one else has access to your private keys.
+                </ThemedText>
+              </View>
+              <Switch
+                value={toggle1}
+                onValueChange={setToggle1}
+                trackColor={{ false: '#E0E0E0', true: Colors.light.successGreen }}
+                thumbColor={'#FFFFFF'}
+              />
+            </View>
           </View>
-        </TouchableOpacity>
+          
+          <View style={styles.separator} />
+          
+          <View style={styles.warningItem}>
+            <View style={styles.warningRow}>
+              <View style={styles.warningTextContainer}>
+                <ThemedText style={styles.warningText}>
+                  If you lose access to this app, and the backup we will help you create, your bitcoin cannot be recovered.
+                </ThemedText>
+              </View>
+              <Switch
+                value={toggle2}
+                onValueChange={setToggle2}
+                trackColor={{ false: '#E0E0E0', true: Colors.light.successGreen }}
+                thumbColor={'#FFFFFF'}
+              />
+            </View>
+          </View>
+          
+        </View>
       </View>
-
+      
       <TouchableOpacity 
-        style={[ styles.button, !hasConfirmed && styles.buttonDisabled ]} 
+        style={[ styles.nextButton, !canContinue && styles.nextButtonDisabled ]} 
         onPress={onComplete}
-        disabled={!hasConfirmed}
+        disabled={!canContinue}
       >
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-          I Understand
-        </ThemedText>
+        <View style={styles.buttonContent}>
+          <ThemedText style={styles.buttonText}>
+            I Understand
+          </ThemedText>
+          <ArrowRight 
+            size={20} 
+            color="#FFFFFF" 
+            style={styles.buttonIcon} 
+          />
+        </View>
       </TouchableOpacity>
-    </ThemedView>
+    </OnboardingContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex    : 1,
-    padding : 20,
-  },
-  title : {
-    fontSize     : 28,
-    fontWeight   : 'bold',
-    marginBottom : 10,
-    textAlign    : 'center',
-  },
-  subtitle : {
-    textAlign    : 'center',
-    marginBottom : 40,
-    opacity      : 0.7,
+  content : {
+    flex       : 1,
+    alignItems : 'center',
+    width      : '100%',
+    paddingTop : 40,
   },
   warningContainer : {
-    gap          : 20,
-    marginBottom : 40,
+    width     : '100%',
+    marginTop : 40,
   },
   warningItem : {
-    padding         : 16,
-    backgroundColor : '#fff3f3',
-    borderRadius    : 12,
-    borderWidth     : 1,
-    borderColor     : '#ffcdd2',
+    paddingVertical : 20,
   },
-  warningDescription : {
-    opacity   : 0.7,
-    marginTop : 4,
+  warningRow : {
+    flexDirection  : 'row',
+    alignItems     : 'center',
+    justifyContent : 'space-between',
   },
-  confirmButton : {
-    marginTop : 20,
+  warningTextContainer : {
+    flex        : 1,
+    marginRight : 15,
   },
-  checkboxContainer : {
-    flexDirection : 'row',
-    alignItems    : 'center',
-    gap           : 12,
+  warningText : {
+    fontSize   : 16,
+    lineHeight : 22,
   },
-  checkbox : {
-    width        : 24,
-    height       : 24,
-    borderRadius : 6,
-    borderWidth  : 2,
-    borderColor  : '#000',
+  separator : {
+    height          : 1,
+    backgroundColor : '#E0E0E0',
+    width           : '100%',
   },
-  checkboxChecked : {
-    backgroundColor : '#000',
+  nextButton : {
+    backgroundColor  : Colors.light.buttons.primary,
+    paddingVertical  : 16,
+    borderRadius     : 30,
+    marginHorizontal : 30,
+    marginBottom     : 50,
+    width            : '100%',
   },
-  checkboxText : {
-    flex : 1,
+  nextButtonDisabled : {
+    backgroundColor : '#CCCCCC',
   },
-  button : {
-    backgroundColor : '#000',
-    padding         : 16,
-    borderRadius    : 12,
-    alignItems      : 'center',
-    marginTop       : 'auto',
-  },
-  buttonDisabled : {
-    opacity : 0.5,
+  buttonContent : {
+    flexDirection  : 'row',
+    alignItems     : 'center',
+    justifyContent : 'center',
   },
   buttonText : {
-    color    : '#fff',
-    fontSize : 16,
+    color       : '#FFFFFF',
+    fontSize    : 16,
+    fontWeight  : 'bold',
+    marginRight : 8,
+  },
+  buttonIcon : {
+    marginLeft : 4,
   },
 }) 

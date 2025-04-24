@@ -73,7 +73,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         />
       )
     case 'warning':
-      return <SeedPhraseWarningScreen onComplete={handleWarningComplete} />
+      return <SeedPhraseWarningScreen onComplete={handleWarningComplete} onBack={handleBackToChoice} />
     case 'confirm-seed':
       return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} />
     case 'import':
