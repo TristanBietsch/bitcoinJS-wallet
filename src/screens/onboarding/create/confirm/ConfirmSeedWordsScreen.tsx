@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
 import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
 import { Colors } from '@/src/constants/colors'
+import { RefreshCw } from 'lucide-react-native'
 
 // Mock seed phrase for demonstration
 const MOCK_SEED_PHRASE = [
@@ -17,55 +18,48 @@ interface ConfirmSeedWordsScreenProps {
   onBack: () => void;
 }
 
+interface SelectedWord {
+  word: string;
+  order: number;
+}
+
 export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
-  const [ selectedWords, setSelectedWords ] = useState<string[]>([])
-  const [ availableWords, setAvailableWords ] = useState<string[]>([])
-  const [ isVerified, setIsVerified ] = useState(false)
+  const [ shuffledWords, setShuffledWords ] = useState<string[]>([])
+  const [ selectedWords, setSelectedWords ] = useState<SelectedWord[]>([])
   
-  // Shuffle and set available words
+  // Shuffle words on component mount
   useEffect(() => {
     const shuffled = [ ...MOCK_SEED_PHRASE ].sort(() => Math.random() - 0.5)
-    setAvailableWords(shuffled)
+    setShuffledWords(shuffled)
   }, [])
   
   const handleWordSelect = (word: string) => {
-    setSelectedWords([ ...selectedWords, word ])
-    setAvailableWords(availableWords.filter(w => w !== word))
+    // Check if word is already selected
+    const isSelected = selectedWords.some(item => item.word === word)
     
-    // Check if all words are correctly selected
-    if (selectedWords.length === MOCK_SEED_PHRASE.length - 1) {
-      // Last word being selected
-      const updatedSelected = [ ...selectedWords, word ]
-      const isCorrect = updatedSelected.every((w, i) => w === MOCK_SEED_PHRASE[i])
-      setIsVerified(isCorrect)
+    if (isSelected) {
+      // If already selected, do nothing
+      return
+    }
+    
+    if (selectedWords.length < 12) {
+      // Add word with current selection order
+      const newSelection: SelectedWord = {
+        word  : word,
+        order : selectedWords.length + 1
+      }
+      
+      setSelectedWords([ ...selectedWords, newSelection ])
     }
   }
   
-  const handleWordRemove = (index: number) => {
-    const word = selectedWords[index]
-    const newSelectedWords = [ ...selectedWords ]
-    newSelectedWords.splice(index, 1)
-    setSelectedWords(newSelectedWords)
-    setAvailableWords([ ...availableWords, word ])
-    setIsVerified(false)
+  const getSelectionOrder = (word: string): number | null => {
+    const selected = selectedWords.find(item => item.word === word)
+    return selected ? selected.order : null
   }
   
-  const handleReset = () => {
+  const resetSelection = () => {
     setSelectedWords([])
-    setAvailableWords([ ...MOCK_SEED_PHRASE ].sort(() => Math.random() - 0.5))
-    setIsVerified(false)
-  }
-  
-  const handleComplete = () => {
-    if (isVerified) {
-      onComplete()
-    }
-  }
-  
-  // Calculate button style
-  const buttonStyle = {
-    ...styles.confirmButton,
-    ...(isVerified ? {} : { opacity: 0.5 }),
   }
   
   return (
@@ -78,68 +72,62 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
         </ThemedText>
         
         <ThemedText style={styles.subtitle}>
-          Select the words in the correct order to verify your backup
+          Select the words in the correct order of your seed phrase
         </ThemedText>
         
-        {/* Selected Words Container */}
-        <View style={styles.selectedWordsContainer}>
-          {Array.from({ length: 12 }).map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.wordSlot,
-                selectedWords[index] ? styles.wordSlotFilled : {}
-              ]}
-              onPress={() => selectedWords[index] && handleWordRemove(index)}
-              disabled={!selectedWords[index]}
-            >
-              {selectedWords[index] ? (
-                <ThemedText style={styles.selectedWord}>
-                  {selectedWords[index]}
+        {/* Word Grid */}
+        <View style={styles.wordsContainer}>
+          {shuffledWords.map((word, index) => {
+            const selectionOrder = getSelectionOrder(word)
+            const isSelected = selectionOrder !== null
+            
+            return (
+              <TouchableOpacity
+                key={index}
+                style={styles.wordItem}
+                onPress={() => handleWordSelect(word)}
+                disabled={selectedWords.length >= 12 && !isSelected}
+              >
+                <ThemedText style={styles.wordText}>
+                  {word}
                 </ThemedText>
-              ) : (
-                <ThemedText style={styles.wordPlaceholder}>
-                  {index + 1}
-                </ThemedText>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-        
-        {/* Available Words Container */}
-        <View style={styles.availableWordsContainer}>
-          {availableWords.map((word, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.availableWord}
-              onPress={() => handleWordSelect(word)}
-              disabled={selectedWords.length >= 12}
-            >
-              <ThemedText>
-                {word}
-              </ThemedText>
-            </TouchableOpacity>
-          ))}
+                
+                {isSelected && (
+                  <View style={styles.selectionOverlay}>
+                    <Text style={styles.selectionOrderText}>
+                      {selectionOrder}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )
+          })}
         </View>
         
         <TouchableOpacity 
-          style={styles.resetButton} 
-          onPress={handleReset}
+          style={styles.resetButton}
+          onPress={resetSelection}
           disabled={selectedWords.length === 0}
         >
-          <ThemedText style={[
-            styles.resetButtonText,
-            selectedWords.length === 0 && { opacity: 0.5 }
-          ]}>
-            Reset
-          </ThemedText>
+          {selectedWords.length > 0 && (
+            <View style={styles.resetButtonContent}>
+              <RefreshCw 
+                size={16} 
+                color={Colors.light.buttons.primary} 
+                style={styles.resetIcon}
+              />
+              <ThemedText style={styles.resetButtonText}>
+                Reset
+              </ThemedText>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
       
       <OnboardingButton
         label="Confirm"
-        onPress={handleComplete}
-        style={buttonStyle}
+        onPress={onComplete}
+        style={styles.confirmButton}
       />
     </OnboardingContainer>
   )
@@ -156,57 +144,61 @@ const styles = StyleSheet.create({
     fontSize     : 28,
     fontWeight   : 'bold',
     textAlign    : 'center',
+    marginTop    : 110,
     marginBottom : 10,
   },
   subtitle : {
     fontSize     : 16,
     textAlign    : 'center',
-    marginBottom : 30,
+    marginBottom : 90,
   },
-  selectedWordsContainer : {
-    flexDirection   : 'row',
-    flexWrap        : 'wrap',
-    justifyContent  : 'center',
-    backgroundColor : '#F5F5F5',
-    borderRadius    : 16,
-    padding         : 16,
-    width           : '100%',
-    marginBottom    : 20,
-  },
-  wordSlot : {
-    width           : '45%',
-    height          : 40,
-    backgroundColor : '#E0E0E0',
-    borderRadius    : 8,
-    justifyContent  : 'center',
-    alignItems      : 'center',
-    margin          : 5,
-  },
-  wordSlotFilled : {
-    backgroundColor : '#FFF',
-  },
-  selectedWord : {
-    fontSize : 16,
-  },
-  wordPlaceholder : {
-    opacity : 0.5,
-  },
-  availableWordsContainer : {
+  wordsContainer : {
     flexDirection  : 'row',
     flexWrap       : 'wrap',
     justifyContent : 'center',
+    width          : '100%',
     marginBottom   : 20,
   },
-  availableWord : {
+  wordItem : {
     backgroundColor   : '#F5F5F5',
     paddingHorizontal : 16,
-    paddingVertical   : 8,
+    paddingVertical   : 12,
     borderRadius      : 16,
-    margin            : 4,
+    margin            : 6,
+    position          : 'relative',
+    minWidth          : '28%',
+    alignItems        : 'center',
+  },
+  wordText : {
+    fontSize : 16,
+  },
+  selectionOverlay : {
+    position        : 'absolute',
+    top             : 0,
+    left            : 0,
+    right           : 0,
+    bottom          : 0,
+    backgroundColor : 'rgba(0, 0, 0, 0.85)',
+    borderRadius    : 16,
+    justifyContent  : 'center',
+    alignItems      : 'center',
+  },
+  selectionOrderText : {
+    color      : '#FFFFFF',
+    fontSize   : 18,
+    fontWeight : 'bold',
   },
   resetButton : {
-    marginTop       : 10,
+    marginTop       : 20,
     paddingVertical : 8,
+  },
+  resetButtonContent : {
+    flexDirection  : 'row',
+    alignItems     : 'center',
+    justifyContent : 'center',
+  },
+  resetIcon : {
+    marginRight : 4,
   },
   resetButtonText : {
     color    : Colors.light.buttons.primary,
@@ -217,7 +209,4 @@ const styles = StyleSheet.create({
     marginBottom    : 30,
     width           : '100%',
   },
-  buttonDisabled : {
-    opacity : 0.5,
-  }
 }) 
