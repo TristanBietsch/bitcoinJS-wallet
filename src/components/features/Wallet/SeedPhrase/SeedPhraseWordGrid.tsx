@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import SelectableWordItem from '@/src/components/ui/Form/SelectableWordItem'
 import { SelectedWord } from '@/src/hooks/wallet/useSeedPhraseSelection'
@@ -23,18 +23,6 @@ const SeedPhraseWordGrid: React.FC<SeedPhraseWordGridProps> = ({
   const getSelectionOrder = (word: string): number | null => {
     const selected = selectedWords.find(item => item.word === word)
     return selected ? selected.order : null
-  }
-  
-  // Calculate the highest selection order for determining last selected word
-  const highestOrder = useMemo(() => {
-    return selectedWords.length > 0
-      ? Math.max(...selectedWords.map(item => item.order))
-      : 0
-  }, [ selectedWords ])
-
-  const isWordLastSelected = (word: string): boolean => {
-    const order = getSelectionOrder(word)
-    return order !== null && order === highestOrder
   }
   
   return (

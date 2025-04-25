@@ -1,7 +1,6 @@
 import React from 'react'
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { Colors } from '@/src/constants/colors'
 
 interface SelectableWordItemProps {
   word: string

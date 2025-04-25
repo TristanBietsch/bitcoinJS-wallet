@@ -1,77 +1,43 @@
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { FileLock2 } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { BackButton } from '@/src/components/ui/Navigation/BackButton'
-import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
-import { OnboardingTitle, OnboardingDescription } from '@/src/components/ui/OnboardingScreen'
-import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
+import InfoScreen from '@/src/components/ui/InfoScreen/InfoScreen'
 import { Colors } from '@/src/constants/colors'
+import { SEED_PHRASE_PREPARATION } from '@/src/constants/securityContent'
 
 interface PreparePhraseScreenProps {
   onComplete: () => void;
   onBack: () => void;
 }
 
+/**
+ * Screen that prepares users for the seed phrase backup process
+ */
 export default function PreparePhraseScreen({ onComplete, onBack }: PreparePhraseScreenProps) {
   return (
-    <OnboardingContainer>
-      <BackButton onPress={onBack} />
-      
-      <View style={styles.content}>
-        <OnboardingTitle>
-          Prepare for Backup
-        </OnboardingTitle>
-        
-        <OnboardingDescription style={styles.subtitle}>
-          We will ask you to write down your seed.
-        </OnboardingDescription>
-        
-        <View style={styles.iconContainer}>
-          <FileLock2 
-            size={90} 
-            color={Colors.light.buttons.primary} 
-            style={styles.icon}
-          />
-        </View>
-        
-        <ThemedText style={styles.securityText}>
-          Write down your seed phrase on paper. Store it somewhere safe and
-          and never share it with anyone. The seed is the only way to recover your
-          wallet.
-        </ThemedText>
-      </View>
-      
-      <OnboardingButton
-        label="Generate My Seed"
-        onPress={onComplete}
-        style={styles.nextButton}
-      />
-    </OnboardingContainer>
+    <InfoScreen
+      title={SEED_PHRASE_PREPARATION.TITLE}
+      description={SEED_PHRASE_PREPARATION.DESCRIPTION}
+      onPrimaryAction={onComplete}
+      onBack={onBack}
+      primaryButtonLabel={SEED_PHRASE_PREPARATION.BUTTON_LABEL}
+      icon={
+        <FileLock2 
+          size={90} 
+          color={Colors.light.buttons.primary} 
+          style={styles.icon}
+        />
+      }
+    >
+      <ThemedText style={styles.securityText}>
+        {SEED_PHRASE_PREPARATION.SECURITY_TEXT}
+      </ThemedText>
+    </InfoScreen>
   )
 }
 
 const styles = StyleSheet.create({
-  content : {
-    marginTop         : 140,
-    flex              : 1,
-    alignItems        : 'center',
-    justifyContent    : 'center',
-    width             : '100%',
-    paddingHorizontal : 24,
-  },
-  subtitle : {
-    marginBottom : 40
-  },
-  iconContainer : {
-    width           : 160,
-    height          : 160,
-    borderRadius    : 90,
-    backgroundColor : Colors.light.iconBackground,
-    alignItems      : 'center',
-    justifyContent  : 'center',
-    marginBottom    : 40
-  },
   icon : {
     marginBottom : 0
   },
@@ -80,11 +46,5 @@ const styles = StyleSheet.create({
     fontSize     : 16,
     lineHeight   : 24,
     marginBottom : 60,
-  },
-  nextButton : {
-    backgroundColor  : Colors.light.buttons.primary,
-    marginHorizontal : 30,
-    marginBottom     : 50,
-    width            : '100%',
   }
 }) 
