@@ -60,7 +60,7 @@
     "express-rate-limit": "^7.5.0",
     "fastest-levenshtein": "^1.0.16",
     "helmet": "^8.0.0",
-    "lottie-react-native": "7.1.0",
+    "lottie-react-native": "^7.2.2",
     "lucide-react-native": "^0.477.0",
     "morgan": "^1.10.0",
     "nativewind": "^4.1.23",
