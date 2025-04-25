@@ -1,9 +1,10 @@
 import React from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import { X } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
+import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
 import { Colors } from '@/src/constants/colors'
 
 interface ErrorSeedPhraseProps {
@@ -27,21 +28,19 @@ export default function ErrorSeedPhrase({ onTryAgain, onBack }: ErrorSeedPhraseP
         
         <View style={styles.iconContainer}>
           <X 
-            size={80} 
-            color="#FF0000" 
+            size={90} 
+            color={Colors.light.errorRed} 
             strokeWidth={2}
           />
         </View>
-        
-        <TouchableOpacity 
-          style={styles.tryAgainButton}
-          onPress={onTryAgain}
-        >
-          <ThemedText style={styles.tryAgainText}>
-            ← Try again
-          </ThemedText>
-        </TouchableOpacity>
       </View>
+      
+      <OnboardingButton
+        label="Try Again"
+        onPress={onTryAgain}
+        style={styles.tryAgainButton}
+        useLeftArrow={true}
+      />
     </OnboardingContainer>
   )
 }
@@ -50,32 +49,32 @@ const styles = StyleSheet.create({
   content : {
     flex              : 1,
     alignItems        : 'center',
-    paddingHorizontal : 20,
-    marginTop         : 60
+    justifyContent    : 'center',
+    paddingHorizontal : 20
   },
   title : {
-    fontSize     : 28,
+    fontSize     : 32,
     fontWeight   : 'bold',
     textAlign    : 'center',
     marginBottom : 10
   },
   subtitle : {
-    fontSize     : 16,
+    fontSize     : 18,
     textAlign    : 'center',
     marginBottom : 60
   },
   iconContainer : {
-    marginVertical : 40,
-    alignItems     : 'center',
-    justifyContent : 'center',
-    flex           : 1
+    width           : 160,
+    height          : 160,
+    borderRadius    : 80,
+    backgroundColor : Colors.light.errorIconBg,
+    alignItems      : 'center',
+    justifyContent  : 'center',
+    marginVertical  : 40
   },
   tryAgainButton : {
-    marginBottom : 30
-  },
-  tryAgainText : {
-    fontSize   : 18,
-    fontWeight : '500',
-    color      : Colors.light.buttons.primary
+    backgroundColor : Colors.light.buttons.primary,
+    marginBottom    : 30,
+    width           : '100%'
   }
 })

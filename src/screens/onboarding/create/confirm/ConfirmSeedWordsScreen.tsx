@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native'
+import React from 'react'
+import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
 import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
-import { Colors } from '@/src/constants/colors'
-import { RefreshCw } from 'lucide-react-native'
+import SeedPhraseWordGrid from '@/src/components/features/Wallet/SeedPhrase/SeedPhraseWordGrid'
+import ResetSelectionButton from '@/src/components/ui/Button/ResetSelectionButton'
+import { useSeedPhraseSelection } from '@/src/hooks/wallet/useSeedPhraseSelection'
+import { useSeedPhraseVerificationFlow } from '@/src/hooks/wallet/useSeedPhraseVerificationFlow'
 import CheckingSeedPhrase from '../checking/CheckingSeedPhrase'
 import ErrorSeedPhrase from '../error/ErrorSeedPhrase'
 import SuccessSeedPhrase from '../success/SuccessSeedPhrase'
+import { Colors } from '@/src/constants/colors'
 
 // Mock seed phrase for demonstration
 const MOCK_SEED_PHRASE = [
@@ -21,84 +24,25 @@ interface ConfirmSeedWordsScreenProps {
   onBack: () => void
 }
 
-interface SelectedWord {
-  word: string
-  order: number
-}
-
 export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
-  const [ shuffledWords, setShuffledWords ] = useState<string[]>([])
-  const [ selectedWords, setSelectedWords ] = useState<SelectedWord[]>([])
-  const [ verificationState, setVerificationState ] = useState<string>('selection') // selection, checking, error, success
+  // Use our modular seed phrase selection hook
+  const {
+    selectedWords,
+    shuffledWords,
+    handleWordSelect,
+    resetSelection,
+    getOrderedSelectedWords,
+    isSelectionComplete
+  } = useSeedPhraseSelection(MOCK_SEED_PHRASE)
   
-  // Shuffle words on component mount
-  useEffect(() => {
-    const shuffled = [ ...MOCK_SEED_PHRASE ].sort(() => Math.random() - 0.5)
-    setShuffledWords(shuffled)
-  }, [])
-  
-  const handleWordSelect = (word: string) => {
-    // Check if word is already selected
-    const isSelected = selectedWords.some(item => item.word === word)
-    
-    if (isSelected) {
-      // Check if this is the most recently selected word (highest order)
-      const selectedWord = selectedWords.find(item => item.word === word)
-      const isLastSelected = selectedWord && 
-        selectedWord.order === Math.max(...selectedWords.map(item => item.order))
-      
-      // Only allow deselection of the most recently selected word
-      if (isLastSelected) {
-        // Remove the most recently selected word
-        setSelectedWords(selectedWords.filter(item => item.word !== word))
-      }
-      return
-    }
-    
-    if (selectedWords.length < 12) {
-      // Add word with current selection order
-      const newSelection: SelectedWord = {
-        word  : word,
-        order : selectedWords.length + 1
-      }
-      
-      setSelectedWords([ ...selectedWords, newSelection ])
-    }
-  }
-  
-  const getSelectionOrder = (word: string): number | null => {
-    const selected = selectedWords.find(item => item.word === word)
-    return selected ? selected.order : null
-  }
-  
-  const resetSelection = () => {
-    setSelectedWords([])
-  }
-  
-  const handleConfirm = () => {
-    // Start verification process
-    setVerificationState('checking')
-  }
-  
-  // Extract words in the order they were selected
-  const getOrderedSelectedWords = (): string[] => {
-    return selectedWords
-      .sort((a, b) => a.order - b.order)
-      .map(item => item.word)
-  }
-  
-  const handleVerificationComplete = (success: boolean) => {
-    if (success) {
-      setVerificationState('success')
-    } else {
-      setVerificationState('error')
-    }
-  }
-  
-  const handleTryAgain = () => {
-    resetSelection()
-    setVerificationState('selection')
-  }
+  // Use our verification flow hook
+  const {
+    verificationState,
+    startVerification,
+    handleVerificationComplete,
+    handleTryAgain,
+    handleComplete
+  } = useSeedPhraseVerificationFlow(onComplete, resetSelection)
   
   // Render different screens based on verification state
   if (verificationState === 'checking') {
@@ -123,7 +67,7 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
   if (verificationState === 'success') {
     return (
       <SuccessSeedPhrase
-        onComplete={onComplete}
+        onComplete={handleComplete}
       />
     )
   }
@@ -142,68 +86,27 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
           Select the words in the correct order of your seed phrase
         </ThemedText>
         
-        {/* Word Grid */}
-        <View style={styles.wordsContainer}>
-          {shuffledWords.map((word, index) => {
-            const selectionOrder = getSelectionOrder(word)
-            const isSelected = selectionOrder !== null
-            
-            // Check if this is the most recently selected word
-            const isLastSelected = isSelected && 
-              selectionOrder === Math.max(...selectedWords.map(item => item.order))
-            
-            return (
-              <TouchableOpacity
-                key={index}
-                style={styles.wordItem}
-                onPress={() => handleWordSelect(word)}
-                disabled={selectedWords.length >= 12 && !isSelected}
-              >
-                <ThemedText style={styles.wordText}>
-                  {word}
-                </ThemedText>
-                
-                {isSelected && (
-                  <View style={[
-                    styles.selectionOverlay,
-                    isLastSelected && styles.lastSelectedOverlay
-                  ]}>
-                    <Text style={styles.selectionOrderText}>
-                      {selectionOrder}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            )
-          })}
-        </View>
+        {/* Word Grid using our extracted component */}
+        <SeedPhraseWordGrid
+          words={shuffledWords}
+          selectedWords={selectedWords}
+          onWordSelect={handleWordSelect}
+          maxSelections={12}
+        />
         
-        <TouchableOpacity 
-          style={styles.resetButton}
+        {/* Reset Button using our extracted component */}
+        <ResetSelectionButton
           onPress={resetSelection}
           disabled={selectedWords.length === 0}
-        >
-          {selectedWords.length > 0 && (
-            <View style={styles.resetButtonContent}>
-              <RefreshCw 
-                size={16} 
-                color={Colors.light.buttons.primary} 
-                style={styles.resetIcon}
-              />
-              <ThemedText style={styles.resetButtonText}>
-                Reset
-              </ThemedText>
-            </View>
-          )}
-        </TouchableOpacity>
+        />
       </View>
       
       <OnboardingButton
         label="Confirm"
-        onPress={selectedWords.length === 12 ? handleConfirm : () => {}}
+        onPress={isSelectionComplete ? startVerification : () => {}}
         style={{
           ...styles.confirmButton,
-          ...(selectedWords.length < 12 ? { opacity: 0.5 } : {})
+          ...(isSelectionComplete ? {} : { opacity: 0.5 })
         }}
       />
     </OnboardingContainer>
@@ -229,72 +132,9 @@ const styles = StyleSheet.create({
     textAlign    : 'center',
     marginBottom : 30
   },
-  helperText : {
-    fontSize     : 14,
-    textAlign    : 'center',
-    marginBottom : 20
-  },
-  wordsContainer : {
-    flexDirection  : 'row',
-    flexWrap       : 'wrap',
-    justifyContent : 'center',
-    width          : '100%',
-    marginBottom   : 20
-  },
-  wordItem : {
-    backgroundColor   : '#F5F5F5',
-    paddingHorizontal : 16,
-    paddingVertical   : 12,
-    borderRadius      : 16,
-    margin            : 6,
-    position          : 'relative',
-    minWidth          : '28%',
-    alignItems        : 'center'
-  },
-  wordText : {
-    fontSize : 16
-  },
-  selectionOverlay : {
-    position        : 'absolute',
-    top             : 0,
-    left            : 0,
-    right           : 0,
-    bottom          : 0,
-    backgroundColor : 'rgba(0, 0, 0, 0.85)',
-    borderRadius    : 16,
-    justifyContent  : 'center',
-    alignItems      : 'center'
-  },
-  selectionOrderText : {
-    color      : '#FFFFFF',
-    fontSize   : 18,
-    fontWeight : 'bold'
-  },
-  resetButton : {
-    marginTop       : 20,
-    paddingVertical : 8
-  },
-  resetButtonContent : {
-    flexDirection  : 'row',
-    alignItems     : 'center',
-    justifyContent : 'center'
-  },
-  resetIcon : {
-    marginRight : 4
-  },
-  resetButtonText : {
-    color    : Colors.light.buttons.primary,
-    fontSize : 16
-  },
   confirmButton : {
     backgroundColor : Colors.light.buttons.primary,
     marginBottom    : 30,
     width           : '100%'
-  },
-  disabledButton : {
-    opacity : 0.5
-  },
-  lastSelectedOverlay : {
-    backgroundColor : 'rgba(0, 0, 0, 0.85)'
   }
 }) 

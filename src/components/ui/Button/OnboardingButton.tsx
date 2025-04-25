@@ -2,7 +2,7 @@ import React from 'react'
 import { TouchableOpacity, View, StyleSheet, ViewStyle, TextStyle } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
-import { ArrowRight } from 'lucide-react-native'
+import { ArrowRight, ArrowLeft } from 'lucide-react-native'
 
 interface OnboardingButtonProps {
   label: string
@@ -11,6 +11,7 @@ interface OnboardingButtonProps {
   textStyle?: TextStyle
   iconSize?: number
   iconStyle?: ViewStyle
+  useLeftArrow?: boolean
 }
 
 /**
@@ -23,6 +24,7 @@ const OnboardingButton: React.FC<OnboardingButtonProps> = ({
   textStyle,
   iconSize = 20,
   iconStyle,
+  useLeftArrow = false,
 }) => {
   return (
     <TouchableOpacity 
@@ -30,14 +32,23 @@ const OnboardingButton: React.FC<OnboardingButtonProps> = ({
       onPress={onPress}
     >
       <View style={styles.buttonContent}>
+        {useLeftArrow && (
+          <ArrowLeft 
+            size={iconSize} 
+            color={Colors.light.buttons.text} 
+            style={[ styles.leftButtonIcon, iconStyle ]} 
+          />
+        )}
         <ThemedText style={[ styles.buttonText, textStyle ]}>
           {label}
         </ThemedText>
-        <ArrowRight 
-          size={iconSize} 
-          color={Colors.light.buttons.text} 
-          style={[ styles.buttonIcon, iconStyle ]} 
-        />
+        {!useLeftArrow && (
+          <ArrowRight 
+            size={iconSize} 
+            color={Colors.light.buttons.text} 
+            style={[ styles.rightButtonIcon, iconStyle ]} 
+          />
+        )}
       </View>
     </TouchableOpacity>
   )
@@ -58,13 +69,15 @@ const styles = StyleSheet.create({
     justifyContent : 'center',
   },
   buttonText : {
-    color       : Colors.light.buttons.text,
-    fontSize    : 16,
-    fontWeight  : 'bold',
-    marginRight : 8,
+    color      : Colors.light.buttons.text,
+    fontSize   : 16,
+    fontWeight : 'bold',
   },
-  buttonIcon : {
-    marginLeft : 4,
+  rightButtonIcon : {
+    marginLeft : 8,
+  },
+  leftButtonIcon : {
+    marginRight : 8,
   },
 })
 
