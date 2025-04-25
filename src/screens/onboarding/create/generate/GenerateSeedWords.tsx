@@ -1,52 +1,53 @@
-import React, { useState } from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
-import { Eye, EyeOff, AlertCircle } from 'lucide-react-native'
-import { BlurView } from 'expo-blur'
+import React, { useMemo } from 'react'
+import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
 import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
 import { Colors } from '@/src/constants/colors'
-
-// Mock seed phrase for demonstration
-const MOCK_SEED_PHRASE = [
-  'abandon', 'ability', 'able', 'about', 'above', 'absent',
-  'absorb', 'abstract', 'absurd', 'abuse', 'access', 'accident'
-]
+import RevealableContent from '@/src/components/ui/Security/RevealableContent'
+import SeedPhraseDisplay from '@/src/components/features/Wallet/SeedPhrase/SeedPhraseDisplay'
+import WarningMessage from '@/src/components/ui/Feedback/WarningMessage'
+import { useContentRevealGuard } from '@/src/hooks/security/useContentRevealGuard'
+import { 
+  handleSeedPhraseContinue, 
+  handleSeedPhraseBack,
+  trackSeedPhraseReveal,
+  generateSeedPhrase
+} from '@/src/handlers/wallet/seedPhraseHandlers'
 
 interface GenerateSeedWordsProps {
-  onComplete: () => void;
-  onBack: () => void;
+  onComplete: () => void
+  onBack: () => void
 }
 
+/**
+ * Screen for displaying and securing the generated seed phrase
+ */
 export default function GenerateSeedWords({ onComplete, onBack }: GenerateSeedWordsProps) {
-  const [ seedRevealed, setSeedRevealed ] = useState(false)
-  const [ hasBeenRevealed, setHasBeenRevealed ] = useState(false)
+  // Generate seed phrase
+  const seedPhrase = useMemo(() => generateSeedPhrase(12), [])
   
-  const toggleSeedVisibility = () => {
-    const newRevealedState = !seedRevealed
-    setSeedRevealed(newRevealedState)
-    
-    // If we're revealing the seed phrase, mark that it has been revealed at least once
-    if (newRevealedState) {
-      setHasBeenRevealed(true)
-    }
-  }
+  // Use our content reveal hook to manage visibility
+  const { 
+    isRevealed, 
+    hasBeenRevealed, 
+    toggleVisibility, 
+    canProceed 
+  } = useContentRevealGuard(
+    // First reveal callback
+    () => console.log('Seed phrase revealed for the first time'),
+    // Toggle callback - track each visibility change
+    (revealed) => trackSeedPhraseReveal(revealed)
+  )
   
-  // Handle the continue button press - only allow if seed has been revealed
-  const handleContinue = () => {
-    if (hasBeenRevealed) {
-      onComplete()
-    }
-  }
-  
-  // Divide words into two columns
-  const leftColumnWords = MOCK_SEED_PHRASE.slice(0, 6)
-  const rightColumnWords = MOCK_SEED_PHRASE.slice(6, 12)
+  // Get handlers
+  const handleContinue = handleSeedPhraseContinue(canProceed, onComplete)
+  const handleBack = handleSeedPhraseBack(onBack)
   
   return (
     <OnboardingContainer>
-      <BackButton onPress={onBack} />
+      <BackButton onPress={handleBack} />
       
       <View style={styles.content}>
         <ThemedText style={styles.title}>
@@ -58,71 +59,33 @@ export default function GenerateSeedWords({ onComplete, onBack }: GenerateSeedWo
         </ThemedText>
         
         <View style={styles.seedContainer}>
-          <View style={styles.seedWordsContainer}>
-            <View style={styles.column}>
-              {leftColumnWords.map((word, index) => (
-                <View key={index} style={styles.wordRow}>
-                  <ThemedText style={styles.wordText}>
-                    {index + 1}. {word}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-            
-            <View style={styles.column}>
-              {rightColumnWords.map((word, index) => (
-                <View key={index} style={styles.wordRow}>
-                  <ThemedText style={styles.wordText}>
-                    {index + 7}. {word}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          </View>
-          
-          {!seedRevealed && (
-            <TouchableOpacity 
-              style={styles.revealOverlay} 
-              activeOpacity={0.9}
-              onPress={toggleSeedVisibility}
-            >
-              <BlurView intensity={70} tint="light" style={styles.revealBlur} />
-              <View style={styles.tapToRevealContainer}>
-                <View style={styles.revealContentRow}>
-                  <Eye size={24} color="#222" />
-                  <ThemedText style={styles.tapText}>
-                    Tap To Reveal
-                  </ThemedText>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
+          <RevealableContent
+            isRevealed={isRevealed}
+            onToggle={toggleVisibility}
+            revealText="Tap To Reveal"
+            hideText="Tap To Hide"
+          >
+            <SeedPhraseDisplay 
+              seedPhrase={seedPhrase} 
+              columns={2}
+              startFromOne={true}
+            />
+          </RevealableContent>
         </View>
         
-        {seedRevealed && (
-          <TouchableOpacity 
-            style={styles.hideButton} 
-            onPress={toggleSeedVisibility}
-          >
-            <EyeOff size={20} color="#000" />
-            <ThemedText style={styles.hideButtonText}>Tap To Hide</ThemedText>
-          </TouchableOpacity>
-        )}
-        
         {!hasBeenRevealed && (
-          <View style={styles.warningContainer}>
-            <AlertCircle size={18} color="#E8AB2F" />
-            <ThemedText style={styles.warningText}>
-              You must reveal your seed phrase before continuing
-            </ThemedText>
-          </View>
+          <WarningMessage
+            message="You must reveal your seed phrase before continuing"
+            iconSize={18}
+            iconColor="#E8AB2F"
+          />
         )}
       </View>
       
       <OnboardingButton
         label="Verify Backup"
         onPress={handleContinue}
-        style={hasBeenRevealed ? styles.confirmButton : { ...styles.confirmButton, ...styles.disabledButton }}
+        style={canProceed ? styles.confirmButton : { ...styles.confirmButton, ...styles.disabledButton }}
       />
     </OnboardingContainer>
   )
@@ -157,65 +120,6 @@ const styles = StyleSheet.create({
     position        : 'relative',
     overflow        : 'hidden',
   },
-  revealOverlay : {
-    position       : 'absolute',
-    top            : 0,
-    left           : 0,
-    right          : 0,
-    bottom         : 0,
-    justifyContent : 'center',
-    alignItems     : 'center',
-    zIndex         : 1,
-  },
-  revealBlur : {
-    position : 'absolute',
-    top      : 0,
-    left     : 0,
-    right    : 0,
-    bottom   : 0,
-  },
-  tapToRevealContainer : {
-    alignItems     : 'center',
-    justifyContent : 'center',
-    height         : '100%',
-    zIndex         : 2,
-  },
-  revealContentRow : {
-    flexDirection  : 'row',
-    alignItems     : 'center',
-    justifyContent : 'center',
-  },
-  tapText : {
-    fontSize   : 16,
-    fontWeight : '500',
-    marginLeft : 8,
-  },
-  seedWordsContainer : {
-    flexDirection  : 'row',
-    justifyContent : 'space-between',
-    width          : '100%',
-  },
-  column : {
-    width : '48%',
-  },
-  wordRow : {
-    paddingVertical : 12,
-  },
-  wordText : {
-    fontSize : 16,
-  },
-  hideButton : {
-    flexDirection   : 'row',
-    alignItems      : 'center',
-    justifyContent  : 'center',
-    marginTop       : 20,
-    paddingVertical : 10,
-  },
-  hideButtonText : {
-    marginLeft : 8,
-    fontSize   : 16,
-    fontWeight : '500',
-  },
   confirmButton : {
     backgroundColor : Colors.light.buttons.primary,
     marginBottom    : 50,
@@ -223,16 +127,5 @@ const styles = StyleSheet.create({
   },
   disabledButton : {
     opacity : 0.5,
-  },
-  warningContainer : {
-    flexDirection     : 'row',
-    alignItems        : 'center',
-    marginTop         : 20,
-    paddingHorizontal : 20,
-  },
-  warningText : {
-    fontSize   : 14,
-    marginLeft : 8,
-    color      : '#E8AB2F',
   }
 })
