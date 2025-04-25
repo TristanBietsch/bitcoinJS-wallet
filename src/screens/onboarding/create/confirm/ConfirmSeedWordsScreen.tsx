@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   confirmButton : {
     backgroundColor : Colors.light.buttons.primary,
-    marginBottom    : 30,
+    marginBottom    : 50,
     width           : '100%'
   }
 }) 

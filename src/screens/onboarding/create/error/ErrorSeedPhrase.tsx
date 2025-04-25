@@ -53,13 +53,13 @@ const styles = StyleSheet.create({
     paddingHorizontal : 20
   },
   title : {
-    fontSize     : 32,
+    fontSize     : 28,
     fontWeight   : 'bold',
     textAlign    : 'center',
     marginBottom : 10
   },
   subtitle : {
-    fontSize     : 18,
+    fontSize     : 16,
     textAlign    : 'center',
     marginBottom : 60
   },
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   tryAgainButton : {
     backgroundColor : Colors.light.buttons.primary,
-    marginBottom    : 30,
+    marginBottom    : 50,
     width           : '100%'
   }
 })

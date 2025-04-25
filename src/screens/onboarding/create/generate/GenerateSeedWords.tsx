@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
-import { Eye, EyeOff } from 'lucide-react-native'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react-native'
 import { BlurView } from 'expo-blur'
 import { ThemedText } from '@/src/components/ui/Text'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
@@ -21,9 +21,23 @@ interface GenerateSeedWordsProps {
 
 export default function GenerateSeedWords({ onComplete, onBack }: GenerateSeedWordsProps) {
   const [ seedRevealed, setSeedRevealed ] = useState(false)
+  const [ hasBeenRevealed, setHasBeenRevealed ] = useState(false)
   
   const toggleSeedVisibility = () => {
-    setSeedRevealed(!seedRevealed)
+    const newRevealedState = !seedRevealed
+    setSeedRevealed(newRevealedState)
+    
+    // If we're revealing the seed phrase, mark that it has been revealed at least once
+    if (newRevealedState) {
+      setHasBeenRevealed(true)
+    }
+  }
+  
+  // Handle the continue button press - only allow if seed has been revealed
+  const handleContinue = () => {
+    if (hasBeenRevealed) {
+      onComplete()
+    }
   }
   
   // Divide words into two columns
@@ -94,12 +108,21 @@ export default function GenerateSeedWords({ onComplete, onBack }: GenerateSeedWo
             <ThemedText style={styles.hideButtonText}>Tap To Hide</ThemedText>
           </TouchableOpacity>
         )}
+        
+        {!hasBeenRevealed && (
+          <View style={styles.warningContainer}>
+            <AlertCircle size={18} color="#E8AB2F" />
+            <ThemedText style={styles.warningText}>
+              You must reveal your seed phrase before continuing
+            </ThemedText>
+          </View>
+        )}
       </View>
       
       <OnboardingButton
         label="Verify Backup"
-        onPress={onComplete}
-        style={styles.confirmButton}
+        onPress={handleContinue}
+        style={hasBeenRevealed ? styles.confirmButton : { ...styles.confirmButton, ...styles.disabledButton }}
       />
     </OnboardingContainer>
   )
@@ -197,5 +220,19 @@ const styles = StyleSheet.create({
     backgroundColor : Colors.light.buttons.primary,
     marginBottom    : 50,
     width           : '100%',
+  },
+  disabledButton : {
+    opacity : 0.5,
+  },
+  warningContainer : {
+    flexDirection     : 'row',
+    alignItems        : 'center',
+    marginTop         : 20,
+    paddingHorizontal : 20,
+  },
+  warningText : {
+    fontSize   : 14,
+    marginLeft : 8,
+    color      : '#E8AB2F',
   }
 })
