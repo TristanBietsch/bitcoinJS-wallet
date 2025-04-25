@@ -23,6 +23,8 @@ export const Colors = {
     errorRed        : '#FF4A6E',          // Error Red
     inactiveGray    : '#6F7390',      // Inactive Gray
     subtleBorder    : '#3B3E4A',      // Subtle Border
+    iconBackground  : '#E6F2FF',      // Light Blue Background for Icons
+    successIconBg   : '#E6F8EC',      // Light Green Background for Success Icons
     buttons         : {
       primary   : '#014B8F',      // Primary Blue (changed from red)
       secondary : '#687076',      // Secondary Gray
@@ -49,6 +51,8 @@ export const Colors = {
     icon            : '#9BA1A6',
     tabIconDefault  : '#9BA1A6',
     tabIconSelected : tintColorDark,
+    iconBackground  : '#1A3A5A',      // Darker Blue Background for Icons
+    successIconBg   : '#1A4D32',      // Dark Green Background for Success Icons
     buttons         : {
       primary   : '#014B8F',      // Primary Blue (changed from red)
       secondary : '#687076',      // Secondary Gray

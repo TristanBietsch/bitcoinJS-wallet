@@ -27,11 +27,13 @@ export default function PreparePhraseScreen({ onComplete, onBack }: PreparePhras
           We will ask you to write down your seed.
         </OnboardingDescription>
         
-        <FileLock2 
-          size={120} 
-          color={Colors.light.buttons.primary} 
-          style={styles.icon}
-        />
+        <View style={styles.iconContainer}>
+          <FileLock2 
+            size={90} 
+            color={Colors.light.buttons.primary} 
+            style={styles.icon}
+          />
+        </View>
         
         <ThemedText style={styles.securityText}>
           Write down your seed phrase on paper. Store it somewhere safe and
@@ -59,10 +61,19 @@ const styles = StyleSheet.create({
     paddingHorizontal : 24,
   },
   subtitle : {
-    marginBottom : 100,
+    marginBottom : 40
+  },
+  iconContainer : {
+    width           : 160,
+    height          : 160,
+    borderRadius    : 90,
+    backgroundColor : Colors.light.iconBackground,
+    alignItems      : 'center',
+    justifyContent  : 'center',
+    marginBottom    : 40
   },
   icon : {
-    marginBottom : 80,
+    marginBottom : 0
   },
   securityText : {
     textAlign    : 'center',
