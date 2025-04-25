@@ -28,7 +28,7 @@ export default function PreparePhraseScreen({ onComplete, onBack }: PreparePhras
         </OnboardingDescription>
         
         <FileLock2 
-          size={140} 
+          size={120} 
           color={Colors.light.buttons.primary} 
           style={styles.icon}
         />

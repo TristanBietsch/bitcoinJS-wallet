@@ -14,11 +14,19 @@ export default function Home() {
   }, [])
 
   const checkOnboardingStatus = async () => {
-    const completed = await isOnboardingComplete()
-    setIsLoading(false)
-    
-    // Redirect to onboarding route if not completed
-    if (!completed) {
+    try {
+      const completed = await isOnboardingComplete()
+      console.log('Onboarding status:', completed ? 'completed' : 'not completed')
+      setIsLoading(false)
+      
+      // Redirect to onboarding route if not completed
+      if (!completed) {
+        router.push('/onboarding' as any)
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error)
+      setIsLoading(false)
+      // If there's an error, we'll assume onboarding needs to be done
       router.push('/onboarding' as any)
     }
   }

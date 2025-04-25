@@ -6,6 +6,7 @@ import { ThemedText } from '@/src/components/ui/Text'
 import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
 import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
 import { Colors } from '@/src/constants/colors'
+import { setOnboardingComplete } from '@/src/utils/storage'
 
 interface SuccessSeedPhraseProps {
   onComplete?: () => void
@@ -13,13 +14,22 @@ interface SuccessSeedPhraseProps {
 
 export default function SuccessSeedPhrase({ onComplete }: SuccessSeedPhraseProps) {
   
-  const handleGoHome = () => {
-    // Navigate to home screen - use root route which shows HomeScreen
-    router.replace('/' as any)
-    
-    // Also call onComplete if provided (for backward compatibility)
-    if (onComplete) {
-      onComplete()
+  const handleGoHome = async () => {
+    try {
+      // First, mark onboarding as complete in storage
+      await setOnboardingComplete()
+      
+      // Then navigate to home screen
+      router.replace('/' as any)
+      
+      // Also call onComplete if provided (for backward compatibility)
+      if (onComplete) {
+        onComplete()
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+      // Still try to navigate even if there was an error
+      router.replace('/' as any)
     }
   }
   

@@ -12,8 +12,8 @@ import SuccessSeedPhrase from '../success/SuccessSeedPhrase'
 
 // Mock seed phrase for demonstration
 const MOCK_SEED_PHRASE = [
-  'one', 'two', 'three', 'four', 'five', 'six',
-  'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'
+  '1', '2', '3', '4', '5', '6',
+  '7', '8', '9', '10', '11', '12'
 ]
 
 interface ConfirmSeedWordsScreenProps {
@@ -42,7 +42,16 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
     const isSelected = selectedWords.some(item => item.word === word)
     
     if (isSelected) {
-      // If already selected, do nothing
+      // Check if this is the most recently selected word (highest order)
+      const selectedWord = selectedWords.find(item => item.word === word)
+      const isLastSelected = selectedWord && 
+        selectedWord.order === Math.max(...selectedWords.map(item => item.order))
+      
+      // Only allow deselection of the most recently selected word
+      if (isLastSelected) {
+        // Remove the most recently selected word
+        setSelectedWords(selectedWords.filter(item => item.word !== word))
+      }
       return
     }
     
@@ -139,6 +148,10 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
             const selectionOrder = getSelectionOrder(word)
             const isSelected = selectionOrder !== null
             
+            // Check if this is the most recently selected word
+            const isLastSelected = isSelected && 
+              selectionOrder === Math.max(...selectedWords.map(item => item.order))
+            
             return (
               <TouchableOpacity
                 key={index}
@@ -151,7 +164,10 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
                 </ThemedText>
                 
                 {isSelected && (
-                  <View style={styles.selectionOverlay}>
+                  <View style={[
+                    styles.selectionOverlay,
+                    isLastSelected && styles.lastSelectedOverlay
+                  ]}>
                     <Text style={styles.selectionOrderText}>
                       {selectionOrder}
                     </Text>
@@ -213,6 +229,11 @@ const styles = StyleSheet.create({
     textAlign    : 'center',
     marginBottom : 30
   },
+  helperText : {
+    fontSize     : 14,
+    textAlign    : 'center',
+    marginBottom : 20
+  },
   wordsContainer : {
     flexDirection  : 'row',
     flexWrap       : 'wrap',
@@ -272,5 +293,8 @@ const styles = StyleSheet.create({
   },
   disabledButton : {
     opacity : 0.5
+  },
+  lastSelectedOverlay : {
+    backgroundColor : 'rgba(0, 0, 0, 0.85)'
   }
 }) 
