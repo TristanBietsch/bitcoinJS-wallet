@@ -16,9 +16,11 @@ import ImportButton from '@/src/components/features/Wallet/Import/ImportButton'
 
 // Import the checking screen
 import CheckingSeedPhraseImport from '../checking/CheckingSeedPhraseImport'
+import ErrorImport from '../error/ErrorImport'
 
-// Testing constant
+// Testing constants
 const TEST_BYPASS_PHRASE = "admin test"
+const TEST_ERROR_PHRASE = "admin test error"
 
 interface ImportWalletScreenProps {
   onComplete: () => void;
@@ -43,6 +45,10 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
   
   // State to track if we're in the checking phase
   const [ isChecking, setIsChecking ] = useState(false)
+  // State to track if we're in error state
+  const [ showError, setShowError ] = useState(false)
+  // Store the original seed phrase for checking
+  const [ savedPhraseForChecking, setSavedPhraseForChecking ] = useState("")
 
   // Show validation feedback when there's a security error
   useEffect(() => {
@@ -52,8 +58,19 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
   }, [ securityError, setShowValidation ])
 
   const handleImport = async () => {
+    // Save the phrase for checking before clearing it
+    const currentPhrase = seedPhrase.trim()
+    setSavedPhraseForChecking(currentPhrase)
+    
+    // Test error phrase check - go to checking screen first, then error
+    if (currentPhrase === TEST_ERROR_PHRASE) {
+      clearSeedPhrase()
+      setIsChecking(true)
+      return
+    }
+    
     // Test bypass check
-    if (seedPhrase.trim() === TEST_BYPASS_PHRASE) {
+    if (currentPhrase === TEST_BYPASS_PHRASE) {
       clearSeedPhrase()
       setIsChecking(true)
       return
@@ -83,13 +100,28 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     onComplete()
   }
 
+  const handleErrorTryAgain = () => {
+    // Go back to import screen to try again
+    setShowError(false)
+  }
+
+  // If we're in error state, show the error screen
+  if (showError) {
+    return (
+      <ErrorImport
+        onTryAgain={handleErrorTryAgain}
+        onBack={onBack}
+      />
+    )
+  }
+
   // If we're in checking phase, show the checking screen
   if (isChecking) {
     return (
       <CheckingSeedPhraseImport
-        seedPhrase={seedPhrase}
+        seedPhrase={savedPhraseForChecking}
         onComplete={handleCheckingComplete}
-        isTestBypass={seedPhrase.trim() === TEST_BYPASS_PHRASE}
+        isTestBypass={savedPhraseForChecking === TEST_BYPASS_PHRASE}
       />
     )
   }
@@ -119,7 +151,7 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
               }
             }}
             wordValidations={wordValidations}
-            isValid={validationResult.isValid}
+            isValid={validationResult.isValid || seedPhrase.trim() === TEST_BYPASS_PHRASE || seedPhrase.trim() === TEST_ERROR_PHRASE}
             showValidation={showValidation}
           />
           
@@ -139,7 +171,7 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
       <View style={styles.buttonContainer}>
         <ImportButton
           onPress={handleImport}
-          disabled={!validationResult.isValid && seedPhrase.trim() !== TEST_BYPASS_PHRASE}
+          disabled={!validationResult.isValid && seedPhrase.trim() !== TEST_BYPASS_PHRASE && seedPhrase.trim() !== TEST_ERROR_PHRASE}
         />
       </View>
     </OnboardingContainer>
