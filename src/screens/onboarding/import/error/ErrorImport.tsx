@@ -1,10 +1,8 @@
 import React from 'react'
 import StatusScreen from '@/src/components/ui/Feedback/StatusScreen'
+import { ErrorHandlingCallbacks } from '@/src/types/callbacks'
 
-interface ErrorImportProps {
-  onTryAgain: () => void
-  onBack: () => void
-}
+type ErrorImportProps = Pick<ErrorHandlingCallbacks, 'onTryAgain' | 'onBack'>
 
 /**
  * Screen displayed when wallet import fails

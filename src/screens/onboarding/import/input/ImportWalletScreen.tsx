@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { OnboardingContainer, OnboardingTitle } from '@/src/components/ui/OnboardingScreen'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
@@ -14,24 +14,21 @@ import SeedPhraseInput from '@/src/components/features/Wallet/Import/SeedPhraseI
 import ValidationFeedback from '@/src/components/features/Wallet/Import/ValidationFeedback'
 import ImportButton from '@/src/components/features/Wallet/Import/ImportButton'
 
-// Import the checking screen
-import CheckingSeedPhraseImport from '../checking/CheckingSeedPhraseImport'
-import ErrorImport from '../error/ErrorImport'
+// Import shared constants and types
+import { TEST_BYPASS_PHRASE, TEST_ERROR_PHRASE } from '@/src/constants/testing'
+import { BaseCallbacks } from '@/src/types/callbacks'
+import { useImport } from '@/src/features/wallet/import/ImportContext'
 
-// Testing constants
-const TEST_BYPASS_PHRASE = "admin test"
-const TEST_ERROR_PHRASE = "admin test error"
-
-interface ImportWalletScreenProps {
-  onComplete: () => void;
-  onBack: () => void;
-}
+interface ImportWalletScreenProps extends BaseCallbacks {}
 
 /**
  * Screen for importing a wallet with a seed phrase
  * Visual warnings and word chips have been removed while maintaining validation logic
  */
-export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletScreenProps) {
+export default function ImportWalletScreen({ onBack }: ImportWalletScreenProps) {
+  // Context from ImportProvider
+  const { startChecking } = useImport()
+  
   // Use our custom hooks
   const { seedPhrase, handleSeedPhraseChange, clearSeedPhrase } = useSeedPhraseInput()
   const { securelyStoreSeedPhrase, error: securityError } = useSeedPhraseSecurity(seedPhrase)
@@ -42,13 +39,6 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     setShowValidation,
     successAnim
   } = useSeedPhraseValidation(seedPhrase)
-  
-  // State to track if we're in the checking phase
-  const [ isChecking, setIsChecking ] = useState(false)
-  // State to track if we're in error state
-  const [ showError, setShowError ] = useState(false)
-  // Store the original seed phrase for checking
-  const [ savedPhraseForChecking, setSavedPhraseForChecking ] = useState("")
 
   // Show validation feedback when there's a security error
   useEffect(() => {
@@ -58,21 +48,19 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
   }, [ securityError, setShowValidation ])
 
   const handleImport = async () => {
-    // Save the phrase for checking before clearing it
-    const currentPhrase = seedPhrase.trim()
-    setSavedPhraseForChecking(currentPhrase)
-    
     // Test error phrase check - go to checking screen first, then error
-    if (currentPhrase === TEST_ERROR_PHRASE) {
+    if (seedPhrase.trim() === TEST_ERROR_PHRASE) {
+      const currentPhrase = seedPhrase.trim()
       clearSeedPhrase()
-      setIsChecking(true)
+      startChecking(currentPhrase)
       return
     }
     
     // Test bypass check
-    if (currentPhrase === TEST_BYPASS_PHRASE) {
+    if (seedPhrase.trim() === TEST_BYPASS_PHRASE) {
+      const currentPhrase = seedPhrase.trim()
       clearSeedPhrase()
-      setIsChecking(true)
+      startChecking(currentPhrase)
       return
     }
 
@@ -81,10 +69,10 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
       const success = await securelyStoreSeedPhrase()
       
       if (success) {
-        // Clear the UI
+        // Store the phrase for verification before clearing the UI
+        const currentPhrase = seedPhrase.trim()
         clearSeedPhrase()
-        // Show checking screen
-        setIsChecking(true)
+        startChecking(currentPhrase)
       } else {
         // Error is handled by the hook and displayed through validation
         setShowValidation(true)
@@ -95,46 +83,9 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     }
   }
 
-  const handleCheckingComplete = () => {
-    // After checking is complete, trigger the onComplete callback
-    onComplete()
-  }
-
-  const handleCheckingError = () => {
-    // Reset back to the input screen on error
-    setIsChecking(false)
-  }
-
-  const handleErrorTryAgain = () => {
-    // Go back to import screen to try again
-    setShowError(false)
-  }
-
-  // If we're in error state, show the error screen
-  if (showError) {
-    return (
-      <ErrorImport
-        onTryAgain={handleErrorTryAgain}
-        onBack={onBack}
-      />
-    )
-  }
-
-  // If we're in checking phase, show the checking screen
-  if (isChecking) {
-    return (
-      <CheckingSeedPhraseImport
-        seedPhrase={savedPhraseForChecking}
-        onComplete={handleCheckingComplete}
-        onError={handleCheckingError}
-        isTestBypass={savedPhraseForChecking === TEST_BYPASS_PHRASE}
-      />
-    )
-  }
-
   return (
     <OnboardingContainer>
-      <BackButton onPress={onBack} />
+      <BackButton onPress={onBack || (() => {})} />
       
       <View style={styles.content}>
         <OnboardingTitle>
