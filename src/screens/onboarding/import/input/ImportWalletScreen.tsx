@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { OnboardingContainer, OnboardingTitle } from '@/src/components/ui/OnboardingScreen'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
@@ -13,6 +13,9 @@ import { useSeedPhraseInput } from '@/src/hooks/wallet/useSeedPhraseInput'
 import SeedPhraseInput from '@/src/components/features/Wallet/Import/SeedPhraseInput'
 import ValidationFeedback from '@/src/components/features/Wallet/Import/ValidationFeedback'
 import ImportButton from '@/src/components/features/Wallet/Import/ImportButton'
+
+// Import the checking screen
+import CheckingSeedPhraseImport from '../checking/CheckingSeedPhraseImport'
 
 // Testing constant
 const TEST_BYPASS_PHRASE = "admin test"
@@ -37,6 +40,9 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     setShowValidation,
     successAnim
   } = useSeedPhraseValidation(seedPhrase)
+  
+  // State to track if we're in the checking phase
+  const [ isChecking, setIsChecking ] = useState(false)
 
   // Show validation feedback when there's a security error
   useEffect(() => {
@@ -49,7 +55,7 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     // Test bypass check
     if (seedPhrase.trim() === TEST_BYPASS_PHRASE) {
       clearSeedPhrase()
-      onComplete()
+      setIsChecking(true)
       return
     }
 
@@ -60,8 +66,8 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
       if (success) {
         // Clear the UI
         clearSeedPhrase()
-        // Complete the import process
-        onComplete()
+        // Show checking screen
+        setIsChecking(true)
       } else {
         // Error is handled by the hook and displayed through validation
         setShowValidation(true)
@@ -70,6 +76,22 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
       // Force show validation if user tries to submit invalid phrase
       setShowValidation(true)
     }
+  }
+
+  const handleCheckingComplete = () => {
+    // After checking is complete, trigger the onComplete callback
+    onComplete()
+  }
+
+  // If we're in checking phase, show the checking screen
+  if (isChecking) {
+    return (
+      <CheckingSeedPhraseImport
+        seedPhrase={seedPhrase}
+        onComplete={handleCheckingComplete}
+        isTestBypass={seedPhrase.trim() === TEST_BYPASS_PHRASE}
+      />
+    )
   }
 
   return (
