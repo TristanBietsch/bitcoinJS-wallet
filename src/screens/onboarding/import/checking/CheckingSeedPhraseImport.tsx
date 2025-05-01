@@ -7,6 +7,7 @@ import ErrorImport from '../error/ErrorImport'
 interface CheckingSeedPhraseImportProps {
   seedPhrase: string
   onComplete: () => void
+  onError?: () => void
   isTestBypass?: boolean
 }
 
@@ -18,6 +19,7 @@ export default function CheckingSeedPhraseImport({
   // The parameter is kept for future implementation
   seedPhrase,
   onComplete,
+  onError,
   isTestBypass = false
 }: CheckingSeedPhraseImportProps) {
   // Add state to track verification completion
@@ -52,7 +54,12 @@ export default function CheckingSeedPhraseImport({
   // Handle the error try again action
   const handleTryAgain = () => {
     // Go back to import screen
-    onComplete()
+    if (onError) {
+      onError()
+    } else {
+      // Fallback to onComplete for backward compatibility
+      onComplete()
+    }
   }
 
   // Show error screen if verification failed

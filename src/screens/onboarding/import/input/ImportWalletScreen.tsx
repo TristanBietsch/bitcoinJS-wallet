@@ -100,6 +100,11 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
     onComplete()
   }
 
+  const handleCheckingError = () => {
+    // Reset back to the input screen on error
+    setIsChecking(false)
+  }
+
   const handleErrorTryAgain = () => {
     // Go back to import screen to try again
     setShowError(false)
@@ -121,6 +126,7 @@ export default function ImportWalletScreen({ onComplete, onBack }: ImportWalletS
       <CheckingSeedPhraseImport
         seedPhrase={savedPhraseForChecking}
         onComplete={handleCheckingComplete}
+        onError={handleCheckingError}
         isTestBypass={savedPhraseForChecking === TEST_BYPASS_PHRASE}
       />
     )
