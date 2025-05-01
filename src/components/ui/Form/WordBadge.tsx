@@ -10,31 +10,21 @@ interface WordBadgeProps {
 }
 
 /**
- * Displays a word with visual indication of validity (valid/invalid)
+ * Displays a word with neutral styling (removed error indicators)
  */
 const WordBadge: React.FC<WordBadgeProps> = ({ wordValidation, index }) => {
-  // Style based on word validity
-  const badgeStyle = wordValidation.isValid 
-    ? styles.validWordBadge 
-    : styles.invalidWordBadge
-  
-  const textStyle = wordValidation.isValid 
-    ? styles.validWordText 
-    : styles.invalidWordText
-  
   // Add slight position offset based on index for a small staggered effect
   const position = index % 2 === 0 ? 0 : 2
   
   return (
     <View 
       style={[ 
-        styles.wordBadge, 
-        badgeStyle,
+        styles.wordBadge,
         { marginTop: position }
       ]}
       accessibilityLabel={`Word ${index + 1}: ${wordValidation.word}`}
     >
-      <ThemedText style={textStyle}>
+      <ThemedText style={styles.wordText}>
         {wordValidation.word}
       </ThemedText>
     </View>
@@ -48,25 +38,14 @@ const styles = StyleSheet.create({
     borderRadius      : 16,
     margin            : 4,
     marginBottom      : 6,
+    backgroundColor   : Colors.light.offWhite,
+    borderWidth       : 1,
+    borderColor       : Colors.light.buttons.primary,
   },
-  validWordBadge : {
-    backgroundColor : Colors.light.offWhite,
-    borderWidth     : 1,
-    borderColor     : Colors.light.successGreen,
-  },
-  invalidWordBadge : {
-    backgroundColor : Colors.light.offWhite,
-    borderWidth     : 1,
-    borderColor     : Colors.light.errorRed,
-  },
-  validWordText : {
-    color    : Colors.light.successGreen,
+  wordText : {
+    color    : '#333333',
     fontSize : 14,
-  },
-  invalidWordText : {
-    color    : Colors.light.errorRed,
-    fontSize : 14,
-  },
+  }
 })
 
 export default WordBadge 

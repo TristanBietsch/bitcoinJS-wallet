@@ -6,7 +6,7 @@ import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen'
 import PreparePhraseScreen from './create/prepare/PreparePhraseScreen'
 import GenerateSeedWords from './create/generate/GenerateSeedWords'
 import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen'
-import ImportWalletScreen from './import/ImportWalletScreen'
+import ImportWalletScreen from './import/input/ImportWalletScreen'
 import SuccessScreen from './status/SuccessScreen'
 import ErrorScreen from './status/ErrorScreen'
 

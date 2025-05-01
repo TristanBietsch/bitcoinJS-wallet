@@ -14,11 +14,11 @@ interface ValidationFeedbackProps {
 
 /**
  * Component to display validation feedback for seed phrases
+ * (Visual warnings and texts have been removed while keeping validation logic)
  */
 const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
   validationResult,
   showValidation,
-  suggestionText,
   successAnim
 }) => {
   if (!showValidation) {
@@ -27,7 +27,7 @@ const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
 
   return (
     <View style={styles.validationContainer}>
-      {validationResult.isValid ? (
+      {validationResult.isValid && (
         <Animated.View 
           style={[
             styles.successContainer,
@@ -39,27 +39,7 @@ const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
             Valid seed phrase
           </ThemedText>
         </Animated.View>
-      ) : (
-        <View>
-          <ThemedText style={styles.errorText}>
-            {validationResult.errorMessage}
-          </ThemedText>
-          {suggestionText ? (
-            <ThemedText style={styles.suggestionText}>
-              {suggestionText}
-            </ThemedText>
-          ) : null}
-        </View>
       )}
-      
-      <ThemedText style={[
-        styles.wordCountText,
-        validationResult.wordCount === 12 || validationResult.wordCount === 24 
-          ? styles.validText 
-          : styles.warningText
-      ]}>
-        Words: {validationResult.wordCount}/12 or {validationResult.wordCount}/24
-      </ThemedText>
     </View>
   )
 }
@@ -75,29 +55,12 @@ const styles = StyleSheet.create({
     alignItems    : 'center',
     marginBottom  : 4,
   },
-  errorText : {
-    color        : Colors.light.errorRed,
-    fontSize     : 14,
-    marginBottom : 4,
-  },
-  suggestionText : {
-    color        : Colors.light.buttons.primary,
-    fontSize     : 14,
-    marginBottom : 8,
-  },
   validText : {
     color        : Colors.light.successGreen,
     fontSize     : 14,
     marginBottom : 4,
     marginLeft   : 4,
-  },
-  warningText : {
-    color    : Colors.light.buttons.warning,
-    fontSize : 14,
-  },
-  wordCountText : {
-    fontSize : 14,
-  },
+  }
 })
 
 export default ValidationFeedback 
