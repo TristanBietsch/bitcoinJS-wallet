@@ -4,7 +4,7 @@ module.exports = {
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|react-clone-referenced-element|@react-navigation|@expo|expo|@expo-google-fonts|expo-router|@unimodules|unimodules|sentry-expo|react-navigation|@react-native-async-storage)',
+    'node_modules/(?!(jest-)?react-native|@react-native|react-clone-referenced-element|@expo|expo|@expo-google-fonts|expo-router|@unimodules|unimodules|sentry-expo|@react-native-async-storage)',
   ],
   setupFiles: [
     '<rootDir>/tests/config/jest-setup.js',
