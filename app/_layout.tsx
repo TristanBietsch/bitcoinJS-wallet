@@ -29,7 +29,8 @@ const HIDDEN_NAV_ROUTES = [
   '/about', 
   '/settings',
   '/support',
-  '/main/menu'
+  '/main/menu',
+  '/main/qr'
  ]
 
 export default function RootLayout() {

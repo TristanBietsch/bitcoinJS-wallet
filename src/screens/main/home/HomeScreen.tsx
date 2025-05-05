@@ -57,9 +57,9 @@ const HomeScreen = () => {
     router.push('/main/menu' as any)
   }
 
-  // Handle scan button press - No action for now
+  // Handle scan button press - Navigate to QR menu screen
   const handleScanPress = () => {
-    // No action for now
+    router.push('/main/qr' as any)
   }
 
   // Currency dropdown component
