@@ -8,6 +8,7 @@ interface AppHeaderProps {
   title?: string
   showMenuIcon?: boolean
   onMenuPress?: () => void
+  leftComponent?: React.ReactNode
   rightComponent?: React.ReactNode
   titleStyle?: object
   containerStyle?: object
@@ -20,12 +21,18 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   title,
   showMenuIcon = false,
   onMenuPress,
+  leftComponent,
   rightComponent,
   titleStyle,
   containerStyle
 }) => {
   return (
     <View style={[ styles.header, containerStyle ]}>
+      {/* Left section */}
+      <View style={styles.leftSection}>
+        {leftComponent}
+      </View>
+      
       {/* Title */}
       {title && (
         <ThemedText type="title" style={[ styles.headerTitle, titleStyle ]}>
@@ -54,13 +61,17 @@ const styles = StyleSheet.create({
     justifyContent    : 'space-between',
     alignItems        : 'center',
     paddingTop        : 60,
-    paddingBottom     : 16,
     paddingHorizontal : 20,
     backgroundColor   : Colors.light.background,
   },
   headerTitle : {
     fontSize   : 22,
     fontWeight : 'bold',
+  },
+  leftSection : {
+    position : 'absolute',
+    left     : 20,
+    top      : 60,
   },
   rightSection : {
     position : 'absolute',

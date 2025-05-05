@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
 import Dropdown from '@/src/components/ui/Dropdown'
@@ -13,6 +13,7 @@ import { useSendStore } from '@/src/store/sendStore'
 import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
 import AppHeader from '@/src/components/ui/Header/AppHeader'
+import { Scan } from 'lucide-react-native'
 
 const HomeScreen = () => {
   // State for selected currency format
@@ -56,6 +57,11 @@ const HomeScreen = () => {
     router.push('/main/menu' as any)
   }
 
+  // Handle scan button press - No action for now
+  const handleScanPress = () => {
+    // No action for now
+  }
+
   // Currency dropdown component
   const currencySelector = (
     <Dropdown
@@ -69,10 +75,21 @@ const HomeScreen = () => {
     />
   )
 
+  // Scan button component
+  const scanButton = (
+    <TouchableOpacity onPress={handleScanPress} style={styles.scanButton}>
+      <Scan size={24} color={Colors.light.text} />
+    </TouchableOpacity>
+  )
+
   return (
     <View style={styles.container}>
-      {/* Header with menu icon */}
-      <AppHeader showMenuIcon={true} onMenuPress={handleMenuPress} />
+      {/* Header with menu icon and scan button */}
+      <AppHeader 
+        showMenuIcon={true} 
+        onMenuPress={handleMenuPress}
+        leftComponent={scanButton}
+      />
       
       {/* Balance Display Section with dropdown inside */}
       <BalanceDisplay
@@ -108,6 +125,9 @@ const styles = StyleSheet.create({
     bottom   : 160,
     left     : 0,
     right    : 0,
+  },
+  scanButton : {
+    padding : 8,
   },
 })
 
