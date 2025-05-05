@@ -32,8 +32,8 @@ export default function RootLayout() {
   // Check if bottom navigation should be hidden for current route
   const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.startsWith(route))
   
-  const [fontsLoaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  const [ fontsLoaded ] = useFonts({
+    SpaceMono : require('../assets/fonts/SpaceMono-Regular.ttf'),
   })
 
   if (!fontsLoaded) {
@@ -56,12 +56,12 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+  container : {
+    flex            : 1,
+    backgroundColor : '#ffffff',
   },
-  content: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+  content : {
+    flex            : 1,
+    backgroundColor : '#ffffff',
   },
 })

@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     textAlign    : 'center',
     marginBottom : 20,
   },
- r
+
   // Frame corners for scanner
   frameContainer : {
     width     : FRAME_WIDTH,
