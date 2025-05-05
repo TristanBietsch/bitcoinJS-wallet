@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Dimensions, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Stack } from 'expo-router'
 import { X } from 'lucide-react-native'
@@ -8,6 +8,7 @@ import { Colors } from '@/src/constants/colors'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import QRCode from 'react-native-qrcode-svg'
 import { ThemedText } from '@/src/components/ui/Text'
+import { useSendStore } from '@/src/store/sendStore'
 
 // Constants for QR frame layout
 const SCREEN_WIDTH = Dimensions.get('window').width
@@ -15,6 +16,100 @@ const FRAME_WIDTH = SCREEN_WIDTH * 0.7
 const FRAME_HEIGHT = FRAME_WIDTH
 const FRAME_BORDER_WIDTH = 3
 const FRAME_CORNER_SIZE = 20
+
+// Bitcoin address validation regex patterns
+const BTC_ADDRESS_REGEX = {
+  P2PKH  : /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/,  // Legacy addresses starting with 1
+  P2SH   : /^[3][a-km-zA-HJ-NP-Z1-9]{25,34}$/,    // Legacy addresses starting with 3
+  BECH32 : /^bc1[a-zA-HJ-NP-Z0-9]{25,90}$/      // Segwit addresses starting with bc1
+}
+
+// BIP21 URI regex - updated to better handle various formats
+const BIP21_REGEX = /^(?:bitcoin:)?(([13]|bc1)[a-zA-HJ-NP-Z0-9]{25,90})(?:\?(.*))?$/
+
+// Function to validate Bitcoin address
+const isValidBitcoinAddress = (address: string): boolean => {
+  return (
+    BTC_ADDRESS_REGEX.P2PKH.test(address) ||
+    BTC_ADDRESS_REGEX.P2SH.test(address) ||
+    BTC_ADDRESS_REGEX.BECH32.test(address)
+  )
+}
+
+// Function to parse BIP21 URI
+const parseBIP21 = (uri: string): { address: string; amount?: string; label?: string; message?: string } | null => {
+  try {
+    console.log('Attempting to parse BIP21:', uri)
+    
+    // Handle URLs with or without the bitcoin: prefix
+    let processedUri = uri
+    if (!uri.startsWith('bitcoin:')) {
+      // Try to detect if this is a valid address directly
+      if (isValidBitcoinAddress(uri)) {
+        console.log('Valid Bitcoin address detected without prefix')
+        return { address: uri }
+      }
+    }
+    
+    const match = processedUri.match(BIP21_REGEX)
+    if (!match) {
+      console.log('No BIP21 match found')
+      return null
+    }
+
+    const address = match[1]
+    console.log('Extracted address:', address)
+    
+    const queryParams = match[3]
+    console.log('Query params:', queryParams)
+    
+    // Check if the extracted address is valid
+    if (!isValidBitcoinAddress(address)) {
+      console.log('Address validation failed')
+      return null
+    }
+    
+    // Parse query parameters if they exist
+    const result: { address: string; amount?: string; label?: string; message?: string } = { address }
+    
+    if (queryParams) {
+      // Handle URL-encoded params correctly
+      // Replace semicolons with ampersands if needed
+      const normalizedParams = queryParams.replace(';', '&')
+      const params = new URLSearchParams(normalizedParams)
+      
+      // Get the amount parameter safely
+      const amountStr = params.get('amount')
+      if (amountStr) {
+        // Ensure amount is a valid number
+        const amount = parseFloat(amountStr)
+        if (!isNaN(amount)) {
+          result.amount = amount.toString()
+          console.log('Found amount:', result.amount)
+        }
+      }
+      
+      // Get other parameters
+      const label = params.get('label')
+      if (label) {
+        result.label = label
+        console.log('Found label:', label)
+      }
+      
+      const message = params.get('message')
+      if (message) {
+        result.message = message
+        console.log('Found message:', message)
+      }
+    }
+    
+    console.log('Parsed BIP21 result:', result)
+    return result
+  } catch (error) {
+    console.error('Error parsing BIP21 URI:', error)
+    return null
+  }
+}
 
 // Types for the ModeToggle component
 interface ModeToggleProps {
@@ -80,7 +175,9 @@ const ScannerMode: React.FC<ScannerModeProps> = ({ onScanSuccess }) => {
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (data && !scanned) {
       setScanned(true)
-      onScanSuccess(data)
+      setTimeout(() => {
+        onScanSuccess(data)
+      }, 300) // Add a small delay to prevent multiple triggering
     }
   }
 
@@ -205,17 +302,112 @@ const QRCodeMode: React.FC = () => {
 // Main QR Menu Screen Component
 const QRMenuScreen: React.FC = () => {
   const [ mode, setMode ] = useState<'scan' | 'qrcode'>('scan')
+  const [ isProcessing, setIsProcessing ] = useState(false)
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const { setAddress, setAmount, reset } = useSendStore()
   
   const handleClose = () => {
     router.back()
   }
   
+  const navigateToSendAddress = (address: string) => {
+    console.log('Navigating to send address with:', address)
+    // Reset first, then set just the address
+    reset()
+    setAddress(address)
+    
+    // Use setTimeout to ensure state is updated before navigation
+    setTimeout(() => {
+      try {
+        router.replace('/send/address' as any)
+      } catch (err) {
+        console.error('Navigation error:', err)
+        setIsProcessing(false)
+        Alert.alert(
+          "Navigation Error",
+          "Could not navigate to the send screen. Please try again.",
+          [ { text: "OK" } ]
+        )
+      }
+    }, 100)
+  }
+  
+  const navigateToSendConfirm = (address: string, amount?: string) => {
+    console.log('Navigating to confirm with:', { address, amount })
+    // Reset first to clear any previous state
+    reset()
+    setAddress(address)
+    if (amount) {
+      setAmount(amount)
+    }
+    
+    // Use setTimeout to ensure state is updated before navigation
+    setTimeout(() => {
+      try {
+        router.replace('/send/confirm' as any)
+      } catch (err) {
+        console.error('Navigation error:', err)
+        setIsProcessing(false)
+        Alert.alert(
+          "Navigation Error",
+          "Could not navigate to the confirm screen. Please try again.",
+          [ { text: "OK" } ]
+        )
+      }
+    }, 100)
+  }
+  
   const handleScanSuccess = (data: string) => {
-    console.log('Scanned data:', data)
-    // Handle the scanned QR code data
-    // In a real app, you would process the Bitcoin address here
+    console.log('QR code scanned:', data)
+    
+    // Prevent multiple processing
+    if (isProcessing) {
+      console.log('Already processing, ignoring additional scan')
+      return
+    }
+    setIsProcessing(true)
+    
+    try {
+      // First, try to parse as BIP21
+      const bip21Data = parseBIP21(data)
+      
+      if (bip21Data) {
+        console.log('Valid BIP21 data:', bip21Data)
+        
+        // If we have amount, go to confirm screen
+        if (bip21Data.amount) {
+          navigateToSendConfirm(bip21Data.address, bip21Data.amount)
+        } else {
+          // If we only have address, go to address screen
+          navigateToSendAddress(bip21Data.address)
+        }
+        return
+      }
+      
+      // If not BIP21, check if it's a plain Bitcoin address
+      if (isValidBitcoinAddress(data)) {
+        console.log('Valid Bitcoin address:', data)
+        navigateToSendAddress(data)
+        return
+      }
+      
+      // Not a valid Bitcoin address or invoice
+      console.log('Invalid QR code:', data)
+      Alert.alert(
+        "Invalid QR Code",
+        "The scanned QR code doesn't contain a valid Bitcoin address or payment request.",
+        [ { text: "OK", onPress: () => setIsProcessing(false) } ]
+      )
+    } catch (error) {
+      console.error('Error processing QR code:', error)
+      setIsProcessing(false)
+      Alert.alert(
+        "Error",
+        "There was an error processing the QR code. Please try again.",
+        [ { text: "OK" } ]
+      )
+    }
   }
   
   return (
