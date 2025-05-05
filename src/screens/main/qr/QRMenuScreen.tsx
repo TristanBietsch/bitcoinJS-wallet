@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     fontSize   : 16,
   },
   activeToggleButtonText : {
-    color : Colors.light.buttons.text,
+    color      : Colors.light.buttons.text,
     fontWeight : 'bold',
   },
   content : {
@@ -338,12 +338,12 @@ const styles = StyleSheet.create({
     textAlign    : 'center',
     marginBottom : 20,
   },
-  
+ r
   // Frame corners for scanner
   frameContainer : {
-    width    : FRAME_WIDTH,
-    height   : FRAME_HEIGHT,
-    position : 'absolute',
+    width     : FRAME_WIDTH,
+    height    : FRAME_HEIGHT,
+    position  : 'absolute',
     marginTop : -50, // Move frame up
   },
   corner : {
@@ -403,13 +403,13 @@ const styles = StyleSheet.create({
     alignItems : 'center',
   },
   scannerText : {
-    color : 'white',
-    fontSize : 16,
-    fontWeight : '600',
-    textAlign : 'center',
-    padding : 12,
-    backgroundColor : 'rgba(0,0,0,0.5)',
-    borderRadius : 8,
+    color             : 'white',
+    fontSize          : 16,
+    fontWeight        : '600',
+    textAlign         : 'center',
+    padding           : 12,
+    backgroundColor   : 'rgba(0,0,0,0.5)',
+    borderRadius      : 8,
     paddingHorizontal : 20,
   },
   

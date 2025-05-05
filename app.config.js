@@ -31,7 +31,9 @@ module.exports = {
       favicon: './assets/images/favicon.png'
     },
     plugins: [
-      'expo-router'
+      'expo-router',
+      'expo-secure-store',
+      'expo-web-browser'
     ],
     experiments: {
       tsconfigPaths: true

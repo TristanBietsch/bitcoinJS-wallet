@@ -1,5 +1,5 @@
-// Import regeneratorRuntime polyfill
-import '../regeneratorRuntime'
+// Direct import of regenerator-runtime
+import 'regenerator-runtime/runtime'
 
 import React from 'react'
 import "@/global.css"
@@ -8,17 +8,10 @@ import { AppProvider } from '@/src/components/layout/Container'
 import { TabBottomNavigation } from '@/src/components/ui/Navigation'
 import { View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import { usePathname } from 'expo-router'
-import { Slot } from 'expo-router'
+import { usePathname, Slot } from 'expo-router'
 import { useFonts } from 'expo-font'
-import { useEffect } from 'react'
-import * as SplashScreen from 'expo-splash-screen'
-import { initSentry } from '@/src/services/logging/sentryService'
 import { StyleSheet } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync()
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [ 
@@ -31,7 +24,7 @@ const HIDDEN_NAV_ROUTES = [
   '/support',
   '/main/menu',
   '/main/qr'
- ]
+]
 
 export default function RootLayout() {
   const pathname = usePathname()
@@ -39,28 +32,11 @@ export default function RootLayout() {
   // Check if bottom navigation should be hidden for current route
   const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.startsWith(route))
   
-  const [ loaded, error ] = useFonts({
-    SpaceMono : require('../assets/fonts/SpaceMono-Regular.ttf'),
+  const [fontsLoaded] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   })
 
-  useEffect(() => {
-    if (error) throw error
-  }, [ error ])
-
-  useEffect(() => {
-    if (loaded) {
-      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
-      SplashScreen.hideAsync()
-    }
-  }, [ loaded ])
-
-  // Initialize Sentry after component mounts
-  useEffect(() => {
-    initSentry()
-  }, [])
-
-  // Prevent rendering until the font has loaded or an error was returned
-  if (!loaded) {
+  if (!fontsLoaded) {
     return null
   }
 
@@ -80,12 +56,12 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex            : 1,
-    backgroundColor : '#ffffff',
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
   },
-  content : {
-    flex            : 1,
-    backgroundColor : '#ffffff',
+  content: {
+    flex: 1,
+    backgroundColor: '#ffffff',
   },
 })

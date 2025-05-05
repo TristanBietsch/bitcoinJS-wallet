@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
-import { useBitcoinPriceConverter, CurrencyType } from '@/src/hooks/send'
+import { useBitcoinPriceConverter, CurrencyType } from '@/src/hooks/send/useBitcoinPriceConverter'
 import { validateBitcoinInput } from '@/src/utils/formatting/currencyUtils'
 import { formatBitcoinAmount } from '@/src/utils/formatting/formatCurrencyValue'
 

@@ -1,8 +1,5 @@
 // Initialize React first
-import React from 'react';
+import 'react';
 
-// Import regeneratorRuntime polyfill
-import './regeneratorRuntime';
-
-// Import the main entry point
+// Import the main entry point directly
 import 'expo-router/entry'; 

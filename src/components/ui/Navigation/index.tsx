@@ -32,7 +32,7 @@ interface BottomNavigationContainerProps {
   children?: React.ReactNode;
 }
 
-export const BottomNavigation: React.FC<BottomNavigationContainerProps> = ({ children }) => {
+export function BottomNavigation({ children }: BottomNavigationContainerProps) {
   return (
     <View style={containerStyles.container}>
       {children}

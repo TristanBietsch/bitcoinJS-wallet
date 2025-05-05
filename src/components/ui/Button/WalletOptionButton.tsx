@@ -41,10 +41,7 @@ const WalletOptionButton: React.FC<WalletOptionButtonProps> = ({
       <View style={styles.buttonContentRow}>
         {/* Custom styling for icon based on button type */}
         <View style={styles.iconContainer}>
-          {React.cloneElement(icon as React.ReactElement, {
-            color : isPrimary ? Colors.light.buttons.text : Colors.light.buttons.primary,
-            size  : 20
-          })}
+          {icon}
         </View>
         
         <View style={styles.textContainer}>
