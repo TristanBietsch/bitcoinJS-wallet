@@ -225,6 +225,15 @@ const QRMenuScreen: React.FC = () => {
     ]}>
       <Stack.Screen options={{ headerShown: false }} />
       
+      {/* Content - Either Scanner or QR Code Display */}
+      <View style={styles.content}>
+        {mode === 'scan' ? (
+          <ScannerMode onScanSuccess={handleScanSuccess} />
+        ) : (
+          <QRCodeMode />
+        )}
+      </View>
+      
       {/* Header */}
       <View style={[
         styles.header,
@@ -243,15 +252,6 @@ const QRMenuScreen: React.FC = () => {
           onModeChange={setMode} 
         />
       </View>
-      
-      {/* Content - Either Scanner or QR Code Display */}
-      <View style={styles.content}>
-        {mode === 'scan' ? (
-          <ScannerMode onScanSuccess={handleScanSuccess} />
-        ) : (
-          <QRCodeMode />
-        )}
-      </View>
     </View>
   )
 }
@@ -266,12 +266,14 @@ const styles = StyleSheet.create({
     justifyContent : 'center',
     padding        : 20,
     position       : 'relative',
+    zIndex         : 10, // Ensure header appears above the camera
   },
   closeButton : {
     position : 'absolute',
     left     : 20,
     top      : 60,
     padding  : 8,
+    zIndex   : 10, // Ensure button appears above the camera
   },
   toggleContainer : {
     flexDirection   : 'row',
@@ -279,6 +281,7 @@ const styles = StyleSheet.create({
     borderRadius    : 30,
     overflow        : 'hidden',
     marginTop       : 50,
+    zIndex          : 10, // Ensure toggle appears above the camera
   },
   toggleButton : {
     paddingVertical   : 12,
@@ -307,25 +310,29 @@ const styles = StyleSheet.create({
     fontWeight : 'bold',
   },
   content : {
-    flex           : 1,
-    alignItems     : 'center',
-    justifyContent : 'center',
-    paddingTop     : 0,
-    marginTop      : -40, // Move content up
+    flex     : 1,
+    width    : '100%',
+    position : 'absolute',
+    top      : 0,
+    bottom   : 0,
+    left     : 0,
+    right    : 0,
   },
   
   // Scanner mode styles
   scannerContainer : {
     flex           : 1,
     width          : '100%',
+    height         : '100%',
     alignItems     : 'center',
     justifyContent : 'center',
-    paddingTop     : 0,
   },
   camera : {
     width    : '100%',
     height   : '100%',
     position : 'absolute',
+    top      : 0,
+    left     : 0,
   },
   cameraError : {
     flex           : 1,
@@ -341,10 +348,10 @@ const styles = StyleSheet.create({
 
   // Frame corners for scanner
   frameContainer : {
-    width     : FRAME_WIDTH,
-    height    : FRAME_HEIGHT,
-    position  : 'absolute',
-    marginTop : -50, // Move frame up
+    width    : FRAME_WIDTH,
+    height   : FRAME_HEIGHT,
+    position : 'absolute',
+    zIndex   : 5,
   },
   corner : {
     width    : FRAME_CORNER_SIZE,
@@ -397,10 +404,11 @@ const styles = StyleSheet.create({
   },
   scannerInfoContainer : {
     position   : 'absolute',
-    bottom     : 120,
+    bottom     : '15%',
     left       : 0,
     right      : 0,
     alignItems : 'center',
+    zIndex     : 5,
   },
   scannerText : {
     color             : 'white',
