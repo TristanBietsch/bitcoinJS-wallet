@@ -15,11 +15,17 @@ export const generateWallet = async () => {
   const seed = await bip39.mnemonicToSeed(mnemonic)
   const root = bip32.fromSeed(Buffer.from(seed))
   const child = root.derivePath("m/44'/0'/0'/0/0")
-  const { address } = bitcoin.payments.p2wpkh({
-    pubkey  : child.publicKey,
+
+  // Convert publicKey to Buffer to ensure type compatibility
+  const publicKeyBuffer = Buffer.from(child.publicKey)
+
+  // Create payment with correctly typed buffer
+  const payment = bitcoin.payments.p2wpkh({
+    pubkey  : publicKeyBuffer,
     network : bitcoin.networks.bitcoin,
   })
-  return { mnemonic, address }
+
+  return { mnemonic, address: payment.address }
 }
 
 /**
@@ -31,11 +37,17 @@ export const importWallet = async (mnemonic: string) => {
   const seed = await bip39.mnemonicToSeed(mnemonic)
   const root = bip32.fromSeed(Buffer.from(seed))
   const child = root.derivePath("m/44'/0'/0'/0/0")
-  const { address } = bitcoin.payments.p2wpkh({
-    pubkey  : child.publicKey,
+
+  // Convert publicKey to Buffer to ensure type compatibility
+  const publicKeyBuffer = Buffer.from(child.publicKey)
+
+  // Create payment with correctly typed buffer
+  const payment = bitcoin.payments.p2wpkh({
+    pubkey  : publicKeyBuffer,
     network : bitcoin.networks.bitcoin,
   })
-  return { address }
+
+  return { address: payment.address }
 }
 
 /**
