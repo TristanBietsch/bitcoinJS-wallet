@@ -1,121 +1,126 @@
-/**
- * Bitcoin Wallet Hook
- * Custom hook for interacting with Bitcoin wallet functionality
- */
+import { useState, useCallback } from 'react'
+import * as SecureStore from 'expo-secure-store'
+import { 
+  generateWallet, 
+  importWallet, 
+  validateMnemonic 
+} from '../../services/bitcoin/wallet/bitcoinJsWallet'
 
-import { useState, useEffect, useCallback } from 'react'
-import { bdkService } from '../../services/bitcoin/bdkService'
+// Constants for secure storage keys
+const WALLET_MNEMONIC_KEY = 'bitcoin_wallet_mnemonic'
+const WALLET_ADDRESS_KEY = 'bitcoin_wallet_address'
 
-interface WalletState {
-  balance: {
-    confirmed: number;
-    unconfirmed: number;
-    total: number;
-  };
-  transactions: any[];
-  isLoading: boolean;
-  error: string | null;
-}
+export const useBitcoinJSWallet = () => {
+  const [ isLoading, setIsLoading ] = useState(false)
+  const [ error, setError ] = useState<string | null>(null)
+  const [ address, setAddress ] = useState<string | null>(null)
 
-export const useBitcoinWallet = () => {
-  const [ walletState, setWalletState ] = useState<WalletState>({
-    balance : {
-      confirmed   : 0,
-      unconfirmed : 0,
-      total       : 0,
-    },
-    transactions : [],
-    isLoading    : false,
-    error        : null,
-  })
-
-  // Function to fetch wallet data
-  const refreshWallet = useCallback(async () => {
-    setWalletState(prev => ({ ...prev, isLoading: true, error: null }))
-    
+  // Initialize wallet on app start - load from secure storage
+  const initWallet = useCallback(async () => {
     try {
-      // Get wallet balance
-      const balance = await bdkService.getBalance()
+      setIsLoading(true)
+      setError(null)
       
-      // Get transaction history
-      const transactions = await bdkService.getTransactions()
+      // Check if we already have a wallet
+      const storedAddress = await SecureStore.getItemAsync(WALLET_ADDRESS_KEY)
       
-      setWalletState({
-        balance,
-        transactions,
-        isLoading : false,
-        error     : null,
-      })
+      if (storedAddress) {
+        setAddress(storedAddress)
+      }
+      
+      return !!storedAddress
     } catch (error) {
-      console.error('Error refreshing wallet data:', error)
-      setWalletState(prev => ({
-        ...prev,
-        isLoading : false,
-        error     : 'Failed to load wallet data'
-      }))
+      console.error('Error initializing wallet:', error)
+      setError('Failed to initialize wallet')
+      return false
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
-  // Function to generate a new receiving address
-  const getNewAddress = useCallback(async () => {
+  // Create a new wallet
+  const createNewWallet = useCallback(async () => {
     try {
-      return await bdkService.getNewAddress()
+      setIsLoading(true)
+      setError(null)
+      
+      // Generate a new wallet
+      const { mnemonic, address: newAddress } = await generateWallet()
+      
+      // Store in secure storage
+      await SecureStore.setItemAsync(WALLET_MNEMONIC_KEY, mnemonic)
+      await SecureStore.setItemAsync(WALLET_ADDRESS_KEY, newAddress || '')
+      
+      setAddress(newAddress || null)
+      
+      return { mnemonic, address: newAddress }
     } catch (error) {
-      console.error('Error generating address:', error)
-      setWalletState(prev => ({
-        ...prev,
-        error : 'Failed to generate new address'
-      }))
+      console.error('Error creating wallet:', error)
+      setError('Failed to create wallet')
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Restore wallet from mnemonic
+  const restoreWallet = useCallback(async (mnemonic: string) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // Validate mnemonic
+      if (!validateMnemonic(mnemonic)) {
+        throw new Error('Invalid mnemonic phrase')
+      }
+      
+      // Import wallet from mnemonic
+      const { address: importedAddress } = await importWallet(mnemonic)
+      
+      // Store in secure storage
+      await SecureStore.setItemAsync(WALLET_MNEMONIC_KEY, mnemonic)
+      await SecureStore.setItemAsync(WALLET_ADDRESS_KEY, importedAddress || '')
+      
+      setAddress(importedAddress || null)
+      
+      return importedAddress
+    } catch (error) {
+      console.error('Error restoring wallet:', error)
+      setError('Failed to restore wallet')
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Get current wallet address
+  const getAddress = useCallback(async () => {
+    try {
+      // If we already have the address in state, return it
+      if (address) return address
+      
+      // Otherwise get from secure storage
+      const storedAddress = await SecureStore.getItemAsync(WALLET_ADDRESS_KEY)
+      
+      if (storedAddress) {
+        setAddress(storedAddress)
+        return storedAddress
+      }
+      
+      return null
+    } catch (error) {
+      console.error('Error getting address:', error)
       return null
     }
-  }, [])
-
-  // Function to send Bitcoin
-  const sendBitcoin = useCallback(async (address: string, amount: number, feeRate: number) => {
-    try {
-      setWalletState(prev => ({ ...prev, isLoading: true, error: null }))
-      const result = await bdkService.sendTransaction(address, amount, feeRate)
-      // Refresh wallet data after sending
-      await refreshWallet()
-      return result
-    } catch (error) {
-      console.error('Error sending Bitcoin:', error)
-      setWalletState(prev => ({
-        ...prev,
-        isLoading : false,
-        error     : 'Failed to send transaction'
-      }))
-      throw error
-    }
-  }, [ refreshWallet ])
-
-  // Get fee estimates
-  const getFeeEstimates = useCallback(async () => {
-    try {
-      return await bdkService.getFeeEstimates()
-    } catch (error) {
-      console.error('Error getting fee estimates:', error)
-      return {
-        high   : 15,
-        medium : 8,
-        low    : 3
-      }
-    }
-  }, [])
-
-  // Load wallet data on initial component mount
-  useEffect(() => {
-    refreshWallet()
-  }, [ refreshWallet ])
+  }, [ address ])
 
   return {
-    balance      : walletState.balance,
-    transactions : walletState.transactions,
-    isLoading    : walletState.isLoading,
-    error        : walletState.error,
-    refreshWallet,
-    getNewAddress,
-    sendBitcoin,
-    getFeeEstimates,
+    isLoading,
+    error,
+    address,
+    initWallet,
+    createNewWallet,
+    restoreWallet,
+    getAddress
   }
 } 

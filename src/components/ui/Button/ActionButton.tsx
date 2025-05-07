@@ -1,6 +1,7 @@
 import React from 'react'
 import { TouchableOpacity, StyleSheet, ViewStyle, TextStyle } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
 
 interface ActionButtonProps {
   onPress: () => void
@@ -23,7 +24,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   loading = false,
   style,
   textStyle,
-  backgroundColor = '#FF0000',
+  backgroundColor = Colors.light.buttons.primary,
   accessibilityLabel
 }) => {
   return (
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
     opacity : 0.5,
   },
   buttonText : {
-    color      : '#fff',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600',
   },

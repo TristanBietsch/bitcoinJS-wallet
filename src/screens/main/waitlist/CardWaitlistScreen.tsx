@@ -31,6 +31,7 @@ const CardWaitlistScreen = () => {
       <KeyboardAvoidingScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
       >
         {/* Card Image - now using our CardImage component */}
         <CardImage />
@@ -48,7 +49,14 @@ const CardWaitlistScreen = () => {
           'Zero fees',
           'Instant transfers',
           'Secure storage',
-          'Global access'
+          'Global access',
+          'filler text',
+          'filler text',
+          'filler text',
+          'filler text',
+          'filler text',
+          'filler text',
+          'filler text',
         ]} />
 
         {/* Email Form and Submit Button - now using our WaitlistForm component */}
@@ -67,8 +75,9 @@ const CardWaitlistScreen = () => {
 
 const styles = StyleSheet.create({
   container : {
-    marginTop : 70,
-    flex      : 1,
+    marginTop     : 70,
+    flex          : 1,
+    paddingBottom : 100, // Add padding for bottom navigation
   },
   scrollContent : {
     flexGrow          : 1,

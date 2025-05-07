@@ -2,7 +2,7 @@ import React from 'react'
 import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ExternalLink } from 'lucide-react-native'
-import { formatConfirmationValue } from '@/src/utils/formatting/formatCurrencyValue'
+import { formatConfirmationValue, formatTotalWithUsdEquivalent } from '@/src/utils/formatting/formatCurrencyValue'
 import { formatAddressIntoLines } from '@/src/utils/formatting/formatAddress'
 import { CurrencyType } from '@/src/types/currency.types'
 import { TransactionFee } from '@/src/utils/send/feeCalculations'
@@ -14,6 +14,7 @@ type TransactionConfirmationDetailsProps = {
   fee: TransactionFee
   currency: CurrencyType
   totalAmount: number
+  totalAmountUsd?: number
 }
 
 /**
@@ -24,7 +25,8 @@ export const TransactionConfirmationDetails = ({
   address,
   fee,
   currency,
-  totalAmount
+  totalAmount,
+  totalAmountUsd
 }: TransactionConfirmationDetailsProps) => {
   const addressLines = formatAddressIntoLines(address)
   
@@ -54,10 +56,10 @@ export const TransactionConfirmationDetails = ({
           </TouchableOpacity>
         </View>
         <View style={styles.valueContainer}>
-          {formatConfirmationValue(
-            currency === 'USD' ? fee.usd : currency === 'SATS' ? fee.sats : fee.sats / 100000000, 
-            currency
-          )}
+          <View style={styles.satsContainer}>
+            <ThemedText style={styles.value}>{fee.sats.toLocaleString()}</ThemedText>
+            <ThemedText style={styles.satsLabel}>sats</ThemedText>
+          </View>
           <ThemedText style={styles.subtext}>
             {fee.feeRate} sat/vbyte
           </ThemedText>
@@ -66,7 +68,7 @@ export const TransactionConfirmationDetails = ({
       
       <View style={[ styles.detailRow, styles.totalRow ]}>
         <ThemedText style={[ styles.label, styles.bold ]}>Total</ThemedText>
-        {formatConfirmationValue(totalAmount, currency)}
+        {formatTotalWithUsdEquivalent(totalAmount, currency, totalAmountUsd || totalAmount)}
       </View>
     </View>
   )
@@ -96,6 +98,15 @@ const styles = StyleSheet.create({
     fontSize  : 14,
     color     : '#666',
     marginTop : 4
+  },
+  satsContainer : {
+    flexDirection : 'row',
+    alignItems    : 'baseline'
+  },
+  satsLabel : {
+    fontSize   : 12,
+    color      : '#666',
+    marginLeft : 4
   }
 })
 

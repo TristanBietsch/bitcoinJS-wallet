@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
-import { useBitcoinPriceConverter, CurrencyType } from '@/src/hooks/send'
+import { useBitcoinPriceConverter, CurrencyType } from '@/src/hooks/send/useBitcoinPriceConverter'
+import { validateBitcoinInput } from '@/src/utils/formatting/currencyUtils'
+import { formatBitcoinAmount } from '@/src/utils/formatting/formatCurrencyValue'
 
 export const useSendAmount = () => {
   const router = useRouter()
@@ -40,10 +42,27 @@ export const useSendAmount = () => {
     // Enable conversion when user manually enters a value
     setConversionDisabled(false)
     
+    // Validate input for BTC/SATS to prevent more than 8 decimal places
+    if (!validateBitcoinInput(amount, num, currency)) {
+      // Don't update if the input would be invalid
+      return
+    }
+    
     setLocalAmount(prev => {
+      // Prevent negative numbers
+      if (num === '-' || (prev === '0' && num === '0')) {
+        return prev
+      }
+      
       const newAmount = prev === '0' && num !== '.' ? num :
         num === '.' && prev.includes('.') ? prev :
         prev + num
+      
+      // Don't allow zero amount
+      if (newAmount === '0' || newAmount === '0.') {
+        return prev
+      }
+      
       setAmount(newAmount)
       return newAmount
     })
@@ -67,21 +86,17 @@ export const useSendAmount = () => {
   
   // Handle continue
   const handleContinue = () => {
-    router.push({
-      pathname : '/send/confirm' as any,
-      params   : {
-        amount   : amount,
-        currency : currency
-      }
-    })
+    // Ensure the store is updated with the latest values
+    setAmount(amount)
+    setCurrency(currency)
+    
+    // Navigate to confirmation screen without sending params
+    router.push('/send/confirm' as any)
   }
   
   // Format displayed amount based on currency
   const getFormattedAmount = () => {
-    if (currency === 'USD') {
-      return amount.includes('.') ? amount : `${amount}.00`
-    }
-    return amount
+    return formatBitcoinAmount(amount, currency)
   }
   
   return {

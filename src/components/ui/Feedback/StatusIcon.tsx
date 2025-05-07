@@ -1,76 +1,63 @@
-import React, { ReactNode } from 'react'
+import React from 'react'
 import { View, StyleSheet, ViewStyle } from 'react-native'
-import { Check, AlertCircle, X } from 'lucide-react-native'
-
-type StatusType = 'success' | 'warning' | 'error' | 'custom'
+import { Check, X, AlertCircle, Info } from 'lucide-react-native'
+import { StatusType, getStatusColors } from '@/src/types/status.types'
 
 interface StatusIconProps {
-  type?: StatusType
-  icon?: ReactNode
+  type: StatusType
   size?: number
-  color?: string
-  backgroundColor?: string
-  style?: ViewStyle
+  strokeWidth?: number
+  containerStyle?: ViewStyle
 }
 
 /**
- * A reusable status icon component for success, warning, or error states
+ * A reusable status icon component that displays the appropriate icon based on status type
  */
 const StatusIcon: React.FC<StatusIconProps> = ({
-  type = 'success',
-  icon,
-  size = 32,
-  color = 'white',
-  backgroundColor,
-  style
+  type,
+  size = 90,
+  strokeWidth = 2,
+  containerStyle
 }) => {
-  // Determine default background color based on status type
-  const getBgColor = () => {
-    if (backgroundColor) return backgroundColor
-    
-    switch(type) {
-      case 'success': return '#22C55E'
-      case 'warning': return '#F59E0B'
-      case 'error': return '#DC2626'
-      default: return '#22C55E'
-    }
-  }
+  const colors = getStatusColors(type)
   
-  // Determine which icon to display
-  const getIcon = () => {
-    if (icon) return icon
-    
-    switch(type) {
-      case 'success': return <Check size={size} color={color} />
-      case 'warning': return <AlertCircle size={size} color={color} />
-      case 'error': return <X size={size} color={color} />
-      default: return <Check size={size} color={color} />
+  // Render the appropriate icon based on status type
+  const renderIcon = () => {
+    switch (type) {
+      case 'success':
+        return <Check size={size} color={colors.icon} strokeWidth={strokeWidth} />
+      case 'error':
+        return <X size={size} color={colors.icon} strokeWidth={strokeWidth} />
+      case 'warning':
+        return <AlertCircle size={size} color={colors.icon} strokeWidth={strokeWidth} />
+      case 'info':
+        return <Info size={size} color={colors.icon} strokeWidth={strokeWidth} />
+      case 'loading':
+        return <Info size={size} color={colors.icon} strokeWidth={strokeWidth} />
+      default:
+        return <Info size={size} color={colors.icon} strokeWidth={strokeWidth} />
     }
   }
   
   return (
-    <View 
-      style={[
-        styles.iconContainer,
-        { 
-          width           : size * 2,
-          height          : size * 2,
-          borderRadius    : size,
-          backgroundColor : getBgColor() 
-        },
-        style
-      ]}
-    >
-      {getIcon()}
+    <View style={[
+      styles.iconContainer,
+      { backgroundColor: colors.background },
+      containerStyle
+    ]}>
+      {renderIcon()}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   iconContainer : {
+    width          : 160,
+    height         : 160,
+    borderRadius   : 80,
     alignItems     : 'center',
     justifyContent : 'center',
-    marginBottom   : 24,
+    marginVertical : 40
   }
 })
 

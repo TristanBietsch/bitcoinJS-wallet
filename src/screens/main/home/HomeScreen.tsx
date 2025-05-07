@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { View, StyleSheet } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
 import Dropdown from '@/src/components/ui/Dropdown'
@@ -9,6 +9,11 @@ import { useFadeAnimation } from '@/src/hooks/ui/useFadeAnimation'
 import { getAmountForCurrency } from '@/src/utils/formatting/currencyUtils'
 import { formatCurrency } from '@/tests/mockData/walletData'
 import { CURRENCY_OPTIONS, CurrencyType } from '@/src/config/currency'
+import { useSendStore } from '@/src/store/sendStore'
+import { useReceiveStore } from '@/src/store/receiveStore'
+import { Colors } from '@/src/constants/colors'
+import AppHeader from '@/src/components/ui/Header/AppHeader'
+import { Scan } from 'lucide-react-native'
 
 const HomeScreen = () => {
   // State for selected currency format
@@ -19,6 +24,16 @@ const HomeScreen = () => {
   
   // Use fade animation hook
   const { fadeAnim, fadeTransition } = useFadeAnimation()
+  
+  // Get access to store reset functions
+  const resetSendStore = useSendStore(state => state.reset)
+  const resetReceiveStore = useReceiveStore(state => state.resetState)
+  
+  // Reset any stored send and receive data when component mounts
+  useEffect(() => {
+    resetSendStore()
+    resetReceiveStore()
+  }, [])
   
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
@@ -36,6 +51,16 @@ const HomeScreen = () => {
   // Navigation handlers
   const handlePressSend = () => router.push('/send/send' as any)
   const handlePressReceive = () => router.push('/receive/receive' as any)
+  
+  // Handle menu press - Navigate to the menu screen
+  const handleMenuPress = () => {
+    router.push('/main/menu' as any)
+  }
+
+  // Handle scan button press - Navigate to QR menu screen
+  const handleScanPress = () => {
+    router.push('/main/qr' as any)
+  }
 
   // Currency dropdown component
   const currencySelector = (
@@ -45,13 +70,27 @@ const HomeScreen = () => {
       onSelect={handleCurrencyChange}
       title="Select Currency"
       cancelButtonLabel="Cancel"
-      backgroundColor="red"
+      backgroundColor={Colors.light.buttons.primary}
       disabled={isLoading || !!error}
     />
   )
 
+  // Scan button component
+  const scanButton = (
+    <TouchableOpacity onPress={handleScanPress} style={styles.scanButton}>
+      <Scan size={24} color={Colors.light.text} />
+    </TouchableOpacity>
+  )
+
   return (
     <View style={styles.container}>
+      {/* Header with menu icon and scan button */}
+      <AppHeader 
+        showMenuIcon={true} 
+        onMenuPress={handleMenuPress}
+        leftComponent={scanButton}
+      />
+      
       {/* Balance Display Section with dropdown inside */}
       <BalanceDisplay
         isLoading={isLoading}
@@ -63,11 +102,13 @@ const HomeScreen = () => {
         currencySelector={currencySelector}
       />
       
-      {/* Action Buttons */}
-      <ActionButtons
-        onPressSend={handlePressSend}
-        onPressReceive={handlePressReceive}
-      />
+      {/* Action Buttons - Positioned above the navbar */}
+      <View style={styles.actionButtonsWrapper}>
+        <ActionButtons
+          onPressSend={handlePressSend}
+          onPressReceive={handlePressReceive}
+        />
+      </View>
     </View>
   )
 }
@@ -76,8 +117,17 @@ const styles = StyleSheet.create({
   container : {
     flex            : 1,
     backgroundColor : 'white',
-    padding         : 20,
+    padding         : 0,
     paddingBottom   : 100,
+  },
+  actionButtonsWrapper : {
+    position : 'absolute',
+    bottom   : 160,
+    left     : 0,
+    right    : 0,
+  },
+  scanButton : {
+    padding : 8,
   },
 })
 

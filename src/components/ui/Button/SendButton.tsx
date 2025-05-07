@@ -1,6 +1,7 @@
 import React from 'react'
 import { TouchableOpacity, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
 
 type SendButtonProps = {
   onPress: () => void
@@ -28,13 +29,13 @@ const styles = StyleSheet.create({
     left            : 20,
     right           : 20,
     height          : 56,
-    backgroundColor : '#FF0000',
+    backgroundColor : Colors.light.buttons.primary,
     borderRadius    : 28,
     alignItems      : 'center',
     justifyContent  : 'center'
   },
   sendButtonText : {
-    color      : '#FFF',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600'
   }

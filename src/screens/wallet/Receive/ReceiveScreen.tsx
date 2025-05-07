@@ -1,18 +1,19 @@
 import React from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
-import { Stack, useRouter } from 'expo-router'
-import { ThemedText } from '@/src/components/ui/Text'
-import { ChevronLeft } from 'lucide-react-native'
+import { View, StyleSheet } from 'react-native'
 
-// Imported components and utilities from our modularized code
+// Import modularized components
+import ReceiveScreenLayout from '@/src/components/layout/ReceiveScreenLayout'
+import PrimaryActionButton from '@/src/components/ui/Button/PrimaryActionButton'
 import AmountDisplay from '@/src/components/ui/AmountDisplay'
 import NumberPad from '@/src/components/ui/NumberPad'
+
+// Import hooks and stores
 import { useReceiveStore } from '@/src/store/receiveStore'
 import { useBitcoinPrice } from '@/src/hooks/bitcoin/useBitcoinPrice'
+import { useReceiveHandlers } from '@/src/handlers/receiveHandlers'
+import { getWalletBalanceDisplay } from '@/src/utils/mockData/walletMockData'
 
 export default function ReceiveScreen() {
-  const router = useRouter()
-  
   // Use our custom hook for Bitcoin price
   const { btcPrice, isLoading } = useBitcoinPrice()
   
@@ -25,37 +26,14 @@ export default function ReceiveScreen() {
     handleCurrencyChange 
   } = useReceiveStore()
   
-  // Dummy balance for display
-  const balance = '$2,257.65'
+  // Use handlers for receive operations
+  const { handleBackPress, handleGenerateQR, isAmountValid } = useReceiveHandlers()
   
-  // Navigate back to home
-  const handleBackPress = () => {
-    router.push('/')
-  }
-  
-  const handleGenerateQR = () => {
-    router.push({
-      pathname : '/receive/invoice' as any,
-      params   : {
-        amount,
-        currency
-      }
-    })
-  }
+  // Get mock balance for display from our mock data
+  const balance = getWalletBalanceDisplay()
   
   return (
-    <View style={styles.container}>
-      <Stack.Screen 
-        options={{
-          headerShown : false, // Hide the navigation bar completely
-        }} 
-      />
-      
-      {/* Custom Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <ChevronLeft size={24} color="black" />
-      </TouchableOpacity>
-      
+    <ReceiveScreenLayout onBackPress={handleBackPress}>
       {/* Amount Display - now using our modularized component */}
       <View style={styles.amountContainer}>
         <AmountDisplay
@@ -68,41 +46,27 @@ export default function ReceiveScreen() {
       </View>
       
       <View style={styles.footerContainer}>
-        {/* Generate QR Button */}
-        <TouchableOpacity 
-          style={styles.continueButton} 
-          onPress={handleGenerateQR}
-        >
-          <ThemedText style={styles.continueButtonText}>Generate QR Code</ThemedText>
-        </TouchableOpacity>
+        {/* Generate QR Button Container */}
+        <View style={styles.buttonContainer}>
+          <PrimaryActionButton
+            label="Generate Invoice"
+            onPress={handleGenerateQR}
+            style={styles.continueButton}
+            disabled={!isAmountValid()}
+          />
+        </View>
         
-        {/* Number Pad - now using our modularized component */}
+        {/* Number Pad - using modularized component */}
         <NumberPad
           onNumberPress={handleNumberPress}
           onBackspace={handleBackspace}
         />
       </View>
-    </View>
+    </ReceiveScreenLayout>
   )
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex            : 1,
-    backgroundColor : 'white',
-    padding         : 0,
-  },
-  backButton : {
-    position       : 'absolute',
-    top            : 70,
-    left           : 16,
-    zIndex         : 10,
-    width          : 40,
-    height         : 40,
-    borderRadius   : 20,
-    justifyContent : 'center',
-    alignItems     : 'center',
-  },
   amountContainer : {
     flex           : 0,
     justifyContent : 'flex-start',
@@ -117,17 +81,14 @@ const styles = StyleSheet.create({
     right         : 0,
     paddingBottom : 32,
   },
-  continueButton : {
-    backgroundColor  : 'red',
-    paddingVertical  : 16,
-    borderRadius     : 30,
-    marginBottom     : 40,
-    marginHorizontal : 24,
-    alignItems       : 'center',
+  buttonContainer : {
+    flexDirection  : 'row',
+    justifyContent : 'center',
+    width          : '100%',
   },
-  continueButtonText : {
-    color      : 'white',
-    fontSize   : 16,
-    fontWeight : 'bold',
+  continueButton : {
+    width            : 250,
+    marginBottom     : 40,
+    marginHorizontal : 0,
   },
 }) 

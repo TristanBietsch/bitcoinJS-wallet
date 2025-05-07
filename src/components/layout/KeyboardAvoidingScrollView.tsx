@@ -13,6 +13,7 @@ interface KeyboardAvoidingScrollViewProps extends KeyboardAvoidingViewProps {
   contentContainerStyle?: ViewStyle
   scrollViewStyle?: ViewStyle
   showsVerticalScrollIndicator?: boolean
+  scrollEnabled?: boolean
 }
 
 /**
@@ -23,6 +24,7 @@ const KeyboardAvoidingScrollView: React.FC<KeyboardAvoidingScrollViewProps> = ({
   contentContainerStyle,
   scrollViewStyle,
   showsVerticalScrollIndicator = false,
+  scrollEnabled = true,
   ...keyboardAvoidingViewProps
 }) => {
   return (
@@ -35,6 +37,8 @@ const KeyboardAvoidingScrollView: React.FC<KeyboardAvoidingScrollViewProps> = ({
         contentContainerStyle={[ styles.scrollContent, contentContainerStyle ]}
         style={scrollViewStyle}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+        scrollEnabled={scrollEnabled}
+        bounces={scrollEnabled}
       >
         {children}
       </ScrollView>

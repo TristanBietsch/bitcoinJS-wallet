@@ -4,6 +4,7 @@ import { isOnboardingComplete, resetOnboardingStatus } from '@/src/utils/storage
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native'
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
+import { Colors } from '@/src/constants/colors'
 
 export default function Home() {
   const [ isLoading, setIsLoading ] = useState(true)
@@ -13,11 +14,19 @@ export default function Home() {
   }, [])
 
   const checkOnboardingStatus = async () => {
-    const completed = await isOnboardingComplete()
-    setIsLoading(false)
-    
-    // Redirect to onboarding route if not completed
-    if (!completed) {
+    try {
+      const completed = await isOnboardingComplete()
+      console.log('Onboarding status:', completed ? 'completed' : 'not completed')
+      setIsLoading(false)
+      
+      // Redirect to onboarding route if not completed
+      if (!completed) {
+        router.push('/onboarding' as any)
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error)
+      setIsLoading(false)
+      // If there's an error, we'll assume onboarding needs to be done
       router.push('/onboarding' as any)
     }
   }
@@ -57,13 +66,13 @@ const styles = StyleSheet.create({
     position        : 'absolute',
     bottom          : 120, // Increased to be above the navigation bar
     right           : 20,
-    backgroundColor : '#FF0000',
+    backgroundColor : Colors.light.buttons.primary,
     padding         : 10,
     borderRadius    : 8,
     opacity         : 0.8,
   },
   resetButtonText : {
-    color    : '#FFFFFF',
+    color    : Colors.light.buttons.text,
     fontSize : 12,
   },
 }) 

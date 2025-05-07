@@ -38,6 +38,9 @@ export default function SendAddressScreen() {
     handleConfirmCustomFee
   } = useSendAddressScreen()
 
+  // Determine if back button should be disabled - only when there's a fee error in the custom fee modal
+  const isBackButtonDisabled = showCustomFeeModal && !!feeError
+
   return (
     <SafeAreaContainer>
       <Stack.Screen 
@@ -47,7 +50,7 @@ export default function SendAddressScreen() {
       />
 
       {/* Custom Back Button */}
-      <BackButton onPress={handleBackPress} />
+      <BackButton onPress={handleBackPress} disabled={isBackButtonDisabled} />
 
       <View style={styles.content}>
         {/* Address Input Section */}

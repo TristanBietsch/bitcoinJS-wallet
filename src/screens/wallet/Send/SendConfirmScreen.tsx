@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Stack } from 'expo-router'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
@@ -6,19 +6,27 @@ import TransactionSummaryFooter from '@/src/components/features/Send/Confirmatio
 import { useSendNavigation } from '@/src/components/ui/Navigation/sendNavigation'
 import { useTransactionParams } from '@/src/hooks/send/useTransactionParams'
 import { transactionStyles } from '@/src/constants/transactionStyles'
+import { useSendStore } from '@/src/store/sendStore'
 
 /**
  * Screen for confirming transaction details before sending
  */
 export default function SendConfirmScreen() {
   const { navigateBack, navigateToSendLoading } = useSendNavigation()
+  const { setErrorMode } = useSendStore()
   const { 
     amount, 
     address, 
     fee, 
     currency, 
-    totalAmount 
+    totalAmount,
+    totalAmountUsd
   } = useTransactionParams()
+  
+  // Reset error mode when mounting this screen
+  useEffect(() => {
+    setErrorMode('none')
+  }, [ setErrorMode ])
   
   return (
     <SafeAreaContainer style={transactionStyles.container}>
@@ -34,6 +42,7 @@ export default function SendConfirmScreen() {
         fee={fee}
         currency={currency}
         totalAmount={totalAmount}
+        totalAmountUsd={totalAmountUsd}
         onSendPress={navigateToSendLoading}
       />
     </SafeAreaContainer>

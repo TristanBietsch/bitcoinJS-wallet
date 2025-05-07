@@ -23,7 +23,18 @@ export const Colors = {
     errorRed        : '#FF4A6E',          // Error Red
     inactiveGray    : '#6F7390',      // Inactive Gray
     subtleBorder    : '#3B3E4A',      // Subtle Border
-    transaction     : {
+    iconBackground  : '#E6F2FF',      // Light Blue Background for Icons
+    successIconBg   : '#E6F8EC',      // Light Green Background for Success Icons
+    errorIconBg     : '#FFEAEA',      // Light Red Background for Error Icons
+    buttons         : {
+      primary   : '#014B8F',      // Primary Blue (changed from red)
+      secondary : '#687076',      // Secondary Gray
+      success   : '#34D45C',      // Success Green
+      warning   : '#F59E0B',      // Warning Orange
+      danger    : '#FF4A6E',      // Danger Red
+      text      : '#FFFFFF',      // Button Text
+    },
+    transaction : {
       send : {
         icon       : '#F44336',
         background : '#FFEBEE',
@@ -41,7 +52,18 @@ export const Colors = {
     icon            : '#9BA1A6',
     tabIconDefault  : '#9BA1A6',
     tabIconSelected : tintColorDark,
-    transaction     : {
+    iconBackground  : '#1A3A5A',      // Darker Blue Background for Icons
+    successIconBg   : '#1A4D32',      // Dark Green Background for Success Icons
+    errorIconBg     : '#FFEAEA',      // Dark Red Background for Error Icons
+    buttons         : {
+      primary   : '#014B8F',      // Primary Blue (changed from red)
+      secondary : '#687076',      // Secondary Gray
+      success   : '#34D45C',      // Success Green
+      warning   : '#F59E0B',      // Warning Orange
+      danger    : '#FF4A6E',      // Danger Red
+      text      : '#FFFFFF',      // Button Text
+    },
+    transaction : {
       send : {
         icon       : '#F44336',
         background : '#FFEBEE',

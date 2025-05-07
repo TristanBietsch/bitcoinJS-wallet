@@ -1,5 +1,6 @@
 /**
  * Hook for fetching and managing Bitcoin price data
+ * This is the consolidated hook for Bitcoin price after removing duplicate implementations
  */
 import { useState, useEffect } from 'react'
 import { fetchCurrentPrice } from '@/src/services/api/price'

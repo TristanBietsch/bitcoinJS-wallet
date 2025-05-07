@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
 
 // Get screen dimensions for the frame
 const SCREEN_WIDTH = Dimensions.get('window').width
@@ -191,13 +192,13 @@ const styles = StyleSheet.create({
     marginBottom : 20,
   },
   retryButton : {
-    backgroundColor   : '#FF0000',
+    backgroundColor   : Colors.light.buttons.primary,
     paddingVertical   : 12,
     paddingHorizontal : 24,
     borderRadius      : 8,
   },
   retryButtonText : {
-    color      : 'white',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600',
   },

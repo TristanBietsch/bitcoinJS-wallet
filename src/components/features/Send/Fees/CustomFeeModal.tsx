@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { CustomFee } from '@/src/types/transaction/send.types'
 import { NumberPad } from '@/src/components/features/Send/Amount/NumberPad'
 import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
+import { Colors } from '@/src/constants/colors'
 
 interface CustomFeeModalProps {
   visible: boolean
@@ -40,11 +41,12 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity 
-              style={styles.modalBackButton} 
+              style={[ styles.modalBackButton, !!feeError && styles.modalBackButtonDisabled ]} 
               onPress={onClose}
+              disabled={!!feeError}
             >
-              <ChevronLeft size={24} color="black" />
-              <ThemedText style={styles.modalBackText}>Back</ThemedText>
+              <ChevronLeft size={24} color={!!feeError ? "#CCCCCC" : "black"} />
+              <ThemedText style={[ styles.modalBackText, !!feeError && styles.modalBackTextDisabled ]}>Back</ThemedText>
             </TouchableOpacity>
             <ThemedText style={styles.modalTitle}>Custom fee</ThemedText>
           </View>
@@ -166,10 +168,16 @@ const styles = StyleSheet.create({
     flexDirection : 'row',
     alignItems    : 'center'
   },
+  modalBackButtonDisabled : {
+    opacity : 0.5
+  },
   modalBackText : {
     fontSize   : 16,
     fontWeight : '500',
     color      : '#000'
+  },
+  modalBackTextDisabled : {
+    color : '#CCCCCC'
   },
   modalTitle : {
     fontSize   : 18,
@@ -235,7 +243,7 @@ const styles = StyleSheet.create({
     backgroundColor : '#FFFFFF'
   },
   confirmButton : {
-    backgroundColor : '#FF0000',
+    backgroundColor : Colors.light.buttons.primary,
     borderRadius    : 12,
     height          : 56,
     justifyContent  : 'center',
@@ -243,16 +251,16 @@ const styles = StyleSheet.create({
     marginTop       : 16
   },
   confirmButtonText : {
-    color      : '#fff',
+    color      : Colors.light.buttons.text,
     fontSize   : 16,
     fontWeight : '600'
   },
   errorInput : {
-    borderColor : '#FF0000',
+    borderColor : Colors.light.buttons.danger,
     borderWidth : 1
   },
   errorText : {
-    color     : '#FF0000',
+    color     : Colors.light.buttons.danger,
     fontSize  : 12,
     marginTop : 4,
     textAlign : 'right'

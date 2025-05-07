@@ -1,6 +1,8 @@
+// Import just the runtime directly to avoid any circular dependencies
+import 'regenerator-runtime/runtime'
+
 // Import core-js for modern JavaScript features
 import 'core-js/stable';
-import 'regenerator-runtime/runtime';
 
 // Make regeneratorRuntime globally available if needed
 if (typeof global.regeneratorRuntime === 'undefined') {

@@ -1,12 +1,15 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native'
 import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
 
 interface ActionButtonsProps {
   onPressSend: () => void
   onPressReceive: () => void
   sendLabel?: string
   receiveLabel?: string
+  containerStyle?: object
 }
 
 /**
@@ -15,23 +18,30 @@ interface ActionButtonsProps {
 const ActionButtons = ({
   onPressSend,
   onPressReceive,
-  sendLabel = 'Send',
-  receiveLabel = 'Receive'
+  sendLabel = 'SEND',
+  receiveLabel = 'RECEIVE',
+  containerStyle = {}
 }: ActionButtonsProps) => {
   return (
-    <View style={styles.actionButtonsContainer}>
-      <TouchableOpacity 
-        style={[ styles.actionButton, styles.buttonWidth ]}
-        onPress={onPressSend}
-      >
-        <ThemedText style={styles.actionButtonText}>{sendLabel}</ThemedText>
-      </TouchableOpacity>
+    <View style={[ styles.actionButtonsContainer, containerStyle ]}>
       
       <TouchableOpacity 
-        style={[ styles.actionButton, styles.buttonWidth ]}
+        style={styles.actionButton}
         onPress={onPressReceive}
       >
-        <ThemedText style={styles.actionButtonText}>{receiveLabel}</ThemedText>
+        <View style={styles.buttonContent}>
+          <ArrowDownLeft size={28} color={Colors.light.buttons.text} />
+          <ThemedText style={styles.actionButtonText}>{receiveLabel}</ThemedText>
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.actionButton}
+        onPress={onPressSend}
+      >
+        <View style={styles.buttonContent}>
+          <ArrowUpRight size={28} color={Colors.light.buttons.text} />
+          <ThemedText style={styles.actionButtonText}>{sendLabel}</ThemedText>
+        </View>
       </TouchableOpacity>
     </View>
   )
@@ -39,23 +49,27 @@ const ActionButtons = ({
 
 const styles = StyleSheet.create({
   actionButtonsContainer : {
-    flexDirection  : 'row',
-    justifyContent : 'space-between',
-    marginBottom   : 20,
-  },
-  buttonWidth : {
-    width : '48%',
+    flexDirection    : 'row',
+    justifyContent   : 'space-between',
+    marginHorizontal : 20,
+    marginBottom     : 20,
   },
   actionButton : {
-    backgroundColor : 'red',
+    backgroundColor : Colors.light.buttons.primary,
     borderRadius    : 30,
     paddingVertical : 16,
     alignItems      : 'center',
+    width           : '48%',
+  },
+  buttonContent : {
+    flexDirection : 'row',
+    alignItems    : 'center',
   },
   actionButtonText : {
-    color      : 'white',
+    color      : Colors.light.buttons.text,
     fontWeight : 'bold',
     fontSize   : 18,
+    marginLeft : 8,
   },
 })
 

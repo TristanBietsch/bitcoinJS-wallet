@@ -1,166 +1,140 @@
-import React, { useState } from 'react'
-import { View, StyleSheet, ScrollView } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import React from 'react'
+import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { ThemedView } from '@/src/components/ui/View'
-
-interface ConfirmSeedWordsScreenProps {
-  onComplete: () => void;
-}
+import { BackButton } from '@/src/components/ui/Navigation/BackButton'
+import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
+import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
+import SeedPhraseWordGrid from '@/src/components/features/Wallet/SeedPhrase/SeedPhraseWordGrid'
+import ResetSelectionButton from '@/src/components/ui/Button/ResetSelectionButton'
+import { useSeedPhraseSelection } from '@/src/hooks/wallet/useSeedPhraseSelection'
+import { useSeedPhraseVerificationFlow } from '@/src/hooks/wallet/useSeedPhraseVerificationFlow'
+import CheckingSeedPhrase from '../checking/CheckingSeedPhrase'
+import ErrorSeedPhrase from '../error/ErrorSeedPhrase'
+import SuccessSeedPhrase from '../success/SuccessSeedPhrase'
+import { Colors } from '@/src/constants/colors'
 
 // Mock seed phrase for demonstration
 const MOCK_SEED_PHRASE = [
-  'abandon', 'ability', 'able', 'about', 'above', 'absent',
-  'absorb', 'abstract', 'absurd', 'abuse', 'access', 'accident'
+  '1', '2', '3', '4', '5', '6',
+  '7', '8', '9', '10', '11', '12'
 ]
 
-export default function ConfirmSeedWordsScreen({ onComplete }: ConfirmSeedWordsScreenProps) {
-  const [ showSeed, setShowSeed ] = useState(false)
-  const [ step, setStep ] = useState<'view' | 'verify'>('view')
+interface ConfirmSeedWordsScreenProps {
+  onComplete: () => void
+  onBack: () => void
+}
 
-  const handleContinue = () => {
-    if (step === 'view') {
-      setStep('verify')
-    } else {
-      onComplete()
-    }
+export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
+  // Use our modular seed phrase selection hook
+  const {
+    selectedWords,
+    shuffledWords,
+    handleWordSelect,
+    resetSelection,
+    getOrderedSelectedWords,
+    isSelectionComplete
+  } = useSeedPhraseSelection(MOCK_SEED_PHRASE)
+  
+  // Use our verification flow hook
+  const {
+    verificationState,
+    startVerification,
+    handleVerificationComplete,
+    handleTryAgain,
+    handleComplete
+  } = useSeedPhraseVerificationFlow(onComplete, resetSelection)
+  
+  // Render different screens based on verification state
+  if (verificationState === 'checking') {
+    return (
+      <CheckingSeedPhrase
+        originalSeedPhrase={MOCK_SEED_PHRASE}
+        selectedWords={getOrderedSelectedWords()}
+        onVerificationComplete={handleVerificationComplete}
+      />
+    )
   }
-
+  
+  if (verificationState === 'error') {
+    return (
+      <ErrorSeedPhrase
+        onTryAgain={handleTryAgain}
+        onBack={onBack}
+      />
+    )
+  }
+  
+  if (verificationState === 'success') {
+    return (
+      <SuccessSeedPhrase
+        onComplete={handleComplete}
+      />
+    )
+  }
+  
+  // Default selection screen
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <ThemedText type="title" style={styles.title}>
-          {step === 'view' ? 'Backup Your Wallet' : 'Verify Your Backup'}
+    <OnboardingContainer>
+      <BackButton onPress={onBack} />
+      
+      <View style={styles.content}>
+        <ThemedText style={styles.title}>
+          Verify Your Backup
         </ThemedText>
-        <ThemedText type="default" style={styles.subtitle}>
-          {step === 'view' 
-            ? 'Write down these 12 words in order and store them securely'
-            : 'Select the words in the correct order to verify your backup'
-          }
+        
+        <ThemedText style={styles.subtitle}>
+          Select the words in the correct order of your seed phrase
         </ThemedText>
-
-        {step === 'view' ? (
-          <View style={styles.seedContainer}>
-            {!showSeed ? (
-              <TouchableOpacity 
-                style={styles.revealButton} 
-                onPress={() => setShowSeed(true)}
-              >
-                <ThemedText type="defaultSemiBold" style={styles.revealButtonText}>
-                  Tap to Reveal Seed Phrase
-                </ThemedText>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.wordGrid}>
-                {MOCK_SEED_PHRASE.map((word, index) => (
-                  <View key={index} style={styles.wordContainer}>
-                    <ThemedText type="default" style={styles.wordNumber}>
-                      {index + 1}
-                    </ThemedText>
-                    <ThemedText type="defaultSemiBold" style={styles.word}>
-                      {word}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.verificationContainer}>
-            <ThemedText type="default" style={styles.verificationText}>
-              Verification UI would go here
-            </ThemedText>
-          </View>
-        )}
-      </ScrollView>
-
-      <TouchableOpacity 
-        style={[ styles.button, !showSeed && step === 'view' && styles.buttonDisabled ]} 
-        onPress={handleContinue}
-        disabled={!showSeed && step === 'view'}
-      >
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-          {step === 'view' ? "I've Written It Down" : 'Confirm Backup'}
-        </ThemedText>
-      </TouchableOpacity>
-    </ThemedView>
+        
+        {/* Word Grid using our extracted component */}
+        <SeedPhraseWordGrid
+          words={shuffledWords}
+          selectedWords={selectedWords}
+          onWordSelect={handleWordSelect}
+          maxSelections={12}
+        />
+        
+        {/* Reset Button using our extracted component */}
+        <ResetSelectionButton
+          onPress={resetSelection}
+          disabled={selectedWords.length === 0}
+        />
+      </View>
+      
+      <OnboardingButton
+        label="Confirm"
+        onPress={isSelectionComplete ? startVerification : () => {}}
+        style={{
+          ...styles.confirmButton,
+          ...(isSelectionComplete ? {} : { opacity: 0.5 })
+        }}
+      />
+    </OnboardingContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container : {
-    flex    : 1,
-    padding : 20,
-  },
-  scrollView : {
-    flex : 1,
+  content : {
+    flex              : 1,
+    alignItems        : 'center',
+    paddingHorizontal : 16,
+    marginTop         : 60
   },
   title : {
     fontSize     : 28,
     fontWeight   : 'bold',
-    marginBottom : 10,
     textAlign    : 'center',
+    marginBottom : 10,
+    marginTop    : 120
   },
   subtitle : {
+    fontSize     : 16,
     textAlign    : 'center',
-    marginBottom : 40,
-    opacity      : 0.7,
+    marginBottom : 30
   },
-  seedContainer : {
-    backgroundColor : '#f5f5f5',
-    borderRadius    : 12,
-    padding         : 20,
-    minHeight       : 200,
-    justifyContent  : 'center',
-  },
-  revealButton : {
-    alignItems     : 'center',
-    justifyContent : 'center',
-    height         : 160,
-  },
-  revealButtonText : {
-    color : '#000',
-  },
-  wordGrid : {
-    flexDirection  : 'row',
-    flexWrap       : 'wrap',
-    justifyContent : 'space-between',
-    gap            : 12,
-  },
-  wordContainer : {
-    width           : '30%',
-    backgroundColor : '#fff',
-    borderRadius    : 8,
-    padding         : 12,
-    alignItems      : 'center',
-  },
-  wordNumber : {
-    fontSize     : 12,
-    opacity      : 0.5,
-    marginBottom : 4,
-  },
-  word : {
-    textAlign : 'center',
-  },
-  verificationContainer : {
-    alignItems : 'center',
-    padding    : 20,
-  },
-  verificationText : {
-    textAlign : 'center',
-  },
-  button : {
-    backgroundColor : '#000',
-    padding         : 16,
-    borderRadius    : 12,
-    alignItems      : 'center',
-    marginTop       : 20,
-  },
-  buttonDisabled : {
-    opacity : 0.5,
-  },
-  buttonText : {
-    color    : '#fff',
-    fontSize : 16,
-  },
+  confirmButton : {
+    backgroundColor : Colors.light.buttons.primary,
+    marginBottom    : 50,
+    width           : '100%'
+  }
 }) 
