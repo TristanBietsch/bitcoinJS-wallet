@@ -25,21 +25,20 @@ import {
 export * from './clipboardValidation'
 export * from './receiveValidation'
 export * from './validateAddress'
-export * from './validateInvoice'
-export * from './validateInput'
 
-// Export renamed and specific functions
+// Re-export from seedPhraseValidation
 export {
-  // From seedPhraseValidation
   validateSeedPhrase,
   validateSeedPhraseWithDetails,
   normalizeSeedPhrase,
   isValidBip39Word,
   seedPhraseSchema,
   VALID_SEED_PHRASE_LENGTHS,
-  getSeedPhraseSuggestion,
-  
-  // From wordlistValidation
+  getSeedPhraseSuggestion
+}
+
+// Re-export from wordlistValidation
+export {
   WordlistLanguage,
   getWordlist,
   isWordInWordlist,
