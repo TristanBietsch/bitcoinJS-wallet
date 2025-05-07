@@ -2,7 +2,7 @@ import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { AmountDisplay } from '@/src/components/features/Send/Address/AmountDisplay'
 import { CurrencySelector } from '@/src/components/features/Send/Amount'
-import { CurrencyType } from '@/src/types/currency.types'
+import { CurrencyType } from '@/src/types/domain/currency'
 
 interface AmountEntrySectionProps {
   amount: string

@@ -1,4 +1,4 @@
-import { Transaction } from '@/src/types/transaction'
+import { Transaction } from '@/src/types/domain/transaction'
 
 // Mock transaction for development - to be replaced with real API calls
 const mockTransaction: Transaction = {

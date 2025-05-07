@@ -16,7 +16,7 @@ import ImportButton from '@/src/components/features/Wallet/Import/ImportButton'
 
 // Import shared constants and types
 import { TEST_BYPASS_PHRASE, TEST_ERROR_PHRASE } from '@/src/constants/testing'
-import { BaseCallbacks } from '@/src/types/callbacks'
+import { BaseCallbacks } from '@/src/types/ui'
 import { useImport } from '@/src/features/wallet/import/ImportContext'
 
 interface ImportWalletScreenProps extends BaseCallbacks {}

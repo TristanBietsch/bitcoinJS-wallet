@@ -5,7 +5,7 @@
  */
 
 import { IS_MAINNET, IS_REGTEST, IS_TESTNET, BITCOIN_NETWORK } from '../../../config/bitcoinNetwork'
-import { AddressValidationResult } from '../../../types/bitcoin'
+import { AddressValidationResult } from '@/src/types/api'
 import { BitcoinAddressError } from '../errors/rpcErrors'
 import { callRpc } from '../rpc/rpcClient'
 

@@ -2,7 +2,7 @@
  * Hook for managing timeframe selection with debounce
  */
 import { useState, useCallback } from 'react'
-import { TimeframePeriod } from '@/src/types/price.types'
+import { TimeframePeriod } from '@/src/types/domain/finance'
 
 interface TimeframeSelectorResult {
   selectedPeriod: TimeframePeriod

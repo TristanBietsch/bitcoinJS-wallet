@@ -2,7 +2,7 @@
  * Hook for parsing and handling transaction parameters
  */
 import { useSendStore } from '@/src/store/sendStore'
-import { CurrencyType } from '@/src/types/currency.types'
+import { CurrencyType } from '@/src/types/domain/finance'
 import { calculateTransactionFee, getFeeInCurrency, TransactionFee } from '@/src/utils/send/feeCalculations'
 
 interface TransactionParams {

@@ -1,6 +1,6 @@
 import React from 'react'
 import StatusScreen from '@/src/components/ui/Feedback/StatusScreen'
-import { ErrorHandlingCallbacks } from '@/src/types/callbacks'
+import { ErrorHandlingCallbacks } from '@/src/types/ui'
 
 type ErrorImportProps = Pick<ErrorHandlingCallbacks, 'onTryAgain' | 'onBack'>
 

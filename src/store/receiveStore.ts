@@ -2,7 +2,7 @@
  * Store for managing state related to the receive functionality
  */
 import { create } from 'zustand'
-import { CurrencyType } from '@/src/types/currency.types'
+import { CurrencyType } from '@/src/types/domain/finance'
 import { convertAmount } from '@/src/utils/currency/conversion'
 
 interface ReceiveStore {

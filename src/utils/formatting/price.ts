@@ -1,7 +1,7 @@
 /**
  * Price formatting utility functions
  */
-import { TimeframePeriod } from '@/src/types/price.types'
+import { TimeframePeriod } from '@/src/types/domain/finance'
 
 /**
  * Formats a timestamp into a readable date string based on timeframe

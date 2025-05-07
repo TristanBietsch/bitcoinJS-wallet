@@ -12,7 +12,7 @@
  */
 
 import { BITCOIN_NETWORK, BitcoinNetworkType } from './bitcoinNetwork'
-import { RpcConfig } from '../types/bitcoin'
+import { RpcConfig } from '@/src/types/api'
 
 /**
  * Get RPC credentials from environment variables if available

@@ -5,7 +5,7 @@
  */
 
 import { BITCOIN_NETWORK } from '../../../config/bitcoinNetwork'
-import { BitcoinTransaction, Utxo, WalletInfo } from '../../../types/bitcoin'
+import { BitcoinTransaction, Utxo, WalletInfo } from '@/src/types/api'
 import { BitcoinAddressError } from '../errors/rpcErrors'
 import { callRpc } from '../rpc/rpcClient'
 import { isValidAddress } from '../address/addressService'

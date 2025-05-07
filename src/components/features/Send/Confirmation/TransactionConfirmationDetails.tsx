@@ -4,8 +4,8 @@ import { ThemedText } from '@/src/components/ui/Text'
 import { ExternalLink } from 'lucide-react-native'
 import { formatConfirmationValue, formatTotalWithUsdEquivalent } from '@/src/utils/formatting/formatCurrencyValue'
 import { formatAddressIntoLines } from '@/src/utils/formatting/formatAddress'
-import { CurrencyType } from '@/src/types/currency.types'
-import { TransactionFee } from '@/src/utils/send/feeCalculations'
+import { CurrencyType } from '@/src/types/domain/currency'
+import { TransactionFee } from '@/src/utils/transactions/feeCalculator'
 import { transactionStyles } from '@/src/constants/transactionStyles'
 
 type TransactionConfirmationDetailsProps = {

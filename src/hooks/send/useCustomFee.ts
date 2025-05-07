@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { CustomFee } from '@/src/types/transaction/send.types'
+import { CustomFee } from '@/src/types/domain/transaction'
 import { transactionFees } from '@/tests/mockData/transactionData'
 
 // Set minimum fee to 150 sats

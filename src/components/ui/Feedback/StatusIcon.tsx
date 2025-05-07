@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet, ViewStyle } from 'react-native'
 import { Check, X, AlertCircle, Info } from 'lucide-react-native'
-import { StatusType, getStatusColors } from '@/src/types/status.types'
+import { StatusType, getStatusColors } from '@/src/types/ui'
 
 interface StatusIconProps {
   type: StatusType
