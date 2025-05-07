@@ -34,6 +34,7 @@ Nummus is built using the following technologies:
 - **Supabase** - Backend as a service platform
 - **Mempool.space API** - Bitcoin mempool data and fee estimation
 - **Bitcoin Development Kit (BDK)** - For Bitcoin wallet functionality
+- **BitcoinJS** - For Bitcoin wallet functionality in JavaScript
 - **Secure storage** - For sensitive wallet data
 - **Jest** - Testing framework
 
@@ -44,6 +45,7 @@ Nummus is built using the following technologies:
 - Node.js (v16 or later)
 - npm or yarn
 - Expo CLI
+- Bitcoin Core (for regtest development)
 
 ### Installation
 
@@ -62,6 +64,98 @@ npm install
 ```
 npm start
 ```
+
+## Bitcoin Network Configuration
+
+Nummus Wallet supports multiple Bitcoin networks for different development and deployment scenarios:
+
+- **regtest**: Local development environment for testing (default)
+- **testnet**: Bitcoin testnet for pre-production testing
+- **mainnet**: Bitcoin mainnet for production use
+
+### Switching Networks
+
+To switch between networks, you can set the `BITCOIN_NETWORK` environment variable:
+
+```bash
+# For development on regtest (default)
+BITCOIN_NETWORK=regtest npm start
+
+# For testing on testnet
+BITCOIN_NETWORK=testnet npm start
+
+# For production on mainnet
+BITCOIN_NETWORK=mainnet npm start
+```
+
+### Secure Configuration
+
+For security reasons, RPC credentials should not be hardcoded. Use environment variables instead:
+
+```bash
+# For regtest
+BITCOIN_REGTEST_HOST=localhost
+BITCOIN_REGTEST_PORT=18443
+BITCOIN_REGTEST_USERNAME=your_secure_username
+BITCOIN_REGTEST_PASSWORD=your_secure_password
+
+# For testnet
+BITCOIN_TESTNET_HOST=your_testnet_node
+BITCOIN_TESTNET_PORT=18332
+BITCOIN_TESTNET_USERNAME=your_secure_username
+BITCOIN_TESTNET_PASSWORD=your_secure_password
+BITCOIN_TESTNET_PROTOCOL=https  # Always use HTTPS for non-local connections
+
+# For mainnet (production)
+BITCOIN_MAINNET_HOST=your_mainnet_node
+BITCOIN_MAINNET_PORT=8332
+BITCOIN_MAINNET_USERNAME=your_secure_username
+BITCOIN_MAINNET_PASSWORD=your_secure_password
+BITCOIN_MAINNET_PROTOCOL=https  # Always use HTTPS for production
+```
+
+You can set these in your environment or create a `.env` file (not committed to version control).
+
+### Security Best Practices
+
+When using this wallet in production:
+
+1. **Always use HTTPS** for connections to remote Bitcoin nodes
+2. **Never use default credentials** in production
+3. **Validate all addresses** before sending transactions
+4. **Keep private keys secure** and never expose them
+5. **Consider using a hardware wallet** for large amounts
+
+### Running a Local Bitcoin Node for Development
+
+For development with regtest, you need to run a local Bitcoin Core node:
+
+1. Install Bitcoin Core (https://bitcoin.org/en/download)
+
+2. Create a bitcoin.conf file with regtest settings:
+
+```
+regtest=1
+server=1
+rpcuser=admin
+rpcpassword=admin
+rpcallowip=127.0.0.1
+rpcport=18443
+```
+
+3. Start Bitcoin Core in regtest mode:
+
+```bash
+bitcoind -regtest -conf=/path/to/bitcoin.conf
+```
+
+4. Generate some initial blocks:
+
+```bash
+bitcoin-cli -regtest generatetoaddress 101 $(bitcoin-cli -regtest getnewaddress)
+```
+
+Now you can run the wallet with regtest mode and it will connect to your local Bitcoin Core node.
 
 ## Usage
 
