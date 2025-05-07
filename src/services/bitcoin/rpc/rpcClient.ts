@@ -9,7 +9,7 @@ import { BITCOIN_NETWORK } from '../../../config/bitcoinNetwork'
 import { RPC_CONFIG, RPC_URL } from '../../../config/rpc'
 import { 
   BitcoinRpcResponse 
-} from '../../../types/bitcoin'
+} from '@/src/types/api'
 import { 
   BitcoinAuthError, 
   BitcoinConnectionError,

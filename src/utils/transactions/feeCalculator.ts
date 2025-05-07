@@ -1,6 +1,6 @@
 import { transactionFees } from '@/tests/mockData/transactionData'
 import { speedOptions } from '@/src/config/transactionFees'
-import { CurrencyType } from '@/src/types/domain/currency'
+import { CurrencyType } from '@/src/types/domain/finance'
 
 /**
  * Type for transaction fee

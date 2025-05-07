@@ -1,7 +1,7 @@
 /**
  * Constants for Bitcoin price components
  */
-import { TimeframePeriod } from '@/src/types/price.types'
+import { TimeframePeriod } from '@/src/types/domain/finance'
 
 // API configuration
 export const MIN_FETCH_INTERVAL = 2000 // Minimum time between API calls (ms)

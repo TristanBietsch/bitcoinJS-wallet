@@ -2,7 +2,7 @@ import React from 'react'
 import { router } from 'expo-router'
 import StatusScreen from '@/src/components/ui/Feedback/StatusScreen'
 import { setOnboardingComplete } from '@/src/utils/storage'
-import { BaseCallbacks } from '@/src/types/callbacks'
+import { BaseCallbacks } from '@/src/types/ui'
 
 type SuccessImportProps = Pick<BaseCallbacks, 'onComplete'>
 

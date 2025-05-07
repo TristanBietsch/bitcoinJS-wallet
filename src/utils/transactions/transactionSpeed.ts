@@ -1,4 +1,4 @@
-import { SpeedOption } from '@/src/types/transaction/send.types'
+import { SpeedOption } from '@/src/types/domain/transaction'
 import { transactionFees } from '@/tests/mockData/transactionData'
 
 export const speedOptions: SpeedOption[] = [

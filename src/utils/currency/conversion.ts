@@ -1,7 +1,7 @@
 /**
  * Currency conversion utilities
  */
-import { CurrencyType } from '@/src/types/currency.types'
+import { CurrencyType } from '@/src/types/domain/finance'
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
 /**

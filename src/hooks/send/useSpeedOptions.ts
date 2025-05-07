@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { SpeedTier } from '@/src/types/transaction/send.types'
+import { SpeedTier } from '@/src/types/domain/transaction'
 import { speedOptions } from '@/src/utils/send/speedOptions'
 import { useCustomFee } from './useCustomFee'
 
