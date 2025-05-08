@@ -1,26 +1,22 @@
 /**
- * Simple test for Bitcoin price fetching functionality
- * This test focuses on the service mock rather than the React hook behavior
+ * Simple test for Bitcoin price service
  */
 import { getBTCPrice } from '@/src/services/api/btcPriceService'
 
-// Mock the Bitcoin price service
+// Mock the BTC price service
 jest.mock('@/src/services/api/btcPriceService', () => ({
   getBTCPrice : jest.fn()
 }))
 
-// Get the mocked function
-const mockedGetBTCPrice = getBTCPrice as jest.MockedFunction<typeof getBTCPrice>
-
-describe('Bitcoin Price Functionality', () => {
+describe('Bitcoin Price Service', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedGetBTCPrice.mockReset()
   })
 
-  it('should fetch current BTC price', async () => {
+  it('should mock Bitcoin price correctly', async () => {
     // Arrange
     const expectedPrice = 45000
+    const mockedGetBTCPrice = getBTCPrice as jest.MockedFunction<typeof getBTCPrice>
     mockedGetBTCPrice.mockResolvedValue(expectedPrice)
     
     // Act
@@ -31,9 +27,10 @@ describe('Bitcoin Price Functionality', () => {
     expect(mockedGetBTCPrice).toHaveBeenCalledTimes(1)
   })
   
-  it('should handle API errors gracefully', async () => {
+  it('should handle errors', async () => {
     // Arrange
-    const errorMessage = 'Failed to fetch Bitcoin price'
+    const errorMessage = 'API Error'
+    const mockedGetBTCPrice = getBTCPrice as jest.MockedFunction<typeof getBTCPrice>
     mockedGetBTCPrice.mockRejectedValue(new Error(errorMessage))
     
     // Act & Assert
