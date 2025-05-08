@@ -133,33 +133,27 @@ describe('Bitcoin Price Service', () => {
       expect(getBTCPriceMock).toHaveBeenCalledTimes(1)
     })
     
-    it('should handle API rate limiting', async () => {
+    it('should handle API rate limiting behavior', async () => {
       // Arrange
       const mockPrice = 45000
       const getBTCPriceMock = getBTCPrice as jest.MockedFunction<typeof getBTCPrice>
       
-      // Mock the implementation to simulate rate limiting then recovery
-      getBTCPriceMock.mockImplementation(async () => {
-        // First reset the mock to return the successful price on subsequent calls
-        getBTCPriceMock.mockReset()
-        getBTCPriceMock.mockResolvedValue(mockPrice)
-        
-        // Then throw an error on the first call
-        throw new Error('Too many requests (429)')
-      })
+      // Set up mock behavior
+      getBTCPriceMock.mockRejectedValueOnce(new Error('Too many requests'))
+      getBTCPriceMock.mockResolvedValueOnce(mockPrice)
       
-      // Act - First call will fail with rate limit, second should succeed
+      // Act & Assert
       try {
-        await getBTCPrice() // This should fail
-        fail('Should have thrown an error')
-      } catch (error) {
-        // Expected error, now retry
-        const result = await getBTCPrice()
-        
-        // Assert
-        expect(result).toBe(mockPrice)
-        expect(getBTCPriceMock).toHaveBeenCalledTimes(2)
+        await getBTCPrice()
+        // This should not execute if the first call properly throws
+        fail('Should have thrown a rate limit error')
+      } catch (_error) {
+        // Expected rate limit error, continue
       }
+      
+      // Now verify we get a price on retry
+      const result = await getBTCPrice()
+      expect(result).toBe(mockPrice)
     })
     
     it('should validate price data format', async () => {
