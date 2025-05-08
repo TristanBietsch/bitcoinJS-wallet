@@ -1,5 +1,8 @@
 // This file is referenced in jest.config.js and runs before each test
 
+// Import React Native mocks
+require('./tests/jestMocks/reactNativeMock');
+
 // Basic mocks for React Native environment
 global.window = {};
 global.__DEV__ = true;

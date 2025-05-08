@@ -27,12 +27,12 @@ module.exports = {
   // Module name mappings
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/tests/__mocks__/fileMock.js',
-    '\\.(css|less)$': '<rootDir>/tests/__mocks__/styleMock.js'
+    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/tests/jestMocks/fileMock.js',
+    '\\.(css|less)$': '<rootDir>/tests/jestMocks/styleMock.js'
   },
   
   // Configure where to look for modules
-  moduleDirectories: ['node_modules', 'tests'],
+  moduleDirectories: ['node_modules', 'tests/jestMocks', 'tests'],
   
   // Setup files
   setupFiles: ['<rootDir>/jest.setup.js'],
