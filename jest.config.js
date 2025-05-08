@@ -1,51 +1,45 @@
 module.exports = {
-  preset: 'jest-expo',
+  preset: 'react-native',
+  testEnvironment: 'node',
+  
+  // Process JS/TS files with Babel
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+    '^.+\\.(js|jsx|ts|tsx)$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+          '@babel/preset-typescript',
+          '@babel/preset-react'
+        ],
+        plugins: [
+          ['@babel/plugin-transform-runtime', { regenerator: true }],
+          ['@babel/plugin-transform-private-methods', { loose: true }],
+          ['@babel/plugin-transform-private-property-in-object', { loose: true }]
+        ]
+      }
+    ]
   },
+  
+  // Don't transform react-native and other important modules
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|react-clone-referenced-element|@expo|expo|@expo-google-fonts|expo-router|@unimodules|unimodules|sentry-expo|@react-native-async-storage)',
+    'node_modules/(?!(jest-)?react-native|@react-native|react-clone-referenced-element|@react-navigation|react-navigation|@expo|expo|@unimodules|unimodules|@?expo-.*|.*expo-.*)'
   ],
-  setupFiles: [
-    '<rootDir>/tests/config/jest-setup.js',
+  
+  // Match test files in the tests directory structure
+  testMatch: [
+    '<rootDir>/tests/unit/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/integration/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/e2e/**/*.test.{js,jsx,ts,tsx}'
   ],
+  
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
+  
+  // Map module paths to support imports
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
-    '^react-native$': '<rootDir>/node_modules/react-native',
-    '^react-native/Libraries/Animated/NativeAnimatedHelper$': '<rootDir>/node_modules/react-native/Libraries/Animated/NativeAnimatedHelper',
+    '^@/(.*)$': '<rootDir>/$1'
   },
-  testEnvironment: 'jsdom',
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/android/',
-    '/ios/',
-  ],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  collectCoverage: true,
-  collectCoverageFrom: [
-    '**/*.{js,jsx,ts,tsx}',
-    '!**/coverage/**',
-    '!**/node_modules/**',
-    '!**/babel.config.js',
-    '!**/jest.setup.js',
-    '!**/jest.config.js',
-  ],
-  // Temporarily disable strict coverage thresholds
-  coverageThreshold: {
-    global: {
-      branches: 0,
-      functions: 0,
-      lines: 0,
-      statements: 0,
-    },
-  },
-  verbose: true,
-  snapshotSerializers: ['@testing-library/jest-native/extend-expect'],
-  testTimeout: 10000,
-  moduleDirectories: ['node_modules', 'src'],
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.json',
-    },
-  },
+  
+  // Setup files for Jest
+  setupFiles: ['<rootDir>/jest.setup.js']
 }; 
