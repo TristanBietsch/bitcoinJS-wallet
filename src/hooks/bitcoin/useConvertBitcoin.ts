@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { fetchCurrentPrice } from '@/src/services/api/price'
+import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
 interface ConvertedAmounts {
@@ -11,29 +10,8 @@ interface ConvertedAmounts {
  * Hook for Bitcoin amount conversion and price fetching
  */
 export const useConvertBitcoin = () => {
-  const [ btcPrice, setBtcPrice ] = useState<number | null>(null)
-  const [ isLoading, setIsLoading ] = useState(false)
-  const [ error, setError ] = useState<string | null>(null)
-
-  // Fetch Bitcoin price
-  const fetchBitcoinPrice = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const price = await fetchCurrentPrice()
-      setBtcPrice(price)
-    } catch (err) {
-      console.error('Error fetching price:', err)
-      setError('Failed to fetch Bitcoin price')
-      setBtcPrice(60000) // Fallback price
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchBitcoinPrice()
-  }, [])
+  // Use the shared global price context
+  const { btcPrice, isLoading, error, refreshPrice } = useGlobalBitcoinPrice()
 
   // Convert amount to SATS and USD
   const getConvertedAmounts = (amount: string, currency: string): ConvertedAmounts => {
@@ -60,10 +38,6 @@ export const useConvertBitcoin = () => {
       sats : Math.round(satsAmount).toString(),
       usd  : usdAmount.toFixed(2)
     }
-  }
-
-  const refreshPrice = () => {
-    fetchBitcoinPrice()
   }
 
   return {

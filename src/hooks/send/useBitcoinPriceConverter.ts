@@ -1,44 +1,12 @@
-import { useState, useEffect } from 'react'
-import { fetchCurrentPrice } from '@/src/services/api/price'
+import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
+import { SATS_PER_BTC } from '@/src/constants/currency'
 
 // Currency type definition
 export type CurrencyType = 'USD' | 'BTC' | 'SATS'
 
-// Constants
-const SATS_PER_BTC = 100000000 // 1 BTC = 100,000,000 SATS (this is a fixed value)
-
 export const useBitcoinPriceConverter = () => {
-  const [ btcPrice, setBtcPrice ] = useState<number | null>(null)
-  const [ isLoading, setIsLoading ] = useState(false)
-  const [ error, setError ] = useState<string | null>(null)
-  
-  // Fetch the current Bitcoin price
-  const fetchBitcoinPrice = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      
-      const price = await fetchCurrentPrice()
-      setBtcPrice(price)
-      setIsLoading(false)
-    } catch (err) {
-      setError('Failed to fetch Bitcoin price')
-      setBtcPrice(60000) // Fallback price if API fails
-      setIsLoading(false)
-      console.error('Error fetching Bitcoin price:', err)
-    }
-  }
-  
-  // Fetch Bitcoin price on component mount
-  useEffect(() => {
-    fetchBitcoinPrice()
-    
-    // Refresh price every 60 seconds
-    const intervalId = setInterval(fetchBitcoinPrice, 60000)
-    
-    // Clean up interval on unmount
-    return () => clearInterval(intervalId)
-  }, [])
+  // Use the shared global price context
+  const { btcPrice, isLoading, error, refreshPrice } = useGlobalBitcoinPrice()
   
   // Convert amount between currencies using real rates
   const convertAmount = (value: string, fromCurrency: CurrencyType, toCurrency: CurrencyType): string => {
@@ -80,6 +48,6 @@ export const useBitcoinPriceConverter = () => {
     isLoading,
     error,
     convertAmount,
-    fetchBitcoinPrice
+    refreshPrice
   }
 } 

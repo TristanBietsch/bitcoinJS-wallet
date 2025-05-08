@@ -31,6 +31,7 @@ module.exports = function(api) {
                 "helpers": true,
                 "useESModules": false
             }],
+            "@babel/plugin-transform-modules-commonjs",
             "react-native-reanimated/plugin"
         ]
     };

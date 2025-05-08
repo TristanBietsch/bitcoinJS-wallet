@@ -3,48 +3,51 @@
  * This is the consolidated hook for Bitcoin price after removing duplicate implementations
  */
 import { useState, useEffect } from 'react'
-import { fetchCurrentPrice } from '@/src/services/api/price'
+import { getBTCPrice } from '@/src/services/api/btcPriceService'
 
+/**
+ * Interface for Bitcoin price data return
+ */
 interface UseBitcoinPriceReturn {
-  btcPrice: number | null
-  isLoading: boolean
-  error: string | null
-  refreshPrice: () => Promise<void>
+  btcPrice : number | null
+  isLoading : boolean
+  error : string | null
+  refreshPrice : () => Promise<void>
 }
 
 /**
- * Custom hook to fetch and maintain Bitcoin price
- * @param refreshInterval - Interval in milliseconds to refresh price (default: 60000ms)
+ * Hook for fetching and managing Bitcoin price data
+ * @param refreshInterval - Milliseconds between price refreshes (default: 30000ms)
  */
-export const useBitcoinPrice = (refreshInterval = 60000): UseBitcoinPriceReturn => {
+export const useBitcoinPrice = (refreshInterval = 30000): UseBitcoinPriceReturn => {
   const [ btcPrice, setBtcPrice ] = useState<number | null>(null)
   const [ isLoading, setIsLoading ] = useState(false)
   const [ error, setError ] = useState<string | null>(null)
   
-  const fetchBitcoinPrice = async () => {
+  // Function to fetch Bitcoin price
+  const fetchPrice = async () => {
     try {
       setIsLoading(true)
       setError(null)
       
-      const price = await fetchCurrentPrice()
+      const price = await getBTCPrice()
       setBtcPrice(price)
-      setIsLoading(false)
     } catch (err) {
+      console.error('Error fetching BTC price:', err)
       setError('Failed to fetch Bitcoin price')
-      setBtcPrice(60000) // Fallback price if API fails
+    } finally {
       setIsLoading(false)
-      console.error('Error fetching Bitcoin price:', err)
     }
   }
   
+  // Fetch price on component mount and set up interval
   useEffect(() => {
-    // Fetch price initially
-    fetchBitcoinPrice()
+    fetchPrice()
     
     // Set up refresh interval
-    const intervalId = setInterval(fetchBitcoinPrice, refreshInterval)
+    const intervalId = setInterval(fetchPrice, refreshInterval)
     
-    // Clean up interval on unmount
+    // Clean up on unmount
     return () => clearInterval(intervalId)
   }, [ refreshInterval ])
   
@@ -52,6 +55,6 @@ export const useBitcoinPrice = (refreshInterval = 60000): UseBitcoinPriceReturn 
     btcPrice,
     isLoading,
     error,
-    refreshPrice : fetchBitcoinPrice
+    refreshPrice : fetchPrice
   }
 } 
