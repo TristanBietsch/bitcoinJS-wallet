@@ -4,9 +4,8 @@ module.exports = function(api) {
     return {
         presets: [
             ["babel-preset-expo", {
-                "runtime": "automatic",
-                "jsxRuntime": "automatic",
-                "jsxImportSource": "nativewind",
+                "runtime": "classic",
+                "jsxRuntime": "classic",
                 "unstable_transformImportMeta": true
             }], 
             "nativewind/babel",

@@ -23,9 +23,9 @@ interface ConfirmSeedWordsScreenProps {
 
 export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
   // State for retrieving the seed phrase
-  const [storedSeedPhrase, setStoredSeedPhrase] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const [ storedSeedPhrase, setStoredSeedPhrase ] = useState<string[]>([])
+  const [ isLoading, setIsLoading ] = useState(true)
+  const [ loadError, setLoadError ] = useState<string | null>(null)
   
   // Fetch stored seed phrase on component mount
   useEffect(() => {
@@ -132,8 +132,8 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
           wordsMatch,
           isValidMnemonic,
           addressesMatch,
-          originalAddress: originalKeyPair.address,
-          selectedAddress: selectedKeyPair.address
+          originalAddress : originalKeyPair.address,
+          selectedAddress : selectedKeyPair.address
         })
         
       } catch (error) {
@@ -143,7 +143,7 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
     }
     
     verifySelectedPhrase()
-  }, [verificationState, getOrderedSelectedWords, storedSeedPhrase, handleVerificationComplete])
+  }, [ verificationState, getOrderedSelectedWords, storedSeedPhrase, handleVerificationComplete ])
   
   // Render different screens based on verification state
   if (verificationState === 'checking') {
