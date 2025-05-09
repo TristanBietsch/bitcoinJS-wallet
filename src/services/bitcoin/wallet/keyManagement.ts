@@ -15,8 +15,8 @@ const networkConfig = {
   regtest : {
     ...bitcoin.networks.testnet, // Regtest uses testnet params with some differences
     bech32 : 'bcrt',             // Different bech32 prefix for regtest
-    bip32 : {
-      public : 0x043587cf,       // Same as testnet
+    bip32  : {
+      public  : 0x043587cf,       // Same as testnet
       private : 0x04358394       // Same as testnet
     }
   }
@@ -65,18 +65,18 @@ export const keyManagement = {
     
     // Generate a P2WPKH (native segwit) address from the public key
     const payment = bitcoin.payments.p2wpkh({
-      pubkey : child.publicKey,
+      pubkey  : child.publicKey,
       network : networkParams
     })
     
     return {
       path,
       network,
-      publicKey : child.publicKey,
-      privateKey : child.privateKey as Buffer,
-      wif : child.toWIF(),
-      address : payment.address,
-      extendedPubKey : child.neutered().toBase58(),
+      publicKey       : child.publicKey,
+      privateKey      : child.privateKey as Buffer,
+      wif             : child.toWIF(),
+      address         : payment.address,
+      extendedPubKey  : child.neutered().toBase58(),
       extendedPrivKey : child.toBase58()
     }
   },

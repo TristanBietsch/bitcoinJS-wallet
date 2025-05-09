@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
@@ -12,12 +12,9 @@ import CheckingSeedPhrase from '../checking/CheckingSeedPhrase'
 import ErrorSeedPhrase from '../error/ErrorSeedPhrase'
 import SuccessSeedPhrase from '../success/SuccessSeedPhrase'
 import { Colors } from '@/src/constants/colors'
-
-// Mock seed phrase for demonstration
-const MOCK_SEED_PHRASE = [
-  '1', '2', '3', '4', '5', '6',
-  '7', '8', '9', '10', '11', '12'
-]
+import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
+import { keyManagement } from '@/src/services/bitcoin/wallet/keyManagement'
+import { BITCOIN_NETWORK } from '@/src/config/bitcoinNetwork'
 
 interface ConfirmSeedWordsScreenProps {
   onComplete: () => void
@@ -25,6 +22,41 @@ interface ConfirmSeedWordsScreenProps {
 }
 
 export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSeedWordsScreenProps) {
+  // State for retrieving the seed phrase
+  const [storedSeedPhrase, setStoredSeedPhrase] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  
+  // Fetch stored seed phrase on component mount
+  useEffect(() => {
+    const fetchSeedPhrase = async () => {
+      try {
+        setIsLoading(true)
+        
+        // Retrieve the seed phrase from secure storage
+        const seedPhrase = await seedPhraseService.retrieveSeedPhrase()
+        
+        if (!seedPhrase) {
+          setLoadError('Could not find your seed phrase. Please go back and try again.')
+          setIsLoading(false)
+          return
+        }
+        
+        // Convert to array of words
+        const seedPhraseWords = seedPhraseService.getWords(seedPhrase)
+        setStoredSeedPhrase(seedPhraseWords)
+        
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Failed to load seed phrase:', error)
+        setLoadError('Failed to retrieve your seed phrase')
+        setIsLoading(false)
+      }
+    }
+    
+    fetchSeedPhrase()
+  }, [])
+  
   // Use our modular seed phrase selection hook
   const {
     selectedWords,
@@ -33,7 +65,7 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
     resetSelection,
     getOrderedSelectedWords,
     isSelectionComplete
-  } = useSeedPhraseSelection(MOCK_SEED_PHRASE)
+  } = useSeedPhraseSelection(storedSeedPhrase)
   
   // Use our verification flow hook
   const {
@@ -44,11 +76,80 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
     handleComplete
   } = useSeedPhraseVerificationFlow(onComplete, resetSelection)
   
+  // Handle verification of seed phrase with real bitcoin keys
+  useEffect(() => {
+    if (verificationState !== 'checking') return
+    
+    const verifySelectedPhrase = async () => {
+      try {
+        // Get the selected words in order
+        const selectedPhrase = getOrderedSelectedWords()
+        const originalPhrase = storedSeedPhrase
+        
+        // Basic verification - words match exactly
+        const wordsMatch = selectedPhrase.length === originalPhrase.length &&
+          selectedPhrase.every((word, index) => word === originalPhrase[index])
+        
+        if (!wordsMatch) {
+          handleVerificationComplete(false)
+          return
+        }
+        
+        // Advanced verification - validate as Bitcoin key
+        const joinedPhrase = selectedPhrase.join(' ')
+        
+        // First check if it's a valid mnemonic
+        const isValidMnemonic = seedPhraseService.validateMnemonic(joinedPhrase)
+        
+        if (!isValidMnemonic) {
+          handleVerificationComplete(false)
+          return
+        }
+        
+        // Get original address for comparison
+        const originalSeedString = storedSeedPhrase.join(' ')
+        const originalKeyPair = await keyManagement.deriveFromMnemonic(
+          originalSeedString,
+          undefined,
+          BITCOIN_NETWORK
+        )
+        
+        // Derive address from selected words
+        const selectedKeyPair = await keyManagement.deriveFromMnemonic(
+          joinedPhrase,
+          undefined,
+          BITCOIN_NETWORK
+        )
+        
+        // Compare addresses to ensure they match
+        const addressesMatch = originalKeyPair.address === selectedKeyPair.address
+        
+        // Complete verification based on the result
+        handleVerificationComplete(addressesMatch)
+        
+        // For development: log verification details (remove in production)
+        console.log('Seed phrase verification:', {
+          wordsMatch,
+          isValidMnemonic,
+          addressesMatch,
+          originalAddress: originalKeyPair.address,
+          selectedAddress: selectedKeyPair.address
+        })
+        
+      } catch (error) {
+        console.error('Verification error:', error)
+        handleVerificationComplete(false)
+      }
+    }
+    
+    verifySelectedPhrase()
+  }, [verificationState, getOrderedSelectedWords, storedSeedPhrase, handleVerificationComplete])
+  
   // Render different screens based on verification state
   if (verificationState === 'checking') {
     return (
       <CheckingSeedPhrase
-        originalSeedPhrase={MOCK_SEED_PHRASE}
+        originalSeedPhrase={storedSeedPhrase}
         selectedWords={getOrderedSelectedWords()}
         onVerificationComplete={handleVerificationComplete}
       />
@@ -69,6 +170,45 @@ export default function ConfirmSeedWordsScreen({ onComplete, onBack }: ConfirmSe
       <SuccessSeedPhrase
         onComplete={handleComplete}
       />
+    )
+  }
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <OnboardingContainer>
+        <BackButton onPress={onBack} />
+        <View style={styles.content}>
+          <ThemedText style={styles.title}>
+            Loading Your Seed Phrase
+          </ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Please wait while we prepare verification...
+          </ThemedText>
+        </View>
+      </OnboardingContainer>
+    )
+  }
+  
+  // Show error state if loading failed
+  if (loadError) {
+    return (
+      <OnboardingContainer>
+        <BackButton onPress={onBack} />
+        <View style={styles.content}>
+          <ThemedText style={styles.title}>
+            Error Loading Seed Phrase
+          </ThemedText>
+          <ThemedText style={styles.subtitle}>
+            {loadError}
+          </ThemedText>
+          <OnboardingButton
+            label="Go Back"
+            onPress={onBack}
+            style={styles.confirmButton}
+          />
+        </View>
+      </OnboardingContainer>
     )
   }
   
