@@ -5,6 +5,7 @@ import { Plus, Download } from 'lucide-react-native'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import { WalletOptionButton } from '@/src/components/ui/Button'
 import { ButtonsContainer } from '@/src/components/ui/Layout'
+import { Colors } from '@/src/constants/colors'
 
 interface WalletChoiceScreenProps {
   onCreateWallet: () => void;
@@ -33,7 +34,7 @@ export default function WalletChoiceScreen({
         <ButtonsContainer>
           <WalletOptionButton
             type="primary"
-            icon={<Plus />}
+            icon={<Plus color={Colors.light.pureWhite} />}
             title="Create New Wallet"
             description="Start fresh with a new Bitcoin wallet"
             onPress={onCreateWallet}
@@ -41,7 +42,7 @@ export default function WalletChoiceScreen({
 
           <WalletOptionButton
             type="secondary"
-            icon={<Download />}
+            icon={<Download color={Colors.light.buttons.primary} />}
             title="Import Existing Wallet"
             description="Restore a wallet via seed phrase"
             onPress={onImportWallet}
