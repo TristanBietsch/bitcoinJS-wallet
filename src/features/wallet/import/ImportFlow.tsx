@@ -35,6 +35,7 @@ function ImportFlowInternal({ onBack }: { onBack?: () => void }) {
       )
     
     case 'success':
+      console.log('Rendering SuccessImport screen')
       return <SuccessImport onComplete={completeImport} />
     
     case 'error':

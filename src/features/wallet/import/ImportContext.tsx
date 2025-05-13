@@ -37,7 +37,7 @@ interface ImportProviderProps {
 /**
  * Provider component that wraps the import flow and provides state management
  */
-export function ImportProvider({ children, onComplete }: ImportProviderProps) {
+export function ImportProvider({ children, onComplete: _onComplete }: ImportProviderProps) {
   // State for the import flow
   const [ state, setState ] = useState<ImportState>('input')
   const [ seedPhrase, setSeedPhrase ] = useState('')
@@ -78,10 +78,13 @@ export function ImportProvider({ children, onComplete }: ImportProviderProps) {
         
         // Only set wallet and success state if import was successful
         setWallet(importedWallet)
+        
+        // Explicitly change to success state for UI transition
+        console.log('Wallet successfully imported, transitioning to success screen')
         setState('success')
         
-        // Call onComplete callback if provided
-        if (onComplete) onComplete()
+        // We no longer call onComplete here - we'll let the SuccessImport screen handle it
+        // This ensures the user sees the success animation
       } catch (importError) {
         console.error('Import failed with error:', importError)
         const errorMessage = importError instanceof Error ? 
@@ -99,8 +102,11 @@ export function ImportProvider({ children, onComplete }: ImportProviderProps) {
   }
   
   const completeImport = () => {
+    // This is now only explicitly used for test bypass flows and by CheckingSeedPhraseImport
+    console.log('Setting import state to success')
     setState('success')
-    if (onComplete) onComplete()
+    
+    // We don't call onComplete here anymore - let SuccessImport handle it
   }
   
   const failImport = (errorMessage?: string) => {

@@ -21,24 +21,22 @@ export default function CheckingSeedPhraseImport({
   onError,
   isTestBypass = false
 }: CheckingSeedPhraseImportProps) {
-  const [status, setStatus] = useState('Validating seed phrase...')
-  const [processingTime, setProcessingTime] = useState(0)
+  const [ status, setStatus ] = useState('Validating seed phrase...')
   
   useEffect(() => {
     // Add a timer to track processing time and provide better feedback
     const timer = setInterval(() => {
-      setProcessingTime(prev => {
-        const newTime = prev + 1
-        if (newTime === 2) {
-          setStatus('Generating wallet keys...')
-        } else if (newTime === 4) {
-          setStatus('Deriving addresses...')
-        } else if (newTime >= 6) {
-          setStatus('Completing import...')
+      setStatus(currentStatus => {
+        if (currentStatus === 'Validating seed phrase...') {
+          return 'Generating wallet keys...'
+        } else if (currentStatus === 'Generating wallet keys...') {
+          return 'Deriving addresses...'
+        } else if (currentStatus === 'Deriving addresses...') {
+          return 'Completing import...'
         }
-        return newTime
+        return currentStatus
       })
-    }, 1000)
+    }, 1500)
     
     return () => clearInterval(timer)
   }, [])
@@ -82,7 +80,7 @@ export default function CheckingSeedPhraseImport({
     return () => {
       isMounted = false
     }
-  }, [seedPhrase, onComplete, onError, isTestBypass])
+  }, [ seedPhrase, onComplete, onError, isTestBypass ])
   
   return (
     <OnboardingContainer>
