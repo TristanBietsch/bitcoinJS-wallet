@@ -1,63 +1,87 @@
-import React from 'react'
-import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
-import VerificationLoader from '@/src/components/ui/Feedback/VerificationLoader'
-import SuccessImport from '../success/SuccessImport'
-import ErrorImport from '../error/ErrorImport'
-import { useVerification } from '@/src/hooks/wallet/useVerification'
+import React, { useEffect } from 'react'
+import { View, StyleSheet, ActivityIndicator } from 'react-native'
+import { OnboardingContainer } from '@/src/components/ui/OnboardingScreen'
+import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
+import { bitcoinWalletService } from '@/src/services/bitcoin/wallet/bitcoinWalletService'
 
 interface CheckingSeedPhraseImportProps {
   seedPhrase: string
   onComplete: () => void
-  onError?: () => void
+  onError: (message?: string) => void
   isTestBypass?: boolean
 }
 
 /**
  * Screen component shown during seed phrase import verification
  */
-export default function CheckingSeedPhraseImport({ 
+export default function CheckingSeedPhraseImport({
   seedPhrase,
   onComplete,
   onError,
   isTestBypass = false
 }: CheckingSeedPhraseImportProps) {
-  // Use the verification hook to handle the verification logic
-  const { isComplete, isError } = useVerification(seedPhrase, isTestBypass)
   
-  // Handle the success screen completion
-  const handleSuccessComplete = () => {
-    // Pass the completion back to the parent
-    if (onComplete) onComplete()
-  }
-
-  // Handle the error try again action
-  const handleTryAgain = () => {
-    // Go back to import screen
-    if (onError) {
-      onError()
-    } else if (onComplete) {
-      // Fallback to onComplete for backward compatibility
-      onComplete()
+  useEffect(() => {
+    async function processImport() {
+      // If it's a test bypass, just complete after a delay
+      if (isTestBypass) {
+        setTimeout(() => {
+          onComplete();
+        }, 2000);
+        return;
+      }
+      
+      try {
+        // Validate the seed phrase
+        if (!bitcoinWalletService.validateMnemonic(seedPhrase)) {
+          throw new Error('Invalid seed phrase');
+        }
+        
+        // For test purposes, show loading state for at least 1.5 seconds
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Complete the import process
+        onComplete();
+      } catch (error) {
+        console.error('Error during wallet import:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to import wallet';
+        onError(errorMessage);
+      }
     }
-  }
-
-  // Show error screen if verification failed
-  if (isError) {
-    return <ErrorImport onTryAgain={handleTryAgain} onBack={handleTryAgain} />
-  }
-
-  // Show success screen if verification is complete
-  if (isComplete) {
-    return <SuccessImport onComplete={handleSuccessComplete} />
-  }
+    
+    processImport();
+  }, [seedPhrase, onComplete, onError, isTestBypass]);
   
-  // Otherwise show the loading indicator
   return (
     <OnboardingContainer>
-      <VerificationLoader 
-        title="Importing..." 
-        subtitle="Verifying and importing your wallet" 
-      />
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <ThemedText style={styles.title}>Importing Wallet</ThemedText>
+        <ThemedText style={styles.description}>
+          Please wait while we validate and import your wallet...
+        </ThemedText>
+      </View>
     </OnboardingContainer>
-  )
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.7,
+  }
+});

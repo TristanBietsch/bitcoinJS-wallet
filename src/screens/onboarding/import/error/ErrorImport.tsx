@@ -1,22 +1,66 @@
 import React from 'react'
-import StatusScreen from '@/src/components/ui/Feedback/StatusScreen'
-import { ErrorHandlingCallbacks } from '@/src/types/ui'
+import { View, StyleSheet } from 'react-native'
+import { OnboardingContainer, OnboardingTitle } from '@/src/components/ui/OnboardingScreen'
+import { ThemedText } from '@/src/components/ui/Text'
+import { Button } from '@/src/components/ui/Button'
+import { XCircle } from 'lucide-react-native'
+import { Colors } from '@/src/constants/colors'
+import { useImport } from '@/src/features/wallet/import/ImportContext'
 
-type ErrorImportProps = Pick<ErrorHandlingCallbacks, 'onTryAgain' | 'onBack'>
+interface ErrorImportProps {
+  onTryAgain: () => void
+  onBack: () => void
+}
 
 /**
  * Screen displayed when wallet import fails
  */
 export default function ErrorImport({ onTryAgain, onBack }: ErrorImportProps) {
+  const { error } = useImport();
+  
   return (
-    <StatusScreen
-      type="error"
-      title="Import Failed"
-      subtitle="We couldn't verify your seed phrase. Please check it and try again."
-      primaryButtonLabel="Try Again"
-      onPrimaryAction={onTryAgain}
-      onBack={onBack}
-      useLeftArrow={true}
-    />
+    <OnboardingContainer>
+      <View style={styles.container}>
+        <View style={styles.iconContainer}>
+          <XCircle size={64} color={Colors.light.error} />
+        </View>
+        
+        <OnboardingTitle>Import Failed</OnboardingTitle>
+        
+        <ThemedText style={styles.description}>
+          {error || 'There was a problem importing your wallet. Please check your seed phrase and try again.'}
+        </ThemedText>
+        
+        <View style={styles.buttonContainer}>
+          <Button title="Try Again" onPress={onTryAgain} />
+          <Button title="Go Back" type="secondary" onPress={onBack} style={styles.backButton} />
+        </View>
+      </View>
+    </OnboardingContainer>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  iconContainer: {
+    marginBottom: 20,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 20,
+    opacity: 0.7,
+  },
+  buttonContainer: {
+    width: '100%',
+    marginTop: 20,
+  },
+  backButton: {
+    marginTop: 12,
+  }
+});

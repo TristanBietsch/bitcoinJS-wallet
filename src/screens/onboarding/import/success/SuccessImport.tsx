@@ -1,42 +1,86 @@
 import React from 'react'
-import { router } from 'expo-router'
-import StatusScreen from '@/src/components/ui/Feedback/StatusScreen'
-import { setOnboardingComplete } from '@/src/utils/storage'
-import { BaseCallbacks } from '@/src/types/ui'
+import { View, StyleSheet } from 'react-native'
+import { OnboardingContainer, OnboardingTitle } from '@/src/components/ui/OnboardingScreen'
+import { ThemedText } from '@/src/components/ui/Text'
+import { Button } from '@/src/components/ui/Button'
+import { CheckCircle } from 'lucide-react-native'
+import { Colors } from '@/src/constants/colors'
+import { useImport } from '@/src/features/wallet/import/ImportContext'
 
-type SuccessImportProps = Pick<BaseCallbacks, 'onComplete'>
+interface SuccessImportProps {
+  onComplete: () => void
+}
 
 /**
  * Screen displayed when wallet import succeeds
  */
 export default function SuccessImport({ onComplete }: SuccessImportProps) {
-  const handleGoHome = async () => {
-    try {
-      // First, mark onboarding as complete in storage
-      await setOnboardingComplete()
-      
-      // Then navigate to home screen
-      router.replace('/' as any)
-      
-      // Also call onComplete if provided (for backward compatibility)
-      if (onComplete) {
-        onComplete()
-      }
-    } catch (error) {
-      console.error('Error completing onboarding:', error)
-      // Still try to navigate even if there was an error
-      router.replace('/' as any)
-    }
-  }
+  const { wallet } = useImport();
   
   return (
-    <StatusScreen
-      type="success"
-      title="Import Successful!"
-      subtitle="Your wallet has been imported successfully."
-      primaryButtonLabel="Go to Wallet"
-      onPrimaryAction={handleGoHome}
-      showAnimation={true}
-    />
+    <OnboardingContainer>
+      <View style={styles.container}>
+        <View style={styles.iconContainer}>
+          <CheckCircle size={64} color={Colors.light.success} />
+        </View>
+        
+        <OnboardingTitle>Wallet Imported</OnboardingTitle>
+        
+        <ThemedText style={styles.description}>
+          Your wallet has been successfully imported. You can now start using Nummus.
+        </ThemedText>
+        
+        {wallet && (
+          <View style={styles.walletInfoContainer}>
+            <ThemedText style={styles.infoTitle}>Wallet Details</ThemedText>
+            <ThemedText style={styles.infoItem}>
+              Receiving Address: {wallet.addresses.nativeSegwit[0]}
+            </ThemedText>
+          </View>
+        )}
+        
+        <View style={styles.buttonContainer}>
+          <Button title="Continue" onPress={onComplete} />
+        </View>
+      </View>
+    </OnboardingContainer>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  iconContainer: {
+    marginBottom: 20,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 20,
+    opacity: 0.7,
+  },
+  walletInfoContainer: {
+    width: '100%',
+    padding: 16,
+    backgroundColor: Colors.light.background2,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  infoItem: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  buttonContainer: {
+    width: '100%',
+    marginTop: 30,
+  }
+});
