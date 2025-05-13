@@ -68,6 +68,21 @@ export default function SuccessImport({ onComplete }: SuccessImportProps) {
         
         <StatusIcon type="success" />
         
+        {/* Display wallet information */}
+        {wallet && (
+          <View style={styles.walletInfoContainer}>
+            <ThemedText style={styles.infoTitle}>Wallet Details</ThemedText>
+            <ThemedText style={styles.infoItem}>Wallet ID: {wallet.id}</ThemedText>
+            <ThemedText style={styles.infoItem}>
+              Receiving Address: {wallet.addresses.nativeSegwit[0]}
+            </ThemedText>
+            {wallet.balances && (
+              <ThemedText style={styles.infoItem}>
+                Balance: {wallet.balances.confirmed} sats
+              </ThemedText>
+            )}
+          </View>
+        )}
       </View>
       
       <OnboardingButton
