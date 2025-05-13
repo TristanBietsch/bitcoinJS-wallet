@@ -6,7 +6,7 @@ import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen'
 import PreparePhraseScreen from './create/prepare/PreparePhraseScreen'
 import GenerateSeedWords from './create/generate/GenerateSeedWords'
 import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen'
-import ImportWalletScreen from './import/input/ImportWalletScreen'
+import ImportFlow from '@/src/features/wallet/import/ImportFlow'
 import SuccessScreen from './status/SuccessScreen'
 import ErrorScreen from './status/ErrorScreen'
 import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
@@ -124,9 +124,9 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     case 'confirm-seed':
       return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} onBack={handleBackToGenerateSeed} />
     case 'import':
-      return <ImportWalletScreen 
+      return <ImportFlow 
         onComplete={handleImportComplete} 
-        onBack={handleBackToChoice} 
+        _onBack={handleBackToChoice} 
       />
     case 'success':
       return <SuccessScreen onComplete={handleSuccess} />

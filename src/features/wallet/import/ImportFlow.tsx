@@ -13,7 +13,7 @@ interface ImportFlowProps {
 /**
  * Component that handles the internal flow of the import process
  */
-function ImportFlowInternal() {
+function ImportFlowInternal({ onBack }: { onBack?: () => void }) {
   const { 
     state, 
     seedPhrase, 
@@ -42,7 +42,7 @@ function ImportFlowInternal() {
     
     case 'input':
     default:
-      return <ImportWalletScreen onBack={returnToInput} />
+      return <ImportWalletScreen onBack={onBack} />
   }
 }
 
@@ -53,7 +53,7 @@ function ImportFlowInternal() {
 export default function ImportFlow({ onComplete, _onBack }: ImportFlowProps) {
   return (
     <ImportProvider onComplete={onComplete}>
-      <ImportFlowInternal />
+      <ImportFlowInternal onBack={_onBack} />
     </ImportProvider>
   )
 } 
