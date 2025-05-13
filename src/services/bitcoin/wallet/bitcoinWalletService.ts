@@ -1,8 +1,14 @@
 import * as bitcoin from 'bitcoinjs-lib'
-import { validateMnemonic, generateRootKeyFromMnemonic } from './keyManagementService'
+import { validateMnemonic } from './keyManagementService'
 import { deriveAddresses } from './addressDerivationService'
 import { getDefaultNetwork } from '../network/bitcoinNetworkConfig'
 import { seedPhraseService } from './seedPhraseService'
+
+// Development mode detection
+const isDevelopment = __DEV__
+
+// Temporary storage for development mode only - DO NOT USE IN PRODUCTION
+let _tempSeedPhrase = ''
 
 export interface BitcoinWallet {
   id: string;
@@ -35,8 +41,23 @@ export class BitcoinWalletService {
     }
     
     try {
-      // Securely store the seed phrase
-      await seedPhraseService.storeSeedPhrase(mnemonic, 'primary_seed')
+      // In development mode, bypass secure storage if having issues
+      if (isDevelopment) {
+        try {
+          // First try the normal way
+          await seedPhraseService.storeSeedPhrase(mnemonic, 'primary_seed')
+          console.log('Seed phrase stored successfully with normal method')
+        } catch (storageError) {
+          console.warn('Secure storage failed, using development mode fallback:', storageError)
+          
+          // Store in temporary memory (ONLY FOR DEVELOPMENT)
+          _tempSeedPhrase = mnemonic
+          console.log('Using in-memory storage for development only')
+        }
+      } else {
+        // Production code - must use secure storage
+        await seedPhraseService.storeSeedPhrase(mnemonic, 'primary_seed')
+      }
       
       // Derive addresses
       const legacyAddresses = deriveAddresses(mnemonic, network, 'legacy', 0, 3)
@@ -72,6 +93,18 @@ export class BitcoinWalletService {
    */
   validateMnemonic(mnemonic: string): boolean {
     return validateMnemonic(mnemonic)
+  }
+  
+  /**
+   * Development-only method to get stored seed phrase
+   * Should NEVER be used in production
+   */
+  _devGetStoredPhrase(): string | null {
+    if (!isDevelopment) {
+      console.error('Attempted to access development-only method in production')
+      return null
+    }
+    return _tempSeedPhrase
   }
 }
 

@@ -6727,7 +6727,7 @@ expo-router@~5.0.5:
     server-only "^0.0.1"
     shallowequal "^1.1.0"
 
-expo-screen-capture@~7.1.4:
+expo-screen-capture@^7.1.4:
   version "7.1.4"
   resolved "https://registry.yarnpkg.com/expo-screen-capture/-/expo-screen-capture-7.1.4.tgz#0e99a619eb7c4b4271848187b537f47413298d8e"
   integrity sha512-MfKZiaNy3AdKog7gU19dCo9lSJMurmQUDzoN9K41vvIsani2xRCMKujEv4DhvEdagjIIz4bjlCnu35aiYiHb2g==

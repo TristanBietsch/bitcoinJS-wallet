@@ -5,6 +5,7 @@ import {
   clearSeedPhraseFromMemory
 } from '@/src/utils/security/seedPhraseProtection'
 import { createSecureDataContainer } from '@/src/utils/security/memoryProtection'
+import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
 
 /**
  * Custom hook to handle seed phrase security features
@@ -56,23 +57,36 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
    */
   const securelyStoreSeedPhrase = async (): Promise<boolean> => {
     try {
+      console.log('Attempting to securely store seed phrase...')
+      
       // Get the seed phrase from the secure container
       const securePhrase = secureContainer.getValue()
       
-      if (securePhrase) {
-        // Store it securely with a unique ID (in a real app, this would be more robust)
-        const seedPhraseId = `wallet_seed_${Date.now()}`
-        await secureStoreSeedPhrase(seedPhraseId, securePhrase)
-        
-        // Clear it from memory
-        clearSeedPhraseFromMemory(seedPhrase)
-        secureContainer.clear()
-        
-        return true
+      if (!securePhrase) {
+        setError('No seed phrase to store')
+        return false
       }
       
-      setError('No seed phrase to store')
-      return false
+      // First try using the simple seedPhraseService
+      try {
+        console.log('Storing with seedPhraseService...')
+        await seedPhraseService.storeSeedPhrase(securePhrase, 'primary_seed')
+        console.log('Successfully stored seed phrase with seedPhraseService')
+        return true
+      } catch (serviceError) {
+        console.error('Failed to store with seedPhraseService, trying alternative:', serviceError)
+        
+        // Fall back to direct secure storage
+        const seedPhraseId = `wallet_seed_${Date.now()}`
+        await secureStoreSeedPhrase(seedPhraseId, securePhrase)
+        console.log('Successfully stored seed phrase with direct method')
+      }
+      
+      // Clear it from memory
+      clearSeedPhraseFromMemory(seedPhrase)
+      secureContainer.clear()
+      
+      return true
     } catch (error) {
       console.error('Failed to securely store seed phrase:', error)
       setError('Failed to securely store seed phrase. Please try again.')

@@ -27,61 +27,61 @@ export default function CheckingSeedPhraseImport({
       // If it's a test bypass, just complete after a delay
       if (isTestBypass) {
         setTimeout(() => {
-          onComplete();
-        }, 2000);
-        return;
+          onComplete()
+        }, 2000)
+        return
       }
       
       try {
         // Validate the seed phrase
         if (!bitcoinWalletService.validateMnemonic(seedPhrase)) {
-          throw new Error('Invalid seed phrase');
+          throw new Error('Invalid seed phrase')
         }
         
         // For test purposes, show loading state for at least 1.5 seconds
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 1500))
         
         // Complete the import process
-        onComplete();
+        onComplete()
       } catch (error) {
-        console.error('Error during wallet import:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to import wallet';
-        onError(errorMessage);
+        console.error('Error during wallet import:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Failed to import wallet'
+        onError(errorMessage)
       }
     }
     
-    processImport();
-  }, [seedPhrase, onComplete, onError, isTestBypass]);
+    processImport()
+  }, [ seedPhrase, onComplete, onError, isTestBypass ])
   
   return (
     <OnboardingContainer>
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <ActivityIndicator size="large" color={Colors.light.buttons.primary} />
         <ThemedText style={styles.title}>Importing Wallet</ThemedText>
         <ThemedText style={styles.description}>
           Please wait while we validate and import your wallet...
         </ThemedText>
       </View>
     </OnboardingContainer>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+  container : {
+    flex              : 1,
+    justifyContent    : 'center',
+    alignItems        : 'center',
+    paddingHorizontal : 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
+  title : {
+    fontSize     : 24,
+    fontWeight   : 'bold',
+    marginTop    : 20,
+    marginBottom : 10,
   },
-  description: {
-    fontSize: 16,
-    textAlign: 'center',
-    opacity: 0.7,
+  description : {
+    fontSize  : 16,
+    textAlign : 'center',
+    opacity   : 0.7,
   }
-});
+})
