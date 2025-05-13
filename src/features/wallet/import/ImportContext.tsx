@@ -50,19 +50,20 @@ export function ImportProvider({ children, onComplete }: ImportProviderProps) {
   
   // Action functions
   const startChecking = async (phrase: string) => {
+    // Set checking state first before any asynchronous operations
     setSeedPhrase(phrase)
     setState('checking')
     
     try {
-      // Test error phrase check
+      // Handling test phrases
       if (phrase.trim() === TEST_ERROR_PHRASE) {
+        // Use setTimeout to ensure the checking state is visible for a moment
         setTimeout(() => {
           failImport('This is a test error')
         }, 2000)
         return
       }
       
-      // Test bypass check
       if (phrase.trim() === TEST_BYPASS_PHRASE) {
         setTimeout(() => {
           completeImport()
@@ -70,13 +71,30 @@ export function ImportProvider({ children, onComplete }: ImportProviderProps) {
         return
       }
       
-      // Real import logic
-      const importedWallet = await bitcoinWalletService.importFromMnemonic(phrase)
-      setWallet(importedWallet)
-      completeImport()
+      // Real import logic - wait for this to complete before changing state
+      try {
+        console.log('Starting wallet import process...')
+        const importedWallet = await bitcoinWalletService.importFromMnemonic(phrase)
+        
+        // Only set wallet and success state if import was successful
+        setWallet(importedWallet)
+        setState('success')
+        
+        // Call onComplete callback if provided
+        if (onComplete) onComplete()
+      } catch (importError) {
+        console.error('Import failed with error:', importError)
+        const errorMessage = importError instanceof Error ? 
+          importError.message : 'Unknown error occurred during import'
+        setError(errorMessage)
+        setState('error')
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred during import'
-      failImport(errorMessage)
+      console.error('Unexpected error during import process:', err)
+      const errorMessage = err instanceof Error ? 
+        err.message : 'Unknown error occurred during import'
+      setError(errorMessage)
+      setState('error')
     }
   }
   

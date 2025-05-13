@@ -35,7 +35,7 @@ export class BitcoinWalletService {
     mnemonic: string,
     network: bitcoin.networks.Network = getDefaultNetwork()
   ): Promise<BitcoinWallet> {
-    // Validate the mnemonic
+    // Validate the mnemonic 
     if (!validateMnemonic(mnemonic)) {
       throw new Error('Invalid seed phrase')
     }
@@ -59,7 +59,18 @@ export class BitcoinWalletService {
         await seedPhraseService.storeSeedPhrase(mnemonic, 'primary_seed')
       }
       
-      // Derive addresses
+      // Pre-validate that we can derive addresses before proceeding
+      try {
+        // First, try just one address to verify everything works
+        const testAddress = deriveAddresses(mnemonic, network, 'native_segwit', 0, 1)
+        console.log('Test address derivation successful:', testAddress[0].address)
+      } catch (derivationTestError) {
+        console.error('Address derivation validation failed:', derivationTestError)
+        throw new Error('Failed to derive Bitcoin addresses from seed phrase')
+      }
+      
+      // Now derive all addresses needed
+      console.log('Deriving addresses for all address types...')
       const legacyAddresses = deriveAddresses(mnemonic, network, 'legacy', 0, 3)
       const segwitAddresses = deriveAddresses(mnemonic, network, 'segwit', 0, 3)
       const nativeSegwitAddresses = deriveAddresses(mnemonic, network, 'native_segwit', 0, 3)
@@ -79,10 +90,13 @@ export class BitcoinWalletService {
         }
       }
       
+      console.log('Wallet import successful, addresses generated:', 
+        wallet.addresses.nativeSegwit[0])
+      
       return wallet
     } catch (error) {
       console.error('Error importing wallet from mnemonic:', error)
-      throw new Error('Failed to import wallet from seed phrase')
+      throw new Error(`Failed to import wallet from seed phrase: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
   

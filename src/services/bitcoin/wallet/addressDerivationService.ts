@@ -1,5 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib'
 import { generateRootKeyFromMnemonic, getDerivationPath } from './keyManagementService'
+import * as ecc from '@bitcoinerlab/secp256k1'
 
 export interface DerivedAddress {
   address: string;
@@ -58,30 +59,43 @@ const getAddressFromKeyPair = (
   network: bitcoin.networks.Network,
   addressType: 'legacy' | 'segwit' | 'native_segwit'
 ) => {
-  let address: string
-  
-  if (addressType === 'legacy') {
-    // P2PKH address (legacy)
-    address = bitcoin.payments.p2pkh({
-      pubkey : keyPair.publicKey,
-      network
-    }).address!
-  } else if (addressType === 'segwit') {
-    // P2SH-wrapped P2WPKH address (segwit)
-    address = bitcoin.payments.p2sh({
-      redeem : bitcoin.payments.p2wpkh({
-        pubkey : keyPair.publicKey,
+  try {
+    // Create a proper ECPair compatible object
+    const publicKey = Buffer.from(keyPair.publicKey)
+    
+    // Ensure we have a valid point for the publicKey
+    if (!ecc.isPoint(publicKey)) {
+      throw new Error('Invalid public key point')
+    }
+    
+    let address: string
+    
+    if (addressType === 'legacy') {
+      // P2PKH address (legacy)
+      address = bitcoin.payments.p2pkh({
+        pubkey : publicKey,
         network
-      }),
-      network
-    }).address!
-  } else {
-    // P2WPKH address (native segwit)
-    address = bitcoin.payments.p2wpkh({
-      pubkey : keyPair.publicKey,
-      network
-    }).address!
+      }).address!
+    } else if (addressType === 'segwit') {
+      // P2SH-wrapped P2WPKH address (segwit)
+      address = bitcoin.payments.p2sh({
+        redeem : bitcoin.payments.p2wpkh({
+          pubkey : publicKey,
+          network
+        }),
+        network
+      }).address!
+    } else {
+      // P2WPKH address (native segwit)
+      address = bitcoin.payments.p2wpkh({
+        pubkey : publicKey,
+        network
+      }).address!
+    }
+    
+    return { address }
+  } catch (error) {
+    console.error('Error generating address from key pair:', error)
+    throw new Error(`Failed to generate ${addressType} address`)
   }
-  
-  return { address }
 } 
