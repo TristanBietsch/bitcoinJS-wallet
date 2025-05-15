@@ -1,17 +1,18 @@
 import React from 'react'
-import { TouchableOpacity, StyleSheet } from 'react-native'
+import { TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
 
 interface ImportButtonProps {
   onPress: () => void
   disabled: boolean
+  isLoading?: boolean
 }
 
 /**
  * Standardized import button component
  */
-const ImportButton: React.FC<ImportButtonProps> = ({ onPress, disabled }) => {
+const ImportButton: React.FC<ImportButtonProps> = ({ onPress, disabled, isLoading = false }) => {
   const buttonOpacity = disabled ? 0.5 : 1
   
   return (
@@ -21,11 +22,15 @@ const ImportButton: React.FC<ImportButtonProps> = ({ onPress, disabled }) => {
         { opacity: buttonOpacity }
       ]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={disabled || isLoading}
     >
-      <ThemedText style={styles.buttonText}>
-        Import
-      </ThemedText>
+      {isLoading ? (
+        <ActivityIndicator size="small" color={Colors.light.buttons.text} />
+      ) : (
+        <ThemedText style={styles.buttonText}>
+          Import
+        </ThemedText>
+      )}
     </TouchableOpacity>
   )
 }

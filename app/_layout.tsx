@@ -1,7 +1,7 @@
 // Direct import of regenerator-runtime
 import 'regenerator-runtime/runtime'
 
-import React, { useCallback } from 'react'
+import React, { useEffect } from 'react'
 import "@/global.css"
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AppProvider } from '@/src/components/layout/Container'
@@ -12,6 +12,7 @@ import { usePathname, Slot } from 'expo-router'
 import { useFonts } from 'expo-font'
 import { StyleSheet } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { useWalletStore } from '@/src/store/walletStore'
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [ 
@@ -29,6 +30,15 @@ const HIDDEN_NAV_ROUTES = [
 export default function RootLayout() {
   const pathname = usePathname()
   
+  // Get wallet initialization function from our store
+  const initializeWallet = useWalletStore(state => state.initializeWallet)
+  
+  // Initialize wallet when app loads
+  useEffect(() => {
+    // Initialize wallet from secure storage
+    initializeWallet()
+  }, [ initializeWallet ])
+  
   // Check if bottom navigation should be hidden for current route
   const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.startsWith(route))
   
@@ -36,28 +46,23 @@ export default function RootLayout() {
     SpaceMono : require('../assets/fonts/SpaceMono-Regular.ttf'),
   })
 
-  // Memoize the content to prevent unnecessary re-renders during navigation
-  const renderContent = useCallback(() => {
-    if (!fontsLoaded) {
-      return null
-    }
-    
-    return (
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={styles.container}>
-          <AppProvider>
-            <View style={styles.content}>
-              <Slot />
-            </View>
-            {!shouldHideNav && <TabBottomNavigation />}
-            <StatusBar style="auto" />
-          </AppProvider>
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    )
-  }, [ fontsLoaded, shouldHideNav ])
+  if (!fontsLoaded) {
+    return null
+  }
 
-  return renderContent()
+  return (
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={styles.container}>
+        <AppProvider>
+          <View style={styles.content}>
+            <Slot />
+          </View>
+          {!shouldHideNav && <TabBottomNavigation />}
+          <StatusBar style="auto" />
+        </AppProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
+  )
 }
 
 const styles = StyleSheet.create({

@@ -5,15 +5,22 @@ import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator } from 'rea
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { Colors } from '@/src/constants/colors'
-import { useWalletWithFocusRefresh } from '@/src/context/WalletContext'
+import { useWalletStore } from '@/src/store/walletStore'
 
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)
-  const { loadWallet, isLoading: isWalletLoading, wallet } = useWalletWithFocusRefresh()
+  
+  // Use Zustand store to check wallet status
+  const { isInitialized, hasWallet, isSyncing, initializeWallet } = useWalletStore(state => ({
+    isInitialized    : state.isInitialized,
+    hasWallet        : !!state.wallet,
+    isSyncing        : state.isSyncing,
+    initializeWallet : state.initializeWallet
+  }))
 
-  // Only show loading spinner for initial load, not returns to the screen
-  // We'll only show loading if there's no wallet loaded yet
-  const isLoading = isChecking || (isWalletLoading && !wallet)
+  // Only show loading when initializing for the first time
+  // Otherwise, wallet data will be loaded silently in the background
+  const isLoading = isChecking || (!isInitialized && isSyncing)
 
   useEffect(() => {
     checkOnboardingStatus()
@@ -28,8 +35,8 @@ export default function Home() {
         // Redirect to onboarding route if not completed
         router.push('/onboarding' as any)
       } else {
-        // If onboarding is complete, load the wallet
-        await loadWallet()
+        // If onboarding is complete, the wallet will be loaded automatically
+        // by the RootLayout component, so we don't need to do it here
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error)
@@ -41,6 +48,8 @@ export default function Home() {
   }
 
   const handleResetOnboarding = async () => {
+    // Clear wallet data and reset onboarding status
+    await useWalletStore.getState().clearWallet()
     await resetOnboardingStatus()
     router.push('/onboarding' as any)
   }

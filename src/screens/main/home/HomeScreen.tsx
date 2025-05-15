@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
+import { useFocusEffect } from '@react-navigation/native'
 import Dropdown from '@/src/components/ui/Dropdown'
 import BalanceDisplay from '@/src/components/features/Balance/BalanceDisplay'
 import ActionButtons from '@/src/components/ui/Button/ActionButtons'
@@ -14,132 +15,79 @@ import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
 import AppHeader from '@/src/components/ui/Header/AppHeader'
 import { Scan } from 'lucide-react-native'
-import { useWalletWithFocusRefresh } from '@/src/context/WalletContext'
 import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
-
-// Global cache for formatted balance to prevent blinking during navigation
-const cachedBalanceState = {
-  lastCurrency   : 'BTC' as CurrencyType,
-  formattedValue : '',
-  balanceValues  : {
-    btcAmount  : 0,
-    usdAmount  : 0,
-    satsAmount : 0
-  }
-}
+import { useWalletBalance } from '@/src/store/walletStore'
 
 const HomeScreen = () => {
-  // Track if this is initial mount to prevent visible loading on navigation
-  const isInitialMount = useRef(true)
-
   // State for selected currency format
-  const [ currency, setCurrency ] = useState<CurrencyType>(() => cachedBalanceState.lastCurrency)
+  const [ currency, setCurrency ] = useState<CurrencyType>('BTC')
   
-  // State to track manual refresh vs background refresh
+  // Use our Zustand store instead of context
+  // Get only what we need, minimizing re-renders
+  const { balances, error: walletError, refreshBalance } = useWalletBalance()
+  
+  // Manual refresh state (only for explicit user-triggered refresh)
   const [ isManualRefresh, setIsManualRefresh ] = useState(false)
   
-  // Use wallet context with focus refresh for seamless background updates
-  const { 
-    balances, 
-    isBalanceLoading, 
-    error: walletError, 
-    refreshBalance,
-  } = useWalletWithFocusRefresh()
-  
-  // Use price context for USD conversion - only extract what we need
-  const { btcPrice, error: priceError } = useGlobalBitcoinPrice()
+  // Use price context for USD conversion
+  const { btcPrice, isLoading: isPriceLoading, error: priceError } = useGlobalBitcoinPrice()
   
   // Use fade animation hook
   const { fadeAnim, fadeTransition } = useFadeAnimation()
   
-  // Only show loading if it's an explicit manual refresh AND we're in initial mount
-  // Never show loading when returning to the screen
-  const isLoading = isManualRefresh && isBalanceLoading && isInitialMount.current
-  
   // Combined error state
   const error = walletError || priceError
+  
+  // We only show a loading indicator during price fetching or manual refresh
+  // Balance updates happen silently in the background with no UI flicker
+  const isLoading = isPriceLoading || isManualRefresh
   
   // Get access to store reset functions
   const resetSendStore = useSendStore(state => state.reset)
   const resetReceiveStore = useReceiveStore(state => state.resetState)
   
   // Reset any stored send and receive data when component mounts
-  // But only perform this once per app session
   useEffect(() => {
     resetSendStore()
     resetReceiveStore()
-    
-    // After first mount, we're no longer in initial state
-    return () => {
-      isInitialMount.current = false
-    }
   }, [])
   
-  // Calculated balance values - use useMemo to prevent recalculation on every render
+  // Background refresh when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Silent refresh (no loading indicator)
+      refreshBalance(true)
+      return () => {}
+    }, [ refreshBalance ])
+  )
+  
+  // Calculated balance values (using useMemo to prevent recalculations)
   const balanceValues = useMemo(() => {
-    // If we have a cached value and the balances haven't changed, use the cache
-    if (cachedBalanceState.balanceValues.satsAmount === balances.total && 
-        cachedBalanceState.balanceValues.btcAmount > 0) {
-      return cachedBalanceState.balanceValues
-    }
-    
-    // Otherwise calculate fresh values
     const btcAmount = balances.total / SATS_PER_BTC // Convert sats to BTC
     const usdAmount = btcPrice ? btcAmount * btcPrice : 0
     const satsAmount = balances.total
     
-    // Update the cache
-    const newValues = {
+    return {
       btcAmount,
       usdAmount,
       satsAmount
     }
-    cachedBalanceState.balanceValues = newValues
-    
-    return newValues
   }, [ balances.total, btcPrice ])
   
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
-    const newCurrency = value as CurrencyType
-    
-    // Update the global cache
-    cachedBalanceState.lastCurrency = newCurrency
-    
     fadeTransition(() => {
-      setCurrency(newCurrency)
+      setCurrency(value as CurrencyType)
     })
   }
   
-  // Get and format the balance - also memoize to prevent recalculations
+  // Get and format the balance (memoized to prevent unnecessary recalculations)
   const formattedBalance = useMemo(() => {
-    // If we have a cached value for this currency, use it initially to prevent blinking
-    if (cachedBalanceState.lastCurrency === currency && 
-        cachedBalanceState.formattedValue && 
-        !isManualRefresh) {
-      // We'll still calculate a new value and update the cache
-      setTimeout(() => {
-        const newFormattedValue = formatCurrency(
-          getAmountForCurrency(currency, balanceValues),
-          currency
-        )
-        cachedBalanceState.formattedValue = newFormattedValue
-      }, 0)
-      
-      return cachedBalanceState.formattedValue
-    }
-    
-    // Calculate a new formatted value
-    const newFormattedValue = formatCurrency(
+    return formatCurrency(
       getAmountForCurrency(currency, balanceValues),
       currency
     )
-    
-    // Update the cache
-    cachedBalanceState.formattedValue = newFormattedValue
-    
-    return newFormattedValue
-  }, [ currency, balanceValues, isManualRefresh ])
+  }, [ currency, balanceValues ])
   
   // Navigation handlers
   const handlePressSend = () => router.push('/send/send' as any)
@@ -158,7 +106,7 @@ const HomeScreen = () => {
   // Handle manual balance refresh (with visible loading)
   const handleManualRefresh = () => {
     setIsManualRefresh(true)
-    refreshBalance(true).finally(() => {
+    refreshBalance(false).finally(() => {
       setIsManualRefresh(false)
     })
   }

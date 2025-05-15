@@ -3,22 +3,23 @@ import { View, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
-import { useImport } from '@/src/features/wallet/import/ImportContext'
+import { useWalletStore } from '@/src/store/walletStore'
 import { setOnboardingComplete } from '@/src/utils/storage'
-import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
+import OnboardingContainer from '@/src/components/layout/OnboardingContainer'
 import StatusIcon from '@/src/components/ui/Feedback/StatusIcon'
-import ConfettiAnimation from '@/src/components/ui/Animations/ConfettiAnimation'
-import { OnboardingButton } from '@/src/components/ui/Button'
+import ConfettiAnimation from '@/src/components/ui/Animation/ConfettiAnimation'
+import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
 
 interface SuccessImportProps {
-  onComplete: () => void
+  onComplete?: () => void;
 }
 
 /**
  * Screen displayed when wallet import succeeds
  */
 export default function SuccessImport({ onComplete }: SuccessImportProps) {
-  const { wallet } = useImport()
+  // Get wallet from the Zustand store
+  const wallet = useWalletStore(state => state.wallet)
   
   // Set up the confetti animation to play automatically
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function SuccessImport({ onComplete }: SuccessImportProps) {
       console.error('Error completing onboarding:', error)
       // Still try to navigate even if there was an error, but with a delay
       setTimeout(() => {
-      router.replace('/' as any)
+        router.replace('/' as any)
       }, 500)
     }
   }
@@ -96,42 +97,41 @@ export default function SuccessImport({ onComplete }: SuccessImportProps) {
 
 const styles = StyleSheet.create({
   content : {
-    flex              : 1,
-    alignItems        : 'center',
-    justifyContent    : 'center',
-    paddingHorizontal : 20
+    alignItems     : 'center',
+    justifyContent : 'center',
+    marginVertical : 24,
+    width          : '100%',
   },
   title : {
     fontSize     : 28,
     fontWeight   : 'bold',
+    marginBottom : 12,
     textAlign    : 'center',
-    marginBottom : 10
   },
   subtitle : {
     fontSize     : 16,
     textAlign    : 'center',
-    marginBottom : 40
+    marginBottom : 40,
+    opacity      : 0.8,
   },
   walletInfoContainer : {
-    width           : '100%',
+    backgroundColor : '#F5F7FF',
+    borderRadius    : 12,
     padding         : 16,
-    backgroundColor : Colors.light.offWhite,
-    borderRadius    : 8,
-    marginTop       : 20,
-    marginBottom    : 30,
+    width           : '100%',
+    marginTop       : 24,
   },
   infoTitle : {
-    fontSize     : 14,
+    fontSize     : 18,
     fontWeight   : 'bold',
-    marginBottom : 8,
+    marginBottom : 12,
   },
   infoItem : {
-    fontSize     : 12,
-    marginBottom : 4,
+    fontSize     : 14,
+    marginBottom : 8,
+    opacity      : 0.8,
   },
   primaryButton : {
-    backgroundColor : Colors.light.buttons.primary,
-    marginBottom    : 30,
-    width           : '100%'
-  }
+    marginTop : 24,
+  },
 })

@@ -78,5 +78,15 @@ export const seedPhraseService = {
    */
   retrieveSeedPhrase : async (id: string = 'primary_seed'): Promise<string | null> => {
     return secureStore.get(`seed_phrase_${id}`)
+  },
+  
+  /**
+   * Remove a stored seed phrase from secure storage
+   * 
+   * @param id Optional identifier (defaults to 'primary_seed')
+   * @returns Promise resolving when removal is complete
+   */
+  removeSeedPhrase : async (id: string = 'primary_seed'): Promise<void> => {
+    await secureStore.delete(`seed_phrase_${id}`)
   }
 } 
