@@ -13,6 +13,7 @@ import { useFonts } from 'expo-font'
 import { StyleSheet } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useWalletStore } from '@/src/store/walletStore'
+import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils'
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [ 
@@ -33,10 +34,18 @@ export default function RootLayout() {
   // Get wallet initialization function from our store
   const initializeWallet = useWalletStore(state => state.initializeWallet)
   
-  // Initialize wallet when app loads
+  // Initialize wallet and security features when app loads
   useEffect(() => {
     // Initialize wallet from secure storage
     initializeWallet()
+    
+    // Schedule encryption key rotation (returns cleanup function)
+    const cleanupKeyRotation = scheduleKeyRotation()
+    
+    // Clean up when component unmounts
+    return () => {
+      cleanupKeyRotation()
+    }
   }, [ initializeWallet ])
   
   // Check if bottom navigation should be hidden for current route

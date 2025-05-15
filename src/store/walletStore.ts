@@ -1,13 +1,23 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import * as SecureStore from 'expo-secure-store'
+// SecureStore is now only used through secureStore utility
 import * as Keychain from 'react-native-keychain'
+import { Platform } from 'react-native'
 import { BitcoinWallet } from '@/src/services/bitcoin/wallet/bitcoinWalletService'
 import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
 import { validateMnemonic } from '@/src/services/bitcoin/wallet/keyManagementService'
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
 import { walletBalanceService } from '@/src/services/api/walletBalanceService'
+import { secureStore } from '@/src/services/storage/secureStore'
+import { 
+  encryptData, 
+  decryptData, 
+  encryptWithWebCrypto, 
+  decryptWithWebCrypto,
+  deriveStorageKey,
+  generateRandomGarbageData
+} from '@/src/utils/security/encryptionUtils'
 
 // Define the wallet store state type
 interface WalletState {
@@ -34,18 +44,29 @@ interface WalletState {
   clearWallet: () => Promise<void>
 }
 
-// Create secure storage for sensitive data
+// Create secure storage for sensitive data with enhanced encryption
 const secureStorage = {
   getItem : async (key: string): Promise<string | null> => {
     try {
-      // For sensitive data like seed phrase, use Keychain
+      // For sensitive data like seed phrase, use Keychain with additional encryption
       if (key === 'nummus-wallet-seedphrase') {
+        if (Platform.OS === 'web') {
+          const encryptedData = localStorage.getItem(key)
+          if (!encryptedData) return null
+          return await decryptWithWebCrypto(encryptedData)
+        }
+        
+        // For mobile platforms, use Keychain with our own encryption
         const result = await Keychain.getGenericPassword({ service: key })
-        return result ? result.password : null
+        if (!result) return null
+        
+        // Decrypt the password from Keychain
+        return await decryptData(result.password)
       }
       
-      // For other data, use SecureStore
-      return await SecureStore.getItemAsync(key)
+      // For other persistent data, use our enhanced secure store
+      const derivedKey = deriveStorageKey('nummus_wallet', key)
+      return await secureStore.get(derivedKey)
     } catch (error) {
       console.error('Error retrieving from secure storage:', error)
       return null
@@ -54,14 +75,24 @@ const secureStorage = {
   
   setItem : async (key: string, value: string): Promise<void> => {
     try {
-      // For sensitive data like seed phrase, use Keychain
+      // For sensitive data like seed phrase, use Keychain with our own encryption
       if (key === 'nummus-wallet-seedphrase') {
-        await Keychain.setGenericPassword(key, value, { service: key })
+        if (Platform.OS === 'web') {
+          // For web, use Web Crypto API
+          const encryptedValue = await encryptWithWebCrypto(value)
+          localStorage.setItem(key, encryptedValue)
+          return
+        }
+        
+        // Encrypt the value before storing in Keychain
+        const encryptedValue = await encryptData(value)
+        await Keychain.setGenericPassword(key, encryptedValue, { service: key })
         return
       }
       
-      // For other data, use SecureStore
-      await SecureStore.setItemAsync(key, value)
+      // For other persistent data, use our enhanced secure store
+      const derivedKey = deriveStorageKey('nummus_wallet', key)
+      await secureStore.set(derivedKey, value)
     } catch (error) {
       console.error('Error saving to secure storage:', error)
     }
@@ -69,14 +100,27 @@ const secureStorage = {
   
   removeItem : async (key: string): Promise<void> => {
     try {
-      // For sensitive data like seed phrase, use Keychain
+      // For sensitive data like seed phrase, securely wipe before removing
       if (key === 'nummus-wallet-seedphrase') {
+        if (Platform.OS === 'web') {
+          // Generate and store random garbage data before removing
+          const garbageData = await generateRandomGarbageData(1024)
+          const encryptedGarbage = await encryptWithWebCrypto(garbageData)
+          localStorage.setItem(key, encryptedGarbage)
+          localStorage.removeItem(key)
+          return
+        }
+        
+        // For mobile, overwrite with garbage then delete
+        const garbageData = await generateRandomGarbageData(1024)
+        await Keychain.setGenericPassword(key, garbageData, { service: key })
         await Keychain.resetGenericPassword({ service: key })
         return
       }
       
-      // For other data, use SecureStore
-      await SecureStore.deleteItemAsync(key)
+      // For other data, use secure deletion in our enhanced store
+      const derivedKey = deriveStorageKey('nummus_wallet', key)
+      await secureStore.delete(derivedKey)
     } catch (error) {
       console.error('Error removing from secure storage:', error)
     }

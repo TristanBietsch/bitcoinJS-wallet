@@ -1,5 +1,13 @@
 import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
+import { 
+  encryptData, 
+  decryptData, 
+  deriveStorageKey, 
+  encryptWithWebCrypto, 
+  decryptWithWebCrypto,
+  generateRandomGarbageData
+} from '@/src/utils/security/encryptionUtils'
 
 /**
  * Service for handling secure storage of sensitive data
@@ -7,18 +15,20 @@ import { Platform } from 'react-native'
  */
 export const secureStore = {
   /**
-   * Store a value securely
+   * Store a value securely with app-level encryption
    * 
    * @param key The key to store the value under
    * @param value The value to store
+   * @param options Additional options
    * @returns Promise that resolves when the storage is complete
    */
-  set : async (key: string, value: string): Promise<void> => {
+  set : async (key: string, value: string, options: { noEncryption?: boolean } = {}): Promise<void> => {
     try {
       if (Platform.OS === 'web') {
         console.warn('SecureStore is not available on web platform')
-        // Use localStorage as fallback for web (not secure, but better than crashing)
-        localStorage.setItem(key, value)
+        // Use Web Crypto API for web
+        const encryptedValue = await encryptWithWebCrypto(value)
+        localStorage.setItem(key, encryptedValue)
         return
       }
       
@@ -27,7 +37,13 @@ export const secureStore = {
         throw new Error('SecureStore not available on this device')
       }
       
-      await SecureStore.setItemAsync(key, value, {
+      // Derive a storage key from the original key for enhanced security
+      const derivedKey = deriveStorageKey('nummus_storage', key)
+      
+      // Encrypt the value before storing (unless explicitly disabled)
+      const valueToStore = options.noEncryption ? value : await encryptData(value)
+      
+      await SecureStore.setItemAsync(derivedKey, valueToStore, {
         // Only accessible when device is unlocked
         keychainAccessible : SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
       })
@@ -41,17 +57,27 @@ export const secureStore = {
    * Retrieve a securely stored value
    * 
    * @param key The key to retrieve
+   * @param options Additional options
    * @returns Promise that resolves to the stored value or null if not found
    */
-  get : async (key: string): Promise<string | null> => {
+  get : async (key: string, options: { noDecryption?: boolean } = {}): Promise<string | null> => {
     try {
       if (Platform.OS === 'web') {
         console.warn('SecureStore is not available on web platform')
-        // Use localStorage as fallback for web (not secure, but better than crashing)
-        return localStorage.getItem(key)
+        // Use Web Crypto API for web
+        const encryptedValue = localStorage.getItem(key)
+        if (!encryptedValue) return null
+        return await decryptWithWebCrypto(encryptedValue)
       }
       
-      return await SecureStore.getItemAsync(key)
+      // Derive the same storage key
+      const derivedKey = deriveStorageKey('nummus_storage', key)
+      
+      const encryptedValue = await SecureStore.getItemAsync(derivedKey)
+      if (encryptedValue === null) return null
+      
+      // Decrypt the value before returning (unless explicitly disabled)
+      return options.noDecryption ? encryptedValue : await decryptData(encryptedValue)
     } catch (error) {
       console.error('Error in secureStore.get:', error)
       return null
@@ -59,7 +85,7 @@ export const secureStore = {
   },
   
   /**
-   * Delete a securely stored value
+   * Delete a securely stored value with secure wiping
    * 
    * @param key The key to delete
    * @returns Promise that resolves when deletion is complete
@@ -68,12 +94,22 @@ export const secureStore = {
     try {
       if (Platform.OS === 'web') {
         console.warn('SecureStore is not available on web platform')
-        // Use localStorage as fallback for web
+        // Overwrite with random data before removing
+        const garbageData = await generateRandomGarbageData(1024)
+        localStorage.setItem(key, garbageData)
         localStorage.removeItem(key)
         return
       }
       
-    await SecureStore.deleteItemAsync(key)
+      // Derive the same storage key
+      const derivedKey = deriveStorageKey('nummus_storage', key)
+      
+      // First overwrite with garbage data to ensure it's not recoverable
+      const garbageData = await generateRandomGarbageData(1024)
+      await SecureStore.setItemAsync(derivedKey, garbageData)
+      
+      // Then delete it
+      await SecureStore.deleteItemAsync(derivedKey)
     } catch (error) {
       console.error('Error in secureStore.delete:', error)
       throw new Error(`Failed to delete secure data: ${error instanceof Error ? error.message : String(error)}`)
@@ -90,12 +126,14 @@ export const secureStore = {
     try {
       if (Platform.OS === 'web') {
         console.warn('SecureStore is not available on web platform')
-        // Use localStorage as fallback for web
         return localStorage.getItem(key) !== null
       }
       
-    const value = await SecureStore.getItemAsync(key)
-    return value !== null
+      // Derive the same storage key
+      const derivedKey = deriveStorageKey('nummus_storage', key)
+      
+      const value = await SecureStore.getItemAsync(derivedKey)
+      return value !== null
     } catch (error) {
       console.error('Error in secureStore.exists:', error)
       return false

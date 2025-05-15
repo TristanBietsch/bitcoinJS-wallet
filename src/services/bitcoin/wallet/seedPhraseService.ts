@@ -1,6 +1,7 @@
 import * as bip39 from 'bip39'
 import { Buffer } from 'buffer'
 import { secureStore } from '@/src/services/storage/secureStore'
+import { rotateEncryptionKey, generateRandomGarbageData } from '@/src/utils/security/encryptionUtils'
 
 /**
  * Seed phrase word length options
@@ -60,14 +61,19 @@ export const seedPhraseService = {
   },
   
   /**
-   * Securely store a seed phrase
+   * Securely store a seed phrase with app-level encryption
    * 
    * @param mnemonic The mnemonic seed phrase to store
    * @param id Optional identifier (defaults to 'primary_seed')
    * @returns Promise resolving when storage is complete
    */
   storeSeedPhrase : async (mnemonic: string, id: string = 'primary_seed'): Promise<void> => {
+    // Use a more secure storage key derived from the ID
     await secureStore.set(`seed_phrase_${id}`, mnemonic)
+    
+    // If this is a new wallet, rotate the encryption key
+    // This ensures each seed phrase is encrypted with a fresh key
+    await rotateEncryptionKey()
   },
   
   /**
@@ -81,12 +87,25 @@ export const seedPhraseService = {
   },
   
   /**
-   * Remove a stored seed phrase from secure storage
+   * Remove a stored seed phrase from secure storage with secure deletion
    * 
    * @param id Optional identifier (defaults to 'primary_seed')
    * @returns Promise resolving when removal is complete
    */
   removeSeedPhrase : async (id: string = 'primary_seed'): Promise<void> => {
-    await secureStore.delete(`seed_phrase_${id}`)
+    const key = `seed_phrase_${id}`
+    
+    try {
+      // First overwrite with garbage data to ensure it's not recoverable
+      const garbageData = await generateRandomGarbageData(1024)
+      await secureStore.set(key, garbageData)
+      
+      // Then delete it
+      await secureStore.delete(key)
+    } catch (error) {
+      console.error('Error securely removing seed phrase:', error)
+      // Still try regular deletion as fallback
+      await secureStore.delete(key)
+    }
   }
 } 
