@@ -37,8 +37,8 @@ export default function ErrorImport({ onTryAgain, onBack }: ErrorImportProps) {
             label="Go Back" 
             onPress={onBack} 
             style={styles.backButton}
-            useLeftArrow={true}
-          />
+      useLeftArrow={true}
+    />
         </View>
       </View>
     </OnboardingContainer>

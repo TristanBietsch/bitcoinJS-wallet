@@ -5,14 +5,15 @@ import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator } from 'rea
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { Colors } from '@/src/constants/colors'
-import { useWallet } from '@/src/context/WalletContext'
+import { useWalletWithFocusRefresh } from '@/src/context/WalletContext'
 
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)
-  const { loadWallet, isLoading: isWalletLoading } = useWallet()
+  const { loadWallet, isLoading: isWalletLoading, wallet } = useWalletWithFocusRefresh()
 
-  // Combined loading state  
-  const isLoading = isChecking || isWalletLoading
+  // Only show loading spinner for initial load, not returns to the screen
+  // We'll only show loading if there's no wallet loaded yet
+  const isLoading = isChecking || (isWalletLoading && !wallet)
 
   useEffect(() => {
     checkOnboardingStatus()

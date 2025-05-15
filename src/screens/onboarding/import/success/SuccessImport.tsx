@@ -47,7 +47,7 @@ export default function SuccessImport({ onComplete }: SuccessImportProps) {
       console.error('Error completing onboarding:', error)
       // Still try to navigate even if there was an error, but with a delay
       setTimeout(() => {
-        router.replace('/' as any)
+      router.replace('/' as any)
       }, 500)
     }
   }

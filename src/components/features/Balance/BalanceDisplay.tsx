@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react'
+import React, { ReactNode, useEffect, useState, useRef, memo } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import LoadingIndicator from '@/src/components/ui/Feedback/LoadingIndicator'
@@ -18,7 +18,7 @@ interface BalanceDisplayProps {
 /**
  * Reusable component for displaying wallet balance with loading and error states
  */
-const BalanceDisplay = ({
+const BalanceDisplay = memo(({
   isLoading,
   error,
   currency,
@@ -27,13 +27,30 @@ const BalanceDisplay = ({
   onRetry,
   currencySelector
 }: BalanceDisplayProps) => {
+  // Store the last non-loading balance for smooth transitions
+  const [stableBalance, setStableBalance] = useState(formattedBalance)
+  const prevLoadingRef = useRef(isLoading)
+
+  // Only update the displayed balance when not loading
+  useEffect(() => {
+    // If we're not in a loading state, update the stable balance
+    if (!isLoading && formattedBalance !== stableBalance) {
+      setStableBalance(formattedBalance)
+    }
+    
+    prevLoadingRef.current = isLoading
+  }, [ isLoading, formattedBalance, stableBalance ])
+
   // Render the balance based on currency type
   const renderBalance = () => {
+    // Use stableBalance to prevent flickering during loading
+    const displayBalance = isLoading ? stableBalance : formattedBalance
+    
     if (currency === 'SATS') {
       return (
         <View style={styles.balanceRow}>
           <ThemedText style={styles.balanceAmount}>
-            {formattedBalance}
+            {displayBalance}
           </ThemedText>
           <ThemedText style={styles.satsLabel}>
             Sats
@@ -43,7 +60,7 @@ const BalanceDisplay = ({
     } else {
       return (
         <ThemedText style={styles.balanceAmount}>
-          {formattedBalance}
+          {displayBalance}
         </ThemedText>
       )
     }
@@ -55,13 +72,13 @@ const BalanceDisplay = ({
         Current Balance:
       </ThemedText>
       
-      {isLoading ? (
+      {isLoading && !stableBalance ? (
         <LoadingIndicator style={styles.loader} />
       ) : error ? (
         <ErrorDisplay error={error} onRetry={onRetry} />
       ) : (
         <>
-          <Animated.View style={[ styles.balanceDisplayContainer, { opacity: fadeAnim } ]}>
+          <Animated.View style={[styles.balanceDisplayContainer, { opacity: fadeAnim }]}>
             {renderBalance()}
           </Animated.View>
           
@@ -71,11 +88,19 @@ const BalanceDisplay = ({
               {currencySelector}
             </View>
           )}
+          
+          {/* Show a small loading indicator only if we have a stable balance to display */}
+          {isLoading && stableBalance && (
+            <LoadingIndicator 
+              style={styles.miniLoader} 
+              size="small" 
+            />
+          )}
         </>
       )}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   balanceContainer : {
@@ -103,6 +128,11 @@ const styles = StyleSheet.create({
   },
   loader : {
     marginVertical : 20,
+  },
+  miniLoader : {
+    marginTop  : 10,
+    height     : 20,
+    opacity    : 0.5,
   },
   balanceDisplayContainer : {
     opacity        : 1,

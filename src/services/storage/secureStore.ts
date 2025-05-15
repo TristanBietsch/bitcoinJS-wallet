@@ -73,7 +73,7 @@ export const secureStore = {
         return
       }
       
-      await SecureStore.deleteItemAsync(key)
+    await SecureStore.deleteItemAsync(key)
     } catch (error) {
       console.error('Error in secureStore.delete:', error)
       throw new Error(`Failed to delete secure data: ${error instanceof Error ? error.message : String(error)}`)
@@ -94,8 +94,8 @@ export const secureStore = {
         return localStorage.getItem(key) !== null
       }
       
-      const value = await SecureStore.getItemAsync(key)
-      return value !== null
+    const value = await SecureStore.getItemAsync(key)
+    return value !== null
     } catch (error) {
       console.error('Error in secureStore.exists:', error)
       return false

@@ -81,12 +81,12 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
         await secureStoreSeedPhrase(seedPhraseId, securePhrase)
         console.log('Successfully stored seed phrase with direct method')
       }
-      
-      // Clear it from memory
-      clearSeedPhraseFromMemory(seedPhrase)
-      secureContainer.clear()
-      
-      return true
+        
+        // Clear it from memory
+        clearSeedPhraseFromMemory(seedPhrase)
+        secureContainer.clear()
+        
+        return true
     } catch (error) {
       console.error('Failed to securely store seed phrase:', error)
       setError('Failed to securely store seed phrase. Please try again.')

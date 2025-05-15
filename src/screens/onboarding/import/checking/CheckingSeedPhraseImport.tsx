@@ -15,7 +15,7 @@ interface CheckingSeedPhraseImportProps {
 /**
  * Screen component shown during seed phrase import verification
  */
-export default function CheckingSeedPhraseImport({
+export default function CheckingSeedPhraseImport({ 
   seedPhrase,
   onComplete,
   onError,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import Dropdown from '@/src/components/ui/Dropdown'
@@ -14,15 +14,23 @@ import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
 import AppHeader from '@/src/components/ui/Header/AppHeader'
 import { Scan } from 'lucide-react-native'
-import { useWallet } from '@/src/context/WalletContext'
+import { useWalletWithFocusRefresh } from '@/src/context/WalletContext'
 import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
 
 const HomeScreen = () => {
   // State for selected currency format
   const [ currency, setCurrency ] = useState<CurrencyType>('BTC')
   
-  // Use wallet context for real wallet data
-  const { balances, isLoading: isWalletLoading, error: walletError, refreshBalance } = useWallet()
+  // State to track manual refresh vs background refresh
+  const [ isManualRefresh, setIsManualRefresh ] = useState(false)
+  
+  // Use wallet context with focus refresh for seamless background updates
+  const { 
+    balances, 
+    isBalanceLoading, 
+    error: walletError, 
+    refreshBalance,
+  } = useWalletWithFocusRefresh()
   
   // Use price context for USD conversion
   const { btcPrice, isLoading: isPriceLoading, error: priceError } = useGlobalBitcoinPrice()
@@ -30,8 +38,11 @@ const HomeScreen = () => {
   // Use fade animation hook
   const { fadeAnim, fadeTransition } = useFadeAnimation()
   
-  // Combined loading state
-  const isLoading = isWalletLoading || isPriceLoading
+  // Only show loading if it's a manual refresh or initial load with no balance yet
+  // This prevents the UI from blinking during background refreshes
+  const isLoading = (isManualRefresh && isBalanceLoading) || 
+                    (!balances.total && isBalanceLoading) || 
+                    isPriceLoading
   
   // Combined error state
   const error = walletError || priceError
@@ -46,10 +57,18 @@ const HomeScreen = () => {
     resetReceiveStore()
   }, [])
   
-  // Calculated balance values
-  const btcAmount = balances.total / SATS_PER_BTC // Convert sats to BTC
-  const usdAmount = btcPrice ? btcAmount * btcPrice : 0
-  const satsAmount = balances.total
+  // Calculated balance values - use useMemo to prevent recalculation on every render
+  const balanceValues = useMemo(() => {
+    const btcAmount = balances.total / SATS_PER_BTC // Convert sats to BTC
+    const usdAmount = btcPrice ? btcAmount * btcPrice : 0
+    const satsAmount = balances.total
+    
+    return {
+      btcAmount,
+      usdAmount,
+      satsAmount
+    }
+  }, [ balances.total, btcPrice ])
   
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
@@ -58,11 +77,13 @@ const HomeScreen = () => {
     })
   }
   
-  // Get and format the balance
-  const formattedBalance = formatCurrency(
-    getAmountForCurrency(currency, { usdAmount, btcAmount, satsAmount }),
-    currency
-  )
+  // Get and format the balance - also memoize to prevent recalculations
+  const formattedBalance = useMemo(() => {
+    return formatCurrency(
+      getAmountForCurrency(currency, balanceValues),
+      currency
+    )
+  }, [ currency, balanceValues ])
   
   // Navigation handlers
   const handlePressSend = () => router.push('/send/send' as any)
@@ -76,6 +97,14 @@ const HomeScreen = () => {
   // Handle scan button press - Navigate to QR menu screen
   const handleScanPress = () => {
     router.push('/main/qr' as any)
+  }
+  
+  // Handle manual balance refresh (with visible loading)
+  const handleManualRefresh = () => {
+    setIsManualRefresh(true)
+    refreshBalance(true).finally(() => {
+      setIsManualRefresh(false)
+    })
   }
 
   // Currency dropdown component
@@ -114,7 +143,7 @@ const HomeScreen = () => {
         currency={currency}
         formattedBalance={formattedBalance}
         fadeAnim={fadeAnim}
-        onRetry={refreshBalance}
+        onRetry={handleManualRefresh}
         currencySelector={currencySelector}
       />
       
