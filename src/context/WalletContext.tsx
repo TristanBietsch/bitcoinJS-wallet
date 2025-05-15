@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react'
 import { BitcoinWallet } from '@/src/services/bitcoin/wallet/bitcoinWalletService'
 import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
 import { walletBalanceService } from '../services/api/walletBalanceService'
@@ -7,6 +7,19 @@ import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivation
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
 import { useFocusEffect } from '@react-navigation/native'
 import { AppState, AppStateStatus } from 'react-native'
+
+// Keep a global reference to wallet state to ensure persistence across navigation
+// This prevents the wallet state from being lost when the context is unmounted
+const globalWalletState = {
+  wallet   : null as BitcoinWallet | null,
+  balances : {
+    confirmed   : 0,
+    unconfirmed : 0,
+    total       : 0
+  },
+  lastRefreshTime : 0,
+  isInitialized   : false
+}
 
 interface WalletContextType {
   wallet: BitcoinWallet | null;
@@ -51,23 +64,38 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
   children, 
   autoLoad = true
 }) => {
-  const [ wallet, setWallet ] = useState<BitcoinWallet | null>(null)
+  // Track if this is the first mount of the provider
+  const isFirstMount = useRef(true)
+  
+  // Use the global wallet state if it exists, otherwise initialize with defaults
+  const [ wallet, setWallet ] = useState<BitcoinWallet | null>(() => globalWalletState.wallet)
   const [ isLoading, setIsLoading ] = useState<boolean>(false)
   const [ error, setError ] = useState<string | null>(null)
   
-  const [ balances, setBalances ] = useState({
-    confirmed   : 0,
-    unconfirmed : 0,
-    total       : 0
-  })
+  const [ balances, setBalances ] = useState(() => globalWalletState.balances)
   const [ isBalanceLoading, setIsBalanceLoading ] = useState<boolean>(false)
   const [ balanceError, setBalanceError ] = useState<string | null>(null)
-  const [ _lastRefreshTime, setLastRefreshTime ] = useState<number>(0)
+  const [ _lastRefreshTime, setLastRefreshTime ] = useState<number>(globalWalletState.lastRefreshTime)
+  
+  // Keep track of in-flight requests to prevent multiple simultaneous refreshes
+  const refreshInProgress = useRef(false)
 
   // Load wallet from storage
   const loadWallet = async () => {
+    // If wallet is already loaded or loading is in progress, don't reload
+    if (globalWalletState.isInitialized || refreshInProgress.current) {
+      console.log('Wallet already initialized, skipping loadWallet')
+      return
+    }
+    
     try {
-      setIsLoading(true)
+      refreshInProgress.current = true
+      
+      // Only show loading indicator on initial app load
+      if (isFirstMount.current) {
+        setIsLoading(true)
+      }
+      
       setError(null)
       
       // First, try to retrieve the stored seed phrase
@@ -76,6 +104,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
         console.log('No seed phrase found in storage')
         setWallet(null)
         setIsLoading(false)
+        refreshInProgress.current = false
         return
       }
       
@@ -109,24 +138,34 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
         }
       }
       
-      // Set wallet in state
+      // Update global state first
+      globalWalletState.wallet = walletData
+      globalWalletState.isInitialized = true
+      
+      // Then update component state
       setWallet(walletData)
       console.log('Wallet loaded with addresses:', walletData.addresses.nativeSegwit[0])
       
       // Fetch initial balance - we want to show loading indicator for initial load
-      await refreshBalanceForWallet(walletData, true)
+      await refreshBalanceForWallet(walletData, isFirstMount.current)
+      
+      // No longer first mount
+      isFirstMount.current = false
     } catch (err) {
       console.error('Error loading wallet:', err)
       setError(err instanceof Error ? err.message : 'Unknown error loading wallet')
       setWallet(null)
     } finally {
       setIsLoading(false)
+      refreshInProgress.current = false
     }
   }
   
   // Refresh wallet balance with option to show/hide loading indicator
   const refreshBalanceForWallet = async (walletToRefresh: BitcoinWallet, showLoading = true) => {
-    if (!walletToRefresh) return
+    if (!walletToRefresh || refreshInProgress.current) return
+    
+    refreshInProgress.current = true
     
     try {
       // Only show loading indicator if explicitly requested
@@ -155,6 +194,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
         newBalances.unconfirmed !== balances.unconfirmed
         
       if (hasBalanceChanged) {
+        // Update global state first
+        globalWalletState.balances = newBalances
+        
         // For silent refresh, don't trigger UI updates for same values
         setBalances(prev => {
           // Return the same object reference if values haven't changed
@@ -177,6 +219,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
             return prev
           }
           
+          // Update the global wallet state
+          if (globalWalletState.wallet) {
+            globalWalletState.wallet.balances = {
+              confirmed   : balanceData.confirmed,
+              unconfirmed : balanceData.unconfirmed
+            }
+          }
+          
           return {
             ...prev,
             balances : {
@@ -192,7 +242,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
       }
       
       // Update last refresh timestamp
-      setLastRefreshTime(Date.now())
+      const now = Date.now()
+      globalWalletState.lastRefreshTime = now
+      setLastRefreshTime(now)
     } catch (err) {
       console.error('Error fetching wallet balance:', err)
       if (showLoading) {
@@ -203,6 +255,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
       if (showLoading) {
         setIsBalanceLoading(false)
       }
+      refreshInProgress.current = false
     }
   }
   
@@ -216,15 +269,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
   // Silent refresh without loading indicator
   const silentRefreshBalance = async () => {
     if (wallet) {
+      // Don't show any loading indicators for silent refresh
       await refreshBalanceForWallet(wallet, false)
     }
   }
+  
+  // UseEffect hooks modified to ensure no blinking during navigation
   
   // Listen for app state changes to refresh balance when app comes to foreground
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active' && wallet) {
-        // App has come to the foreground
+        // App has come to the foreground - completely silent refresh
         silentRefreshBalance()
       }
     })
@@ -234,9 +290,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
     }
   }, [ wallet ])
   
-  // Auto-load wallet on mount if enabled
+  // Auto-load wallet on mount if enabled, but only if not already initialized
   useEffect(() => {
-    if (autoLoad) {
+    if (autoLoad && !globalWalletState.isInitialized) {
       loadWallet()
     }
   }, [ autoLoad ])
@@ -244,6 +300,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({
   // Periodic silent refresh (every 2 minutes if wallet is loaded)
   useEffect(() => {
     if (!wallet) return
+    
+    // First refresh on mount should happen silently in the background
+    // Only if it's been more than 30 seconds since the last refresh
+    const timeSinceLastRefresh = Date.now() - globalWalletState.lastRefreshTime
+    if (timeSinceLastRefresh > 30 * 1000 && !isFirstMount.current) {
+      silentRefreshBalance()
+    }
     
     const refreshInterval = setInterval(() => {
       silentRefreshBalance()
@@ -284,12 +347,24 @@ export const useWallet = (): WalletContextType => {
 // Custom hook for screens to use that handles focus events
 export const useWalletWithFocusRefresh = (): WalletContextType => {
   const walletContext = useWallet()
+  const isInitialFocus = useRef(true)
   
   // Silently refresh balance when screen comes into focus
+  // But NEVER show loading indicators or trigger UI changes
   useFocusEffect(
     React.useCallback(() => {
       if (walletContext.wallet) {
-        walletContext.silentRefreshBalance()
+        // Skip the first focus event to prevent double loading
+        // (since useEffect already triggered a load)
+        if (isInitialFocus.current) {
+          isInitialFocus.current = false
+          return
+        }
+        
+        // ALWAYS use silentRefreshBalance to prevent loading spinners
+        setTimeout(() => {
+          walletContext.silentRefreshBalance()
+        }, 300) // Add a small delay to allow UI to settle first
       }
       return () => {}
     }, [ walletContext.wallet ])

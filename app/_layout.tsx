@@ -1,7 +1,7 @@
 // Direct import of regenerator-runtime
 import 'regenerator-runtime/runtime'
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import "@/global.css"
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AppProvider } from '@/src/components/layout/Container'
@@ -36,23 +36,28 @@ export default function RootLayout() {
     SpaceMono : require('../assets/fonts/SpaceMono-Regular.ttf'),
   })
 
-  if (!fontsLoaded) {
-    return null
-  }
+  // Memoize the content to prevent unnecessary re-renders during navigation
+  const renderContent = useCallback(() => {
+    if (!fontsLoaded) {
+      return null
+    }
+    
+    return (
+      <SafeAreaProvider>
+        <GestureHandlerRootView style={styles.container}>
+          <AppProvider>
+            <View style={styles.content}>
+              <Slot />
+            </View>
+            {!shouldHideNav && <TabBottomNavigation />}
+            <StatusBar style="auto" />
+          </AppProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    )
+  }, [ fontsLoaded, shouldHideNav ])
 
-  return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={styles.container}>
-        <AppProvider>
-          <View style={styles.content}>
-            <Slot />
-          </View>
-          {!shouldHideNav && <TabBottomNavigation />}
-          <StatusBar style="auto" />
-        </AppProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
-  )
+  return renderContent()
 }
 
 const styles = StyleSheet.create({

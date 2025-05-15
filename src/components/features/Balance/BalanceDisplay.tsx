@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState, useRef, memo } from 'react'
+import React, { ReactNode, useEffect, useRef, memo, useMemo } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import LoadingIndicator from '@/src/components/ui/Feedback/LoadingIndicator'
@@ -12,95 +12,201 @@ interface BalanceDisplayProps {
   formattedBalance: string
   fadeAnim: Animated.Value
   onRetry?: () => void
-  currencySelector?: ReactNode // New prop for currency selector
+  currencySelector?: ReactNode
 }
 
 /**
- * Reusable component for displaying wallet balance with loading and error states
+ * Completely rewritten balance display with anti-flicker technology
+ * Uses direct animation control and prevents any component updates
+ * during background refreshes
  */
-const BalanceDisplay = memo(({
-  isLoading,
-  error,
-  currency,
-  formattedBalance,
-  fadeAnim,
-  onRetry,
-  currencySelector
-}: BalanceDisplayProps) => {
-  // Store the last non-loading balance for smooth transitions
-  const [stableBalance, setStableBalance] = useState(formattedBalance)
-  const prevLoadingRef = useRef(isLoading)
-
-  // Only update the displayed balance when not loading
-  useEffect(() => {
-    // If we're not in a loading state, update the stable balance
-    if (!isLoading && formattedBalance !== stableBalance) {
-      setStableBalance(formattedBalance)
-    }
+const BalanceDisplay = (props: BalanceDisplayProps) => {
+  const {
+    isLoading,
+    error,
+    currency,
+    formattedBalance,
+    onRetry,
+    currencySelector
+  } = props
+  
+  // Store component refs that should never change to avoid re-renders
+  const component = useRef({
+    // Main balance value that's displayed
+    displayValue : formattedBalance || '',
     
-    prevLoadingRef.current = isLoading
-  }, [ isLoading, formattedBalance, stableBalance ])
-
-  // Render the balance based on currency type
-  const renderBalance = () => {
-    // Use stableBalance to prevent flickering during loading
-    const displayBalance = isLoading ? stableBalance : formattedBalance
+    // Animation values
+    mainOpacity : new Animated.Value(1),
     
-    if (currency === 'SATS') {
-      return (
-        <View style={styles.balanceRow}>
-          <ThemedText style={styles.balanceAmount}>
-            {displayBalance}
-          </ThemedText>
-          <ThemedText style={styles.satsLabel}>
-            Sats
-          </ThemedText>
-        </View>
-      )
-    } else {
+    // Stable representation of loading state
+    isCurrentlyLoading : isLoading,
+    
+    // The last time the display was updated
+    lastUpdateTime : Date.now(),
+    
+    // Flag to track initial vs subsequent loads
+    hasShownInitialValue : !!formattedBalance,
+    
+    // Currency suffix for SATS
+    currencySuffix : currency === 'SATS' ? ' Sats' : '',
+  }).current
+  
+  // Create memoized views that won't change during prop updates
+  const views = useMemo(() => {
+    // Currency-specific render function
+    const createBalanceText = (value: string, currency: CurrencyType) => {
+      if (currency === 'SATS') {
+        return (
+          <View style={styles.balanceRow}>
+            <ThemedText style={styles.balanceAmount}>
+              {value}
+            </ThemedText>
+            <ThemedText style={styles.satsLabel}>
+              Sats
+            </ThemedText>
+          </View>
+        )
+      }
       return (
         <ThemedText style={styles.balanceAmount}>
-          {displayBalance}
+          {value}
         </ThemedText>
       )
     }
+    
+    return {
+      // Loading view - only shown on initial load
+      loadingView : (
+        <LoadingIndicator style={styles.loader} />
+      ),
+      
+      // Error view
+      errorView : (
+        <ErrorDisplay 
+          error={error || 'Error loading balance'} 
+          onRetry={onRetry} 
+        />
+      ),
+      
+      // Reusable balance display
+      balanceView : (displayValue: string) => (
+        <Animated.View 
+          style={[
+            styles.balanceDisplayContainer, 
+            { opacity: component.mainOpacity }
+          ]}
+        >
+          {createBalanceText(displayValue, currency)}
+        </Animated.View>
+      ),
+      
+      // Mini loading indicator (shown during background refresh)
+      miniLoaderView : (
+        <LoadingIndicator 
+          style={styles.miniLoader} 
+          size="small" 
+        />
+      )
+    }
+  }, [ currency, error, onRetry ])
+  
+  // Update internal state without triggering re-renders
+  useEffect(() => {
+    // Skip this effect if we're just toggling loading state and already have a value
+    if (component.displayValue && 
+        component.hasShownInitialValue && 
+        formattedBalance === component.displayValue) {
+      component.isCurrentlyLoading = isLoading
+      return
+    }
+    
+    // Always update loading state
+    component.isCurrentlyLoading = isLoading
+    
+    // Only update display if we have a real value and
+    // 1. We've never shown a value before
+    // 2. The value has actually changed
+    // 3. We're not in a loading state
+    if (formattedBalance && 
+        (!component.hasShownInitialValue || 
+         formattedBalance !== component.displayValue || 
+         !isLoading)) {
+      
+      // Only animate if this isn't the first value and enough time has passed
+      const shouldAnimate = component.hasShownInitialValue && 
+                            (Date.now() - component.lastUpdateTime > 200)
+      
+      if (shouldAnimate) {
+        // Fade out
+        Animated.timing(component.mainOpacity, {
+          toValue         : 0.3,
+          duration        : 150,
+          useNativeDriver : true
+        }).start(() => {
+          // Update value while faded
+          component.displayValue = formattedBalance
+          
+          // Fade back in
+          Animated.timing(component.mainOpacity, {
+            toValue         : 1,
+            duration        : 150,
+            useNativeDriver : true
+          }).start()
+        })
+      } else {
+        // Just update without animation
+        component.displayValue = formattedBalance
+      }
+      
+      component.hasShownInitialValue = true
+      component.lastUpdateTime = Date.now()
+    }
+  }, [ formattedBalance, isLoading, component ])
+  
+  // Currency suffix needs to be tracked separately
+  useEffect(() => {
+    component.currencySuffix = currency === 'SATS' ? ' Sats' : ''
+  }, [ currency, component ])
+  
+  // Determine what content to render based on component state
+  let mainContent
+  
+  if (!component.hasShownInitialValue && isLoading) {
+    // Initial loading state
+    mainContent = views.loadingView
+  } else if (error) {
+    // Error state
+    mainContent = views.errorView
+  } else {
+    // Normal display with balance
+    mainContent = (
+      <>
+        {views.balanceView(component.displayValue)}
+        
+        {/* Currency selector */}
+        {currencySelector && (
+          <View style={styles.currencySelectorContainer}>
+            {currencySelector}
+          </View>
+        )}
+        
+        {/* Mini loader for background refreshes */}
+        {isLoading && component.hasShownInitialValue && (
+          views.miniLoaderView
+        )}
+      </>
+    )
   }
-
+  
   return (
     <View style={styles.balanceContainer}>
       <ThemedText type="default" style={styles.balanceLabel}>
         Current Balance:
       </ThemedText>
-      
-      {isLoading && !stableBalance ? (
-        <LoadingIndicator style={styles.loader} />
-      ) : error ? (
-        <ErrorDisplay error={error} onRetry={onRetry} />
-      ) : (
-        <>
-          <Animated.View style={[styles.balanceDisplayContainer, { opacity: fadeAnim }]}>
-            {renderBalance()}
-          </Animated.View>
-          
-          {/* Render currency selector directly below balance */}
-          {currencySelector && (
-            <View style={styles.currencySelectorContainer}>
-              {currencySelector}
-            </View>
-          )}
-          
-          {/* Show a small loading indicator only if we have a stable balance to display */}
-          {isLoading && stableBalance && (
-            <LoadingIndicator 
-              style={styles.miniLoader} 
-              size="small" 
-            />
-          )}
-        </>
-      )}
+      {mainContent}
     </View>
   )
-})
+}
 
 const styles = StyleSheet.create({
   balanceContainer : {
@@ -115,7 +221,7 @@ const styles = StyleSheet.create({
   balanceAmount : {
     fontSize     : 48,
     fontWeight   : 'bold',
-    marginBottom : 0, // Reduced to bring dropdown closer
+    marginBottom : 0,
   },
   balanceRow : {
     flexDirection : 'row',
@@ -130,13 +236,13 @@ const styles = StyleSheet.create({
     marginVertical : 20,
   },
   miniLoader : {
-    marginTop  : 10,
-    height     : 20,
-    opacity    : 0.5,
+    marginTop : 10,
+    height    : 20,
+    opacity   : 0.5,
   },
   balanceDisplayContainer : {
     opacity        : 1,
-    height         : 60, // Reduced to bring dropdown closer
+    height         : 60,
     justifyContent : 'center',
     alignItems     : 'center',
   },
