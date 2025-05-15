@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
-import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
 import Dropdown from '@/src/components/ui/Dropdown'
 import BalanceDisplay from '@/src/components/features/Balance/BalanceDisplay'
 import ActionButtons from '@/src/components/ui/Button/ActionButtons'
@@ -9,21 +8,33 @@ import { useFadeAnimation } from '@/src/hooks/ui/useFadeAnimation'
 import { getAmountForCurrency } from '@/src/utils/formatting/currencyUtils'
 import { formatCurrency } from '@/tests/mockData/walletData'
 import { CURRENCY_OPTIONS, CurrencyType } from '@/src/config/currency'
+import { SATS_PER_BTC } from '@/src/constants/currency'
 import { useSendStore } from '@/src/store/sendStore'
 import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
 import AppHeader from '@/src/components/ui/Header/AppHeader'
 import { Scan } from 'lucide-react-native'
+import { useWallet } from '@/src/context/WalletContext'
+import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
 
 const HomeScreen = () => {
   // State for selected currency format
   const [ currency, setCurrency ] = useState<CurrencyType>('BTC')
   
-  // Use wallet balance hook
-  const { btcAmount, usdAmount, satsAmount, isLoading, error, refetch } = useWalletBalance()
+  // Use wallet context for real wallet data
+  const { balances, isLoading: isWalletLoading, error: walletError, refreshBalance } = useWallet()
+  
+  // Use price context for USD conversion
+  const { btcPrice, isLoading: isPriceLoading, error: priceError } = useGlobalBitcoinPrice()
   
   // Use fade animation hook
   const { fadeAnim, fadeTransition } = useFadeAnimation()
+  
+  // Combined loading state
+  const isLoading = isWalletLoading || isPriceLoading
+  
+  // Combined error state
+  const error = walletError || priceError
   
   // Get access to store reset functions
   const resetSendStore = useSendStore(state => state.reset)
@@ -34,6 +45,11 @@ const HomeScreen = () => {
     resetSendStore()
     resetReceiveStore()
   }, [])
+  
+  // Calculated balance values
+  const btcAmount = balances.total / SATS_PER_BTC // Convert sats to BTC
+  const usdAmount = btcPrice ? btcAmount * btcPrice : 0
+  const satsAmount = balances.total
   
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
@@ -98,7 +114,7 @@ const HomeScreen = () => {
         currency={currency}
         formattedBalance={formattedBalance}
         fadeAnim={fadeAnim}
-        onRetry={refetch}
+        onRetry={refreshBalance}
         currencySelector={currencySelector}
       />
       

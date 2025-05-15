@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, ViewStyle } from 'react-native'
 import { PriceProvider } from '@/src/context/PriceContext'
+import { WalletProvider } from '@/src/context/WalletContext'
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -14,7 +15,9 @@ export function AppProvider(props: AppProviderProps): React.ReactElement {
   return (
     <View style={[ { flex: 1 }, style ]}>
       <PriceProvider>
-        {children}
+        <WalletProvider>
+          {children}
+        </WalletProvider>
       </PriceProvider>
     </View>
   )

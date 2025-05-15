@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
+import { useWallet } from '@/src/context/WalletContext'
 import { SATS_PER_BTC } from '@/src/constants/currency'
-
-// For now, we'll still use the mock BTC amount until we connect to a real wallet API
-const DUMMY_WALLET_BTC_BALANCE = 1.47299012
 
 type WalletBalanceData = {
   btcAmount: number;
@@ -16,47 +14,50 @@ type WalletBalanceData = {
 
 /**
  * Custom hook to fetch and manage wallet balance data
- * Uses real-time BTC price for USD calculations
+ * Uses real wallet data from WalletContext and price data from PriceContext
  */
 export const useWalletBalance = (): WalletBalanceData => {
   // Get real-time Bitcoin price from context
   const { btcPrice, isLoading: isPriceLoading, error: priceError, refreshPrice } = useGlobalBitcoinPrice()
   
+  // Get wallet data from context
+  const { balances, isLoading: isWalletLoading, error: walletError, refreshBalance } = useWallet()
+  
+  // Combine balance with price data
   const [ balanceData, setBalanceData ] = useState({
-    btcAmount  : DUMMY_WALLET_BTC_BALANCE,
+    btcAmount  : 0,
     usdAmount  : 0,
-    satsAmount : Math.floor(DUMMY_WALLET_BTC_BALANCE * SATS_PER_BTC)
+    satsAmount : 0
   })
-  const [ isLoading, setIsLoading ] = useState(true)
-  const [ error, setError ] = useState<string | null>(null)
-
-  // Update USD amount whenever price changes
+  
+  // Calculate derived values whenever the wallet balances or price changes
   useEffect(() => {
-    if (btcPrice) {
-      setBalanceData(prev => ({
-        ...prev,
-        usdAmount : prev.btcAmount * btcPrice
-      }))
-      setIsLoading(false)
-    } else if (priceError) {
-      setError(priceError)
-      setIsLoading(false)
-    } else {
-      setIsLoading(isPriceLoading)
-    }
-  }, [ btcPrice, isPriceLoading, priceError ])
-
+    const btcAmount = balances.total / SATS_PER_BTC
+    const usdAmount = btcPrice ? btcAmount * btcPrice : 0
+    
+    setBalanceData({
+      btcAmount,
+      usdAmount,
+      satsAmount : balances.total
+    })
+  }, [ balances, btcPrice ])
+  
+  // Combined loading state
+  const isLoading = isPriceLoading || isWalletLoading
+  
+  // Combined error state (prioritize wallet errors over price errors)
+  const error = walletError || priceError
+  
   // Function to refresh both price and balance data
-  const refreshBalance = () => {
-    setIsLoading(true)
+  const refreshAll = async () => {
     refreshPrice()
-    // In the future, this would also refresh the BTC balance from the wallet API
+    refreshBalance()
   }
 
   return {
     ...balanceData,
     isLoading,
     error,
-    refetch : refreshBalance
+    refetch : refreshAll
   }
 } 

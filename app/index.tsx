@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import HomeScreen from '@/src/screens/main/home/HomeScreen'
 import { isOnboardingComplete, resetOnboardingStatus } from '@/src/utils/storage'
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native'
+import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator } from 'react-native'
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { Colors } from '@/src/constants/colors'
+import { useWallet } from '@/src/context/WalletContext'
 
 export default function Home() {
-  const [ isLoading, setIsLoading ] = useState(true)
+  const [ isChecking, setIsChecking ] = useState(true)
+  const { loadWallet, isLoading: isWalletLoading } = useWallet()
+
+  // Combined loading state  
+  const isLoading = isChecking || isWalletLoading
 
   useEffect(() => {
     checkOnboardingStatus()
@@ -17,17 +22,20 @@ export default function Home() {
     try {
       const completed = await isOnboardingComplete()
       console.log('Onboarding status:', completed ? 'completed' : 'not completed')
-      setIsLoading(false)
       
-      // Redirect to onboarding route if not completed
       if (!completed) {
+        // Redirect to onboarding route if not completed
         router.push('/onboarding' as any)
+      } else {
+        // If onboarding is complete, load the wallet
+        await loadWallet()
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error)
-      setIsLoading(false)
       // If there's an error, we'll assume onboarding needs to be done
       router.push('/onboarding' as any)
+    } finally {
+      setIsChecking(false)
     }
   }
 
@@ -37,7 +45,12 @@ export default function Home() {
   }
 
   if (isLoading) {
-    return null // Or return a loading spinner
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.light.buttons.primary} />
+        <Text style={styles.loadingText}>Loading wallet...</Text>
+      </View>
+    )
   }
 
   // If onboarding should be shown, this screen will redirect to /onboarding
@@ -61,6 +74,18 @@ const styles = StyleSheet.create({
   container : {
     flex            : 1,
     backgroundColor : '#FFFFFF',
+  },
+  loadingContainer : {
+    flex            : 1,
+    backgroundColor : '#FFFFFF',
+    justifyContent  : 'center',
+    alignItems      : 'center',
+  },
+  loadingText : {
+    marginTop  : 20,
+    fontSize   : 16,
+    color      : Colors.light.text,
+    fontWeight : '500',
   },
   resetButton : {
     position        : 'absolute',
