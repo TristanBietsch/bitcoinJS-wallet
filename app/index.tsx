@@ -1,43 +1,87 @@
 import React, { useEffect, useState } from 'react'
 import HomeScreen from '@/src/screens/main/home/HomeScreen'
-import { isOnboardingComplete, resetOnboardingStatus } from '@/src/utils/storage'
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native'
+import { isOnboardingComplete } from '@/src/utils/storage'
+import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator } from 'react-native'
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { Colors } from '@/src/constants/colors'
+import { useWalletStore } from '@/src/store/walletStore'
 
 export default function Home() {
-  const [ isLoading, setIsLoading ] = useState(true)
+  const [ isChecking, setIsChecking ] = useState(true)
+  
+  const isInitialized = useWalletStore(state => state.isInitialized)
+  const isSyncing = useWalletStore(state => state.isSyncing)
+  const wallet = useWalletStore(state => state.wallet)
 
+  // Log wallet state changes for diagnostics
   useEffect(() => {
-    checkOnboardingStatus()
-  }, [])
+    console.log(`Wallet state changed (effect): isInitialized: ${isInitialized}, isSyncing: ${isSyncing}, wallet: ${JSON.stringify(wallet)}`)
+  }, [ isInitialized, isSyncing, wallet ])
+
+  // Only show loading when initializing for the first time
+  // Otherwise, wallet data will be loaded silently in the background
+  const isLoading = isChecking || (!isInitialized && isSyncing)
+
+  // Use a separate effect to check onboarding status on component mount only
+  useEffect(() => {
+    const runCheck = async () => {
+      await checkOnboardingStatus()
+    }
+    
+    // Call the async function
+    runCheck()
+  }, []) // Empty dependency array ensures this runs only once
 
   const checkOnboardingStatus = async () => {
     try {
       const completed = await isOnboardingComplete()
       console.log('Onboarding status:', completed ? 'completed' : 'not completed')
-      setIsLoading(false)
       
-      // Redirect to onboarding route if not completed
       if (!completed) {
+        // Redirect to onboarding route if not completed
         router.push('/onboarding' as any)
       }
+      // No else block to reduce unnecessary code execution
     } catch (error) {
       console.error('Error checking onboarding status:', error)
-      setIsLoading(false)
       // If there's an error, we'll assume onboarding needs to be done
       router.push('/onboarding' as any)
+    } finally {
+      setIsChecking(false)
     }
   }
 
   const handleResetOnboarding = async () => {
-    await resetOnboardingStatus()
-    router.push('/onboarding' as any)
+    try {
+      // Clear all wallet data
+      await useWalletStore.getState().clearWallet()
+      
+      // Clear all AsyncStorage keys for a complete reset
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default
+      await AsyncStorage.clear()
+      
+      console.log('All storage keys cleared - complete app reset')
+      
+      // Navigate back to onboarding
+      router.push('/onboarding' as any)
+    } catch (error) {
+      console.error('Error resetting app:', error)
+      // Still try to navigate to onboarding even if there was an error
+      router.push('/onboarding' as any)
+    }
   }
 
+  // Log state right before render decision
+  console.log(`Home component render: isLoading: ${isLoading}, isChecking: ${isChecking}, isInitialized: ${isInitialized}, isSyncing: ${isSyncing}, wallet object: ${JSON.stringify(wallet)}`)
+
   if (isLoading) {
-    return null // Or return a loading spinner
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.light.buttons.primary} />
+        <Text style={styles.loadingText}>Loading wallet...</Text>
+      </View>
+    )
   }
 
   // If onboarding should be shown, this screen will redirect to /onboarding
@@ -61,6 +105,18 @@ const styles = StyleSheet.create({
   container : {
     flex            : 1,
     backgroundColor : '#FFFFFF',
+  },
+  loadingContainer : {
+    flex            : 1,
+    backgroundColor : '#FFFFFF',
+    justifyContent  : 'center',
+    alignItems      : 'center',
+  },
+  loadingText : {
+    marginTop  : 20,
+    fontSize   : 16,
+    color      : Colors.light.text,
+    fontWeight : '500',
   },
   resetButton : {
     position        : 'absolute',

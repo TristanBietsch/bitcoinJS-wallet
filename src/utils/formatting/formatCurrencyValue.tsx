@@ -1,32 +1,84 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { CurrencyType } from '@/src/types/currency.types'
+import { CurrencyType } from '@/src/types/domain/finance'
 
 /**
- * Formats a currency amount with the specified currency symbol
- * @param amount The amount to format
- * @param currencySymbol The currency symbol to use (defaults to $)
- * @returns Formatted currency string
+ * Generic number formatter that correctly handles the display of BTC and SATS values
+ * This is robust and won't break when swapping between currencies
+ * 
+ * @param amount The amount to format - for BTC input, should be in BTC units; for SATS input, should be in SATS units
+ * @param currencyType The currency type (BTC or SATS) to format as
+ * @returns Formatted currency string without currency suffix (UI handles that separately)
  */
-export const formatCurrency = (amount: number, currencyType: string = 'USD'): string => {
-  let currencySymbol = '$'
+export const formatCurrency = (amount: number, currencyType: CurrencyType): string => {
+  if (amount === 0) return '0'
   
   if (currencyType === 'BTC') {
-    currencySymbol = 'BTC'
+    // Ensure amount is in BTC (it should already be)
+    // No conversion needed here, as we now handle the conversion in the HomeScreen component
+    
+    // Format BTC with 8 decimal places and thousands separators
+    const parts = amount.toFixed(8).split('.')
+    const integerPart = parseInt(parts[0]).toLocaleString('en-US')
+    const decimalPart = parts[1]
+    
+    // Combine integer and decimal parts with proper formatting
+    return `${integerPart}.${decimalPart}`
+  } else { // SATS
+    // Amount should already be in SATS as we handle conversion in the HomeScreen component
+    
+    // Format SATS as whole numbers with thousand separators
+    const satsValue = Math.round(amount)
+    return satsValue.toLocaleString('en-US', {
+      maximumFractionDigits : 0
+    })
   }
-  
-  return `${currencySymbol}${amount.toFixed(2)}`
 }
 
 /**
- * Formats currency values for display with proper styling 
+ * Formats Bitcoin amounts with the appropriate number of decimal places
+ * This is a more robust implementation that handles conversion as needed
+ * 
+ * @param amount The amount to format (as a string)
+ * @param currency The currency type (BTC or SATS)
+ * @returns Formatted string
+ */
+export const formatBitcoinAmount = (amount: string, currency: CurrencyType): string => {
+  const numAmount = parseFloat(amount)
+  if (isNaN(numAmount) || numAmount === 0) return '0' // Or handle error appropriately
+
+  if (currency === 'SATS') {
+    // Assume the input is already in the correct unit (SATS)
+    const satsValue = Math.round(numAmount)
+    return satsValue.toLocaleString('en-US', {
+      maximumFractionDigits : 0
+    })
+  } else { // BTC
+    // Assume the input is already in BTC
+    
+    // Format with thousands separators and 8 decimal places
+    const parts = numAmount.toFixed(8).split('.')
+    const integerPart = parseInt(parts[0]).toLocaleString('en-US')
+    let decimalPart = parts[1]
+    
+    // Trim trailing zeros from decimal part
+    decimalPart = decimalPart.replace(/0+$/, '')
+    
+    // Return formatted string with or without decimal part
+    return decimalPart ? `${integerPart}.${decimalPart}` : integerPart
+  }
+}
+
+/**
+ * Formats currency values for display with proper styling for SATS and BTC
  * @param amount The amount to format
- * @param currency The currency type (USD, BTC, or SATS)
+ * @param currency The currency type (BTC or SATS)
  */
 export const formatConfirmationValue = (amount: number, currency: CurrencyType) => {
   if (currency === 'SATS') {
-    const formattedNumber = amount.toLocaleString('en-US', {
+    // Assume amount is already in SATS format
+    const formattedNumber = Math.round(amount).toLocaleString('en-US', {
       minimumFractionDigits : 0,
       maximumFractionDigits : 0
     })
@@ -38,85 +90,9 @@ export const formatConfirmationValue = (amount: number, currency: CurrencyType) 
     )
   }
   
-  if (currency === 'USD') {
-    return <ThemedText style={styles.value}>${amount.toFixed(2)}</ThemedText>
-  }
-  
+  // Default to BTC formatting if not SATS
+  // Assume amount is already in BTC format
   return <ThemedText style={styles.value}>{amount.toFixed(8)} {currency}</ThemedText>
-}
-
-/**
- * Formats the total amount with USD equivalent in subtext
- * @param amount The main amount to display
- * @param currency The currency type of the main amount
- * @param usdEquivalent The USD equivalent amount
- */
-export const formatTotalWithUsdEquivalent = (
-  amount: number, 
-  currency: CurrencyType,
-  usdEquivalent: number
-) => {
-  return (
-    <View style={styles.valueContainer}>
-      {formatConfirmationValue(amount, currency)}
-      {currency !== 'USD' && (
-        <ThemedText style={styles.subtextUsd}>${usdEquivalent.toFixed(2)}</ThemedText>
-      )}
-    </View>
-  )
-}
-
-/**
- * Formats Bitcoin amounts with the appropriate number of decimal places
- * BTC shows up to 8 decimal places, trimming trailing zeros
- * SATS shows 0 decimal places, up to 9 digits
- * USD shows 2 decimal places
- * 
- * @param amount The amount to format
- * @param currency The currency type
- * @returns Formatted string
- */
-export const formatBitcoinAmount = (amount: string, currency: CurrencyType): string => {
-  // For USD, ensure 2 decimal places
-  if (currency === 'USD') {
-    const num = parseFloat(amount)
-    return num.toFixed(2)
-  }
-  
-  // For SATS, show as integer (no decimal places)
-  if (currency === 'SATS') {
-    // If there's a decimal point, only show the integer part
-    if (amount.includes('.')) {
-      return amount.split('.')[0]
-    }
-    
-    // Limit to 9 digits maximum
-    if (amount.length > 9) {
-      return amount.substring(0, 9)
-    }
-    
-    return amount
-  }
-  
-  // For BTC, show up to 8 decimal places without trailing zeros
-  const parts = amount.split('.')
-  if (parts.length === 1) {
-    return amount // No decimal point
-  }
-  
-  const integerPart = parts[0]
-  let decimalPart = parts[1]
-  
-  // Limit to 8 decimal places
-  if (decimalPart.length > 8) {
-    decimalPart = decimalPart.substring(0, 8)
-  }
-  
-  // Trim trailing zeros
-  decimalPart = decimalPart.replace(/0+$/, '')
-  
-  // Return the formatted amount
-  return decimalPart ? `${integerPart}.${decimalPart}` : integerPart
 }
 
 const styles = StyleSheet.create({
@@ -137,9 +113,5 @@ const styles = StyleSheet.create({
   valueContainer : {
     alignItems : 'flex-end'
   },
-  subtextUsd : {
-    fontSize  : 14,
-    color     : '#666',
-    marginTop : 4
-  }
+  // subtextUsd style removed as it is no longer needed
 }) 

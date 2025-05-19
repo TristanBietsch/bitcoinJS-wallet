@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react'
-import * as SecureStore from 'expo-secure-store'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { 
   generateWallet, 
   importWallet, 
   validateMnemonic 
 } from '../../services/bitcoin/wallet/bitcoinJsWallet'
 
-// Constants for secure storage keys
+// Constants for storage keys
 const WALLET_MNEMONIC_KEY = 'bitcoin_wallet_mnemonic'
 const WALLET_ADDRESS_KEY = 'bitcoin_wallet_address'
 
@@ -15,14 +15,14 @@ export const useBitcoinJSWallet = () => {
   const [ error, setError ] = useState<string | null>(null)
   const [ address, setAddress ] = useState<string | null>(null)
 
-  // Initialize wallet on app start - load from secure storage
+  // Initialize wallet on app start - load from storage
   const initWallet = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
       
       // Check if we already have a wallet
-      const storedAddress = await SecureStore.getItemAsync(WALLET_ADDRESS_KEY)
+      const storedAddress = await AsyncStorage.getItem(WALLET_ADDRESS_KEY)
       
       if (storedAddress) {
         setAddress(storedAddress)
@@ -47,9 +47,9 @@ export const useBitcoinJSWallet = () => {
       // Generate a new wallet
       const { mnemonic, address: newAddress } = await generateWallet()
       
-      // Store in secure storage
-      await SecureStore.setItemAsync(WALLET_MNEMONIC_KEY, mnemonic)
-      await SecureStore.setItemAsync(WALLET_ADDRESS_KEY, newAddress || '')
+      // Store in storage
+      await AsyncStorage.setItem(WALLET_MNEMONIC_KEY, mnemonic)
+      await AsyncStorage.setItem(WALLET_ADDRESS_KEY, newAddress || '')
       
       setAddress(newAddress || null)
       
@@ -77,9 +77,9 @@ export const useBitcoinJSWallet = () => {
       // Import wallet from mnemonic
       const { address: importedAddress } = await importWallet(mnemonic)
       
-      // Store in secure storage
-      await SecureStore.setItemAsync(WALLET_MNEMONIC_KEY, mnemonic)
-      await SecureStore.setItemAsync(WALLET_ADDRESS_KEY, importedAddress || '')
+      // Store in storage
+      await AsyncStorage.setItem(WALLET_MNEMONIC_KEY, mnemonic)
+      await AsyncStorage.setItem(WALLET_ADDRESS_KEY, importedAddress || '')
       
       setAddress(importedAddress || null)
       
@@ -99,8 +99,8 @@ export const useBitcoinJSWallet = () => {
       // If we already have the address in state, return it
       if (address) return address
       
-      // Otherwise get from secure storage
-      const storedAddress = await SecureStore.getItemAsync(WALLET_ADDRESS_KEY)
+      // Otherwise get from storage
+      const storedAddress = await AsyncStorage.getItem(WALLET_ADDRESS_KEY)
       
       if (storedAddress) {
         setAddress(storedAddress)

@@ -1,16 +1,21 @@
 import { useCallback } from 'react'
 import { useClipboard } from '@/src/hooks/ui/useClipboard'
-import { shareContent } from '@/src/utils/file/fileSharing'
+import { Share } from 'react-native'
+
+interface ShareAmounts {
+  sats: string
+}
+
+interface UseShareActionsProps {
+  address: string
+  amounts: ShareAmounts
+  title?: string
+}
 
 interface ShareActionsResult {
   handleCopy: () => void
   handleShare: () => void
   isCopied: boolean
-}
-
-interface AmountInfo {
-  sats: string
-  usd: string
 }
 
 /**
@@ -19,11 +24,7 @@ interface AmountInfo {
  * @param amounts - The amount information for the invoice
  * @param title - Optional title for the share dialog
  */
-export const useShareActions = (
-  address: string,
-  amounts: AmountInfo,
-  title: string = 'Bitcoin Invoice'
-): ShareActionsResult => {
+export const useShareActions = ({ address, amounts, title = 'Bitcoin Invoice' }: UseShareActionsProps): ShareActionsResult => {
   const { copied, copyToClipboard } = useClipboard()
   
   // Handle copying address to clipboard
@@ -32,13 +33,21 @@ export const useShareActions = (
   }, [ address, copyToClipboard ])
   
   // Handle sharing invoice details
-  const handleShare = useCallback(() => {
-    const shareMessage = `Bitcoin Payment Request
-Amount: ${amounts.sats} SATS (≈$${amounts.usd} USD)
-Address: ${address}`
-    
-    shareContent(shareMessage, title)
-  }, [ address, amounts.sats, amounts.usd, title ])
+  const handleShare = useCallback(async () => {
+    try {
+      const message = `Bitcoin Invoice:
+Address: ${address}
+Amount: ${amounts.sats} SATS`
+
+      await Share.share({
+        message,
+        title,
+      })
+    } catch (error) {
+      console.error('Error sharing invoice:', error)
+      // Handle error (e.g., show a toast notification)
+    }
+  }, [ address, amounts.sats, title ])
   
   return {
     handleCopy,

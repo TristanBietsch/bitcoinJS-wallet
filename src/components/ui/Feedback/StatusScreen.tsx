@@ -6,7 +6,7 @@ import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import StatusIcon from './StatusIcon'
 import ConfettiAnimation from '@/src/components/ui/Animations/ConfettiAnimation'
-import { StatusType } from '@/src/types/status.types'
+import { StatusType } from '@/src/types/ui'
 import { Colors } from '@/src/constants/colors'
 
 interface StatusScreenProps {

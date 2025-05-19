@@ -1,13 +1,12 @@
-import { transactionFees } from '@/tests/mockData/transactionData'
 import { speedOptions } from '@/src/config/transactionFees'
-import { CurrencyType } from '@/src/types/currency.types'
+import { CurrencyType } from '@/src/types/domain/finance'
+import { SATS_PER_BTC } from '@/src/constants/currency'
 
 /**
  * Type for transaction fee
  */
 export type TransactionFee = {
   sats: number
-  usd: number
   feeRate: number
 }
 
@@ -15,34 +14,39 @@ export type TransactionFee = {
  * Calculate the transaction fee based on speed or custom fee
  * @param speed Selected speed type
  * @param customFee Optional custom fee settings
- * @returns Fee object with sats, usd, and feeRate
+ * @returns Fee object with sats and feeRate
  */
 export const calculateTransactionFee = (
   speed: string, 
   customFee?: { totalSats: number; feeRate: number }
 ): TransactionFee => {
-  // Use custom fee if selected, otherwise use standard tiers
   if (speed === 'custom' && customFee) {
     return {
       sats    : customFee.totalSats,
-      usd     : Number((customFee.totalSats * transactionFees.conversion.satToDollar).toFixed(2)),
       feeRate : customFee.feeRate
     }
   } 
   
-  // Use fee from predefined speed options
-  return speedOptions[speed as keyof typeof speedOptions]
+  const selectedSpeedOption = speedOptions[speed as keyof typeof speedOptions]
+  if (!selectedSpeedOption) {
+    console.warn(`Invalid speed option: ${speed}. Defaulting to a zero fee.`)
+    return { sats: 0, feeRate: 0 }
+  }
+  // Assuming speedOptions provides sats and feeRate, or its usd field will be ignored
+  return {
+    sats    : selectedSpeedOption.sats,
+    feeRate : selectedSpeedOption.feeRate
+  }
 }
 
 /**
- * Convert fee to the specified currency
- * @param fee Transaction fee object
- * @param currency Target currency type
+ * Convert fee (in SATS) to the specified currency (BTC or SATS)
+ * @param fee Transaction fee object (now only contains sats and feeRate)
+ * @param currency Target currency type (BTC or SATS)
  * @returns Fee amount in the specified currency
  */
 export const getFeeInCurrency = (fee: TransactionFee, currency: CurrencyType): number => {
-  if (currency === 'USD') return fee.usd
   if (currency === 'SATS') return fee.sats
   // If BTC, convert sats to BTC
-  return fee.sats / 100000000
+  return fee.sats / SATS_PER_BTC
 } 

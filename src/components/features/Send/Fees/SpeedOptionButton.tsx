@@ -2,7 +2,7 @@ import React from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Turtle, Squirrel, Rabbit } from 'lucide-react-native'
-import { SpeedOption } from '@/src/types/transaction/send.types'
+import { SpeedOption } from '@/src/types/domain/transaction'
 
 interface SpeedOptionButtonProps {
   option: SpeedOption

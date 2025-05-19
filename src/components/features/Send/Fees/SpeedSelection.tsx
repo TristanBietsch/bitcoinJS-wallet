@@ -6,7 +6,7 @@ import { SpeedOptionButton } from '@/src/components/features/Send/Fees/SpeedOpti
 import { SpeedInfoModal } from '@/src/components/features/Send/Fees/SpeedInfoModal'
 import { CustomFeeModal } from '@/src/components/features/Send/Fees/CustomFeeModal'
 import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
-import { SpeedTier, CustomFee, SpeedOption } from '@/src/types/transaction/send.types'
+import { SpeedTier, CustomFee, SpeedOption } from '@/src/types/domain/transaction'
 
 interface SpeedSelectionProps {
   speedOptions: SpeedOption[]

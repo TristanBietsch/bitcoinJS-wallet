@@ -5,7 +5,7 @@
  */
 
 import { IS_MAINNET, IS_REGTEST, IS_TESTNET, BITCOIN_NETWORK } from '../../../config/bitcoinNetwork'
-import { AddressValidationResult } from '../../../types/bitcoin'
+import { AddressValidationResult } from '@/src/types/api'
 import { BitcoinAddressError } from '../errors/rpcErrors'
 import { callRpc } from '../rpc/rpcClient'
 
@@ -63,4 +63,15 @@ export async function getNewAddress(
   addressType: 'legacy' | 'p2sh-segwit' | 'bech32' = 'bech32'
 ): Promise<string> {
   return callRpc<string>('getnewaddress', [ label, addressType ])
+}
+
+/**
+ * Get payment URI for a Bitcoin amount and address
+ * @param address Bitcoin address
+ * @param amountBTC Optional Bitcoin amount
+ * @returns Bitcoin payment URI
+ */
+export function getBitcoinPaymentURI(address: string, amountBTC?: number): string {
+  const baseURI = `bitcoin:${address}`
+  return amountBTC ? `${baseURI}?amount=${amountBTC}` : baseURI
 } 

@@ -1,38 +1,28 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { CurrencyType } from '@/src/hooks/send/useBitcoinPriceConverter'
+import { CurrencyType } from '@/src/types/domain/finance'
+import { formatBitcoinAmount } from '@/src/utils/formatting/formatCurrencyValue'
 
 interface AmountDisplayProps {
   amount: string
   currency: CurrencyType
-  balance: string
+  balance?: string
 }
 
 export const AmountDisplay: React.FC<AmountDisplayProps> = ({
   amount,
   currency,
-  balance
 }) => {
-  // Format displayed amount based on currency
-  const getFormattedAmount = () => {
-    if (currency === 'USD') {
-      return amount.includes('.') ? amount : `${amount}.00`
-    }
-    return amount
-  }
+  const formattedDisplayAmount = formatBitcoinAmount(amount, currency)
 
   return (
     <View style={styles.amountContainer}>
       <View style={styles.amountDisplay}>
         <ThemedText style={styles.amountText}>
-          {getFormattedAmount()}<ThemedText style={styles.currencyText}>{currency}</ThemedText>
+          {formattedDisplayAmount} <ThemedText style={styles.currencyText}>{currency}</ThemedText>
         </ThemedText>
       </View>
-      
-      <ThemedText style={styles.balanceText}>
-        Your balance {balance}
-      </ThemedText>
     </View>
   )
 }
@@ -42,8 +32,8 @@ const styles = StyleSheet.create({
     flex           : 0,
     justifyContent : 'flex-start',
     alignItems     : 'center',
-    paddingTop     : 120,
-    marginBottom   : 20,
+    paddingTop     : 20,
+    marginBottom   : 10,
   },
   amountDisplay : { 
     marginBottom : 4,

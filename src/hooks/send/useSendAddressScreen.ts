@@ -4,7 +4,7 @@ import { useSendStore } from '@/src/store/sendStore'
 import { useAddressValidation } from '@/src/hooks/send/useAddressValidation'
 import { useSpeedOptions } from '@/src/hooks/send/useSpeedOptions'
 import { useCustomFee } from '@/src/hooks/send/useCustomFee'
-import { SpeedTier } from '@/src/types/transaction/send.types'
+import { SpeedTier } from '@/src/types/domain/transaction'
 import { validateAddress } from '@/src/utils/validation'
 
 export const useSendAddressScreen = () => {

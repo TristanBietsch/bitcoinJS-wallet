@@ -9,14 +9,11 @@ import NumberPad from '@/src/components/ui/NumberPad'
 
 // Import hooks and stores
 import { useReceiveStore } from '@/src/store/receiveStore'
-import { useBitcoinPrice } from '@/src/hooks/bitcoin/useBitcoinPrice'
+// import { usePriceStore } from '@/src/store/priceStore' // Removed
 import { useReceiveHandlers } from '@/src/handlers/receiveHandlers'
-import { getWalletBalanceDisplay } from '@/src/utils/mockData/walletMockData'
+import { getWalletBalanceDisplay } from '@/src/utils/mockData/walletMockData' // This mock might need update if it provides USD
 
 export default function ReceiveScreen() {
-  // Use our custom hook for Bitcoin price
-  const { btcPrice, isLoading } = useBitcoinPrice()
-  
   // Use our store for state management
   const { 
     amount, 
@@ -30,7 +27,7 @@ export default function ReceiveScreen() {
   const { handleBackPress, handleGenerateQR, isAmountValid } = useReceiveHandlers()
   
   // Get mock balance for display from our mock data
-  const balance = getWalletBalanceDisplay()
+  const balance = getWalletBalanceDisplay() // Check if this mock data returns USD related info
   
   return (
     <ReceiveScreenLayout onBackPress={handleBackPress}>
@@ -39,9 +36,9 @@ export default function ReceiveScreen() {
         <AmountDisplay
           amount={amount}
           currency={currency}
-          balance={balance}
-          isLoading={isLoading}
-          onCurrencyChange={(newCurrency) => handleCurrencyChange(newCurrency, btcPrice)}
+          balance={balance} // This balance is mock data
+          // isLoading={isLoadingPrice} // Removed isLoading prop
+          onCurrencyChange={(newCurrency) => handleCurrencyChange(newCurrency as any)} // btcPrice removed, newCurrency cast to any if type mismatch
         />
       </View>
       

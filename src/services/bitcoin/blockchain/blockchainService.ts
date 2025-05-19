@@ -5,7 +5,7 @@
  * blocks, and estimating fees.
  */
 
-import { BlockchainInfo, FeeEstimation } from '../../../types/bitcoin'
+import { BlockchainInfo, FeeEstimation } from '@/src/types/api'
 import { callRpc } from '../rpc/rpcClient'
 
 /**

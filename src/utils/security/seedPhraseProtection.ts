@@ -3,10 +3,11 @@
  * 
  * Security utilities for handling seed phrases with proper protection measures.
  * This module implements best practices for handling sensitive mnemonic data.
+ * 
+ * NOTE: THIS IS TEMPORARY IMPLEMENTATION WITH NO ENCRYPTION - FOR DEVELOPMENT USE ONLY
  */
 
-import { Platform } from 'react-native'
-import * as SecureStore from 'expo-secure-store'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as ScreenCapture from 'expo-screen-capture'
 import { bufferWipe } from './memoryProtection'
 
@@ -81,96 +82,22 @@ export async function preventScreenCapture(): Promise<() => Promise<void>> {
 }
 
 /**
- * Obfuscates a seed phrase in memory by splitting and encoding it
- * @param seedPhrase - The seed phrase to obfuscate
- * @returns Obfuscated data structure
- */
-export function obfuscateSeedPhrase(seedPhrase: string): { parts: string[], checksum: number } {
-  if (!seedPhrase) {
-    throw new SeedPhraseSecurityError('Cannot obfuscate empty seed phrase', 'EMPTY_SEED')
-  }
-  
-  // Create a simple checksum
-  const checksum = seedPhrase.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  
-  // Split the phrase into multiple parts to avoid contiguous storage
-  const words = seedPhrase.split(' ')
-  const parts: string[] = []
-  
-  // Store words in reversed chunks of 3, with padding
-  for (let i = 0; i < words.length; i += 3) {
-    const chunk = words.slice(i, i + 3)
-    // Reverse and add random padding
-    const reversedChunk = chunk.reverse().join('§')
-    const randomPadding = Math.random().toString(36).substring(2, 8)
-    parts.push(`${randomPadding}${reversedChunk}${randomPadding}`)
-  }
-  
-  return { parts, checksum }
-}
-
-/**
- * Deobfuscates a previously obfuscated seed phrase
- * @param obfuscatedData - The obfuscated data structure
- * @returns The original seed phrase
- */
-export function deobfuscateSeedPhrase(obfuscatedData: { parts: string[], checksum: number }): string {
-  try {
-    const { parts, checksum } = obfuscatedData
-    
-    // Process each part to extract the original words
-    const allWords: string[] = []
-    
-    parts.forEach(part => {
-      // Remove the random padding (first and last 6 characters)
-      const contentWithoutPadding = part.substring(6, part.length - 6)
-      // Split by the separator and reverse to original order
-      const wordsInChunk = contentWithoutPadding.split('§').reverse()
-      allWords.push(...wordsInChunk)
-    })
-    
-    const seedPhrase = allWords.join(' ')
-    
-    // Verify checksum
-    const calculatedChecksum = seedPhrase.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    if (calculatedChecksum !== checksum) {
-      throw new SeedPhraseSecurityError('Seed phrase integrity check failed', 'CHECKSUM_FAILED')
-    }
-    
-    return seedPhrase
-  } catch (error) {
-    if (error instanceof SeedPhraseSecurityError) {
-      throw error
-    }
-    throw new SeedPhraseSecurityError('Failed to deobfuscate seed phrase', 'DEOBFUSCATE_FAILED')
-  }
-}
-
-/**
  * Securely store a seed phrase (only temporary storage when absolutely necessary)
+ * TEMPORARY IMPLEMENTATION - NO ENCRYPTION
+ * 
  * @param id - Unique identifier for retrieval
- * @param seedPhrase - The seed phrase to store securely
+ * @param seedPhrase - The seed phrase to store 
  */
 export async function secureStoreSeedPhrase(id: string, seedPhrase: string): Promise<void> {
   try {
-    if (Platform.OS === 'web') {
-      throw new SeedPhraseSecurityError('Secure storage not available on web platform', 'WEB_UNSUPPORTED')
-    }
-    
     if (!id || !seedPhrase) {
       throw new SeedPhraseSecurityError('Invalid id or seed phrase', 'INVALID_INPUT')
     }
     
-    // Obfuscate before storing
-    const obfuscatedData = obfuscateSeedPhrase(seedPhrase)
-    
-    // Store with max security options
-    await SecureStore.setItemAsync(id, JSON.stringify(obfuscatedData), {
-      // Require authentication for access if available
-      requireAuthentication : true,
-      // Only accessible when device is unlocked
-      keychainAccessible    : SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
-    })
+    // TEMPORARY IMPLEMENTATION - STORES UNENCRYPTED
+    // TODO: Replace with proper secure storage
+    await AsyncStorage.setItem(`temp_${id}`, seedPhrase)
+    console.warn('WARNING: Seed phrase stored WITHOUT encryption - FOR DEVELOPMENT USE ONLY')
   } catch (error) {
     console.error('Failed to store seed phrase:', error instanceof Error ? error.message : String(error))
     
@@ -186,28 +113,19 @@ export async function secureStoreSeedPhrase(id: string, seedPhrase: string): Pro
 }
 
 /**
- * Retrieve a securely stored seed phrase
+ * Retrieve a stored seed phrase
+ * TEMPORARY IMPLEMENTATION - NO ENCRYPTION
+ * 
  * @param id - The identifier used during storage
  */
 export async function secureRetrieveSeedPhrase(id: string): Promise<string | null> {
   try {
-    if (Platform.OS === 'web') {
-      throw new SeedPhraseSecurityError('Secure storage not available on web platform', 'WEB_UNSUPPORTED')
-    }
-    
     if (!id) {
       throw new SeedPhraseSecurityError('Invalid id', 'INVALID_INPUT')
     }
     
-    const storedData = await SecureStore.getItemAsync(id)
-    
-    if (!storedData) {
-      return null
-    }
-    
-    // Parse and deobfuscate
-    const obfuscatedData = JSON.parse(storedData)
-    return deobfuscateSeedPhrase(obfuscatedData)
+    // TEMPORARY IMPLEMENTATION - NO ENCRYPTION
+    return await AsyncStorage.getItem(`temp_${id}`)
   } catch (error) {
     console.error('Failed to retrieve seed phrase:', error instanceof Error ? error.message : String(error))
     
@@ -223,20 +141,19 @@ export async function secureRetrieveSeedPhrase(id: string): Promise<string | nul
 }
 
 /**
- * Delete a securely stored seed phrase
+ * Delete a stored seed phrase
+ * TEMPORARY IMPLEMENTATION - NO ENCRYPTION
+ * 
  * @param id - The identifier used during storage
  */
 export async function secureDeleteSeedPhrase(id: string): Promise<void> {
   try {
-    if (Platform.OS === 'web') {
-      throw new SeedPhraseSecurityError('Secure storage not available on web platform', 'WEB_UNSUPPORTED')
-    }
-    
     if (!id) {
       throw new SeedPhraseSecurityError('Invalid id', 'INVALID_INPUT')
     }
     
-    await SecureStore.deleteItemAsync(id)
+    // TEMPORARY IMPLEMENTATION - NO ENCRYPTION
+    await AsyncStorage.removeItem(`temp_${id}`)
   } catch (error) {
     console.error('Failed to delete seed phrase:', error instanceof Error ? error.message : String(error))
     

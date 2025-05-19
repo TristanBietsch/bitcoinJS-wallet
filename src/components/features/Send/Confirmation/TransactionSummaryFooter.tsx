@@ -2,19 +2,20 @@ import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { TransactionConfirmationDetails } from '@/src/components/features/Send/Confirmation/TransactionConfirmationDetails'
 import { SendButton } from '@/src/components/ui/Button/SendButton'
-import { CurrencyType } from '@/src/types/currency.types'
+import { CurrencyType } from '@/src/types/domain/finance'
 import { TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { useSendStore } from '@/src/store/sendStore'
 import { Colors } from '@/src/constants/colors'
+import { TransactionFee } from '@/src/utils/transactions/feeCalculator'
 
 interface TransactionSummaryFooterProps {
   amount: number
   address: string
-  fee: any // Using 'any' temporarily to match the TransactionConfirmationDetails interface
+  feeSats: number
+  feeRate: number
   currency: CurrencyType
   totalAmount: number
-  totalAmountUsd?: number
   onSendPress: () => void
 }
 
@@ -24,10 +25,10 @@ interface TransactionSummaryFooterProps {
 const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
   amount,
   address,
-  fee,
+  feeSats,
+  feeRate,
   currency,
   totalAmount,
-  totalAmountUsd,
   onSendPress
 }) => {
   const { setErrorMode } = useSendStore()
@@ -52,16 +53,21 @@ const TransactionSummaryFooter: React.FC<TransactionSummaryFooterProps> = ({
     onSendPress()
   }
   
+  // Construct the fee object for TransactionConfirmationDetails
+  const transactionFeeForDetails: TransactionFee = {
+    sats    : feeSats,
+    feeRate : feeRate,
+  }
+  
   return (
     <View style={styles.container}>
       {/* Transaction Details */}
       <TransactionConfirmationDetails 
         amount={amount}
         address={address}
-        fee={fee}
+        fee={transactionFeeForDetails}
         currency={currency}
         totalAmount={totalAmount}
-        totalAmountUsd={totalAmountUsd}
       />
       
       {/* Test Error Buttons */}

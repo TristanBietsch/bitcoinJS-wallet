@@ -1,63 +1,90 @@
-import React from 'react'
-import OnboardingContainer from '@/src/components/ui/OnboardingScreen/OnboardingContainer'
-import VerificationLoader from '@/src/components/ui/Feedback/VerificationLoader'
-import SuccessImport from '../success/SuccessImport'
-import ErrorImport from '../error/ErrorImport'
-import { useVerification } from '@/src/hooks/wallet/useVerification'
+import React, { useEffect, useState } from 'react'
+import { View, StyleSheet, ActivityIndicator } from 'react-native'
+import { OnboardingContainer } from '@/src/components/ui/OnboardingScreen'
+import { ThemedText } from '@/src/components/ui/Text'
+import { Colors } from '@/src/constants/colors'
+import { useWalletStore } from '@/src/store/walletStore'
 
 interface CheckingSeedPhraseImportProps {
-  seedPhrase: string
-  onComplete: () => void
-  onError?: () => void
-  isTestBypass?: boolean
 }
 
 /**
- * Screen component shown during seed phrase import verification
+ * Screen component shown during seed phrase import verification and balance fetching
  */
-export default function CheckingSeedPhraseImport({ 
-  seedPhrase,
-  onComplete,
-  onError,
-  isTestBypass = false
-}: CheckingSeedPhraseImportProps) {
-  // Use the verification hook to handle the verification logic
-  const { isComplete, isError } = useVerification(seedPhrase, isTestBypass)
+export default function CheckingSeedPhraseImport({}: CheckingSeedPhraseImportProps) {
+  const [ status, setStatus ] = useState('Validating seed phrase...')
+  const isSyncing = useWalletStore(state => state.isSyncing)
   
-  // Handle the success screen completion
-  const handleSuccessComplete = () => {
-    // Pass the completion back to the parent
-    if (onComplete) onComplete()
-  }
-
-  // Handle the error try again action
-  const handleTryAgain = () => {
-    // Go back to import screen
-    if (onError) {
-      onError()
-    } else if (onComplete) {
-      // Fallback to onComplete for backward compatibility
-      onComplete()
-    }
-  }
-
-  // Show error screen if verification failed
-  if (isError) {
-    return <ErrorImport onTryAgain={handleTryAgain} onBack={handleTryAgain} />
-  }
-
-  // Show success screen if verification is complete
-  if (isComplete) {
-    return <SuccessImport onComplete={handleSuccessComplete} />
-  }
+  useEffect(() => {
+    // Timer for cycling through status messages for better UX
+    // This is purely for display while the store is processing the import.
+    const timer = setInterval(() => {
+      setStatus(currentStatus => {
+        if (currentStatus === 'Validating seed phrase...') {
+          return 'Generating wallet keys...'
+        } else if (currentStatus === 'Generating wallet keys...') {
+          return 'Deriving addresses...'
+        } else if (currentStatus === 'Deriving addresses...') {
+          return 'Creating wallet...'
+        } else if (currentStatus === 'Creating wallet...') {
+          return 'Fetching wallet balance...'
+        } else if (currentStatus === 'Fetching wallet balance...') {
+          // Once we've shown the balance fetching message, we'll keep showing it
+          // until the actual balance is fetched
+          if (isSyncing) {
+            return 'Fetching wallet balance...'
+          } else {
+            return 'Import complete!'
+          }
+        }
+        return currentStatus
+      })
+    }, 1200) // Slightly faster cycling for better UX
+    
+    return () => clearInterval(timer)
+  }, [ isSyncing ])
   
-  // Otherwise show the loading indicator
   return (
     <OnboardingContainer>
-      <VerificationLoader 
-        title="Importing..." 
-        subtitle="Verifying and importing your wallet" 
-      />
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.light.buttons.primary} />
+        <ThemedText style={styles.title}>Importing Wallet</ThemedText>
+        <ThemedText style={styles.description}>
+          {status} {/* Display cycled status */}
+        </ThemedText>
+        {status === 'Import complete!' && (
+          <ThemedText style={styles.success}>
+            Your wallet has been successfully imported!
+          </ThemedText>
+        )}
+      </View>
     </OnboardingContainer>
   )
 }
+
+const styles = StyleSheet.create({
+  container : {
+    flex              : 1,
+    justifyContent    : 'center',
+    alignItems        : 'center',
+    paddingHorizontal : 20,
+  },
+  title : {
+    fontSize     : 24,
+    fontWeight   : 'bold',
+    marginTop    : 20,
+    marginBottom : 10,
+  },
+  description : {
+    fontSize  : 16,
+    textAlign : 'center',
+    opacity   : 0.7,
+  },
+  success : {
+    fontSize   : 16,
+    textAlign  : 'center',
+    color      : Colors.light.buttons.primary,
+    fontWeight : 'bold',
+    marginTop  : 20,
+  }
+})

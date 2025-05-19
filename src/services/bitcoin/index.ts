@@ -20,7 +20,8 @@ export {
   validateAddress,
   isValidAddress,
   validateAddressOrThrow,
-  getNewAddress
+  getNewAddress,
+  getBitcoinPaymentURI
 } from './address/addressService'
 
 // Export from wallet service

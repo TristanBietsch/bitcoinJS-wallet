@@ -8,7 +8,7 @@ import InvoiceActionButtons from './InvoiceActionButtons'
 interface InvoiceContentProps {
   address: string
   satsAmount: string
-  usdAmount: string
+  formattedAmount: string
   onCopy: () => void
   onShare: () => void
   isLoading?: boolean
@@ -18,17 +18,19 @@ interface InvoiceContentProps {
 /**
  * Component that combines all invoice display elements into a single component
  */
-const InvoiceContent: React.FC<InvoiceContentProps> = ({
-  address,
-  satsAmount,
-  usdAmount,
-  onCopy,
-  onShare,
-  isLoading: _isLoading = false,
-  style
-}) => {
+const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
+  // Destructure only the props we need, omitting satsAmount
+  const {
+    address,
+    formattedAmount,
+    onCopy,
+    onShare,
+    isLoading = false,
+    style
+  } = props
+  
   // Use a placeholder value when loading to prevent QR code errors
-  const qrValue = _isLoading ? 'loading' : address
+  const qrValue = isLoading ? 'loading' : address
   
   return (
     <View style={[ styles.container, style ]}>
@@ -50,8 +52,7 @@ const InvoiceContent: React.FC<InvoiceContentProps> = ({
         
         {/* Amount Display */}
         <InvoiceAmountDisplay
-          satsAmount={satsAmount}
-          usdAmount={usdAmount}
+          formattedAmount={formattedAmount}
         />
       </View>
       

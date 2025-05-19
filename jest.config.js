@@ -1,51 +1,62 @@
 module.exports = {
-  preset: 'jest-expo',
+  preset: 'react-native',
+  
+  // For React Native component tests, jsdom works better
+  testEnvironment: 'jsdom',
+  
+  // Specify the directories where Jest should look for tests
+  testMatch: [
+    '<rootDir>/tests/unit/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/integration/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/e2e/**/*.test.{js,jsx,ts,tsx}'
+  ],
+  
+  // Transform files with babel-jest
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest'
   },
+  
+  // Important: Tell Jest which packages should not be transformed
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|react-clone-referenced-element|@expo|expo|@expo-google-fonts|expo-router|@unimodules|unimodules|sentry-expo|@react-native-async-storage)',
+    'node_modules/(?!(react-native|react-native.*|@react-native.*|@?expo.*|expo.*|@react-navigation.*|@?rneui.*|lucide-react-native.*|nativewind.*|react-native-.*|@sentry\/.*|lottie-react-native.*|@bitcoin-design\/.*|@tanstack\/.*)/)'
   ],
-  setupFiles: [
-    '<rootDir>/tests/config/jest-setup.js',
-  ],
+  
+  // File extensions Jest will look for
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
+  
+  // Module name mappings
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '^react-native$': '<rootDir>/node_modules/react-native',
-    '^react-native/Libraries/Animated/NativeAnimatedHelper$': '<rootDir>/node_modules/react-native/Libraries/Animated/NativeAnimatedHelper',
+    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/tests/jestMocks/fileMock.js',
+    '\\.(css|less)$': '<rootDir>/tests/jestMocks/styleMock.js',
+    // Add mappings for any CSS processed by NativeWind
+    '\\.css$': '<rootDir>/tests/jestMocks/styleMock.js'
   },
-  testEnvironment: 'jsdom',
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/android/',
-    '/ios/',
-  ],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  collectCoverage: true,
+  
+  // Configure where to look for modules
+  moduleDirectories: ['node_modules', 'tests/jestMocks', 'tests'],
+  
+  // Setup files
+  setupFiles: ['<rootDir>/tests/setup/mocks.js'],
+  
+  // For testing-library/react-native
+  setupFilesAfterEnv: ['<rootDir>/tests/setup/setupTests.js'],
+  
+  // For coverage reporting
   collectCoverageFrom: [
-    '**/*.{js,jsx,ts,tsx}',
-    '!**/coverage/**',
+    'src/**/*.{js,jsx,ts,tsx}',
+    'app/**/*.{js,jsx,ts,tsx}',
+    '!**/*.d.ts',
     '!**/node_modules/**',
-    '!**/babel.config.js',
-    '!**/jest.setup.js',
-    '!**/jest.config.js',
+    '!**/coverage/**',
+    '!**/tests/**'
   ],
-  // Temporarily disable strict coverage thresholds
-  coverageThreshold: {
-    global: {
-      branches: 0,
-      functions: 0,
-      lines: 0,
-      statements: 0,
-    },
-  },
-  verbose: true,
-  snapshotSerializers: ['@testing-library/jest-native/extend-expect'],
-  testTimeout: 10000,
-  moduleDirectories: ['node_modules', 'src'],
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.json',
-    },
-  },
-}; 
+  
+  // Properly handle files with the same name in different directories
+  watchPathIgnorePatterns: [
+    'node_modules'
+  ],
+  
+  // Set test timeout to accommodate for tests that might take longer
+  testTimeout: 15000
+};

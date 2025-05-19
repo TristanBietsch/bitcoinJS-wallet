@@ -6,7 +6,6 @@ import { ThemedText } from '@/src/components/ui/Text'
 
 // Import our custom hooks
 import { useSeedPhraseValidation } from '@/src/hooks/wallet/useSeedPhraseValidation'
-import { useSeedPhraseSecurity } from '@/src/hooks/security/useSeedPhraseSecurity'
 import { useSeedPhraseInput } from '@/src/hooks/wallet/useSeedPhraseInput'
 
 // Import our modular components
@@ -16,8 +15,8 @@ import ImportButton from '@/src/components/features/Wallet/Import/ImportButton'
 
 // Import shared constants and types
 import { TEST_BYPASS_PHRASE, TEST_ERROR_PHRASE } from '@/src/constants/testing'
-import { BaseCallbacks } from '@/src/types/callbacks'
-import { useImport } from '@/src/features/wallet/import/ImportContext'
+import { BaseCallbacks } from '@/src/types/ui'
+import { useImportStore } from '@/src/store/importStore'
 
 interface ImportWalletScreenProps extends BaseCallbacks {}
 
@@ -26,60 +25,58 @@ interface ImportWalletScreenProps extends BaseCallbacks {}
  * Visual warnings and word chips have been removed while maintaining validation logic
  */
 export default function ImportWalletScreen({ onBack }: ImportWalletScreenProps) {
-  // Context from ImportProvider
-  const { startChecking } = useImport()
+  const { startChecking, setSeedPhrase: setStoreSeedPhrase } = useImportStore.getState()
+  const importFlowState = useImportStore(state => state.importFlowState)
+  const storeSeedPhrase = useImportStore(state => state.seedPhrase)
+  const importErrorFromStore = useImportStore(state => state.importError)
+
+  const { 
+    seedPhrase: localSeedPhrase, 
+    handleSeedPhraseChange: localHandleSeedPhraseChange, 
+  } = useSeedPhraseInput()
   
-  // Use our custom hooks
-  const { seedPhrase, handleSeedPhraseChange, clearSeedPhrase } = useSeedPhraseInput()
-  const { securelyStoreSeedPhrase, error: securityError } = useSeedPhraseSecurity(seedPhrase)
   const { 
     validationResult, 
-    wordValidations, // Still using this for validation logic, but not displaying it
+    wordValidations,
     showValidation, 
     setShowValidation,
     successAnim
-  } = useSeedPhraseValidation(seedPhrase)
+  } = useSeedPhraseValidation(localSeedPhrase)
 
-  // Show validation feedback when there's a security error
   useEffect(() => {
-    if (securityError) {
-      setShowValidation(true)
+    setStoreSeedPhrase(localSeedPhrase)
+    if (importErrorFromStore && localSeedPhrase !== storeSeedPhrase && importFlowState !== 'input') {
+      // If there was a submission error from store, and user changes input, reset to input state
+      useImportStore.getState().returnToInput()
     }
-  }, [ securityError, setShowValidation ])
+  }, [ localSeedPhrase, setStoreSeedPhrase, importErrorFromStore, storeSeedPhrase, importFlowState ])
 
   const handleImport = async () => {
-    // Test error phrase check - go to checking screen first, then error
-    if (seedPhrase.trim() === TEST_ERROR_PHRASE) {
-      const currentPhrase = seedPhrase.trim()
-      clearSeedPhrase()
-      startChecking(currentPhrase)
-      return
-    }
-    
-    // Test bypass check
-    if (seedPhrase.trim() === TEST_BYPASS_PHRASE) {
-      const currentPhrase = seedPhrase.trim()
-      clearSeedPhrase()
-      startChecking(currentPhrase)
+    if (localSeedPhrase.trim() === TEST_ERROR_PHRASE || localSeedPhrase.trim() === TEST_BYPASS_PHRASE) {
+      startChecking(localSeedPhrase.trim())
       return
     }
 
-    // Only proceed if the seed phrase is valid
     if (validationResult.isValid) {
-      const success = await securelyStoreSeedPhrase()
-      
-      if (success) {
-        // Store the phrase for verification before clearing the UI
-        const currentPhrase = seedPhrase.trim()
-        clearSeedPhrase()
-        startChecking(currentPhrase)
-      } else {
-        // Error is handled by the hook and displayed through validation
-        setShowValidation(true)
-      }
+      startChecking(localSeedPhrase.trim())
     } else {
-      // Force show validation if user tries to submit invalid phrase
       setShowValidation(true)
+    }
+  }
+  
+  const isLoading = importFlowState === 'checking'
+
+  let feedbackValidationResult = validationResult
+  if (importErrorFromStore) {
+    // If there is an error from the store (submission error), prioritize showing it.
+    // Ensure all fields from ValidationResult are present.
+    feedbackValidationResult = {
+      ...validationResult, // Base this on current validationResult to preserve other fields if any
+      isValid      : false, 
+      errorMessage : importErrorFromStore,
+      // Explicitly set other potentially required fields if not covered by spread
+      // and if validationResult might not be fully formed from an empty phrase.
+      // For example, if validationResult is from useSeedPhraseValidation, it should be complete.
     }
   }
 
@@ -99,26 +96,28 @@ export default function ImportWalletScreen({ onBack }: ImportWalletScreenProps) 
         <View style={styles.inputContainer}>
           {/* Seed phrase input with validation logic but no visual word chips */}
           <SeedPhraseInput
-            value={seedPhrase}
+            value={localSeedPhrase}
             onChangeText={(text) => {
-              handleSeedPhraseChange(text)
+              // Only allow letters and spaces
+              const lettersAndSpacesOnly = text.replace(/[^a-zA-Z\s]/g, '')
+              // Normalize to lowercase for consistent validation regardless of input case
+              const normalizedText = lettersAndSpacesOnly.toLowerCase()
+              
+              localHandleSeedPhraseChange(normalizedText)
               // Show validation feedback once user starts typing
-              if (!showValidation && text.trim()) {
+              if (!showValidation && normalizedText.trim()) {
                 setShowValidation(true)
               }
             }}
             wordValidations={wordValidations}
-            isValid={validationResult.isValid || seedPhrase.trim() === TEST_BYPASS_PHRASE || seedPhrase.trim() === TEST_ERROR_PHRASE}
+            isValid={validationResult.isValid || localSeedPhrase.trim() === TEST_BYPASS_PHRASE || localSeedPhrase.trim() === TEST_ERROR_PHRASE}
             showValidation={showValidation}
           />
           
           {/* Validation feedback - only shows success state now */}
           <ValidationFeedback
-            validationResult={securityError 
-              ? { ...validationResult, isValid: false, errorMessage: securityError } 
-              : validationResult
-            }
-            showValidation={showValidation}
+            validationResult={feedbackValidationResult}
+            showValidation={showValidation || !!importErrorFromStore}
             suggestionText=""
             successAnim={successAnim}
           />
@@ -128,7 +127,8 @@ export default function ImportWalletScreen({ onBack }: ImportWalletScreenProps) 
       <View style={styles.buttonContainer}>
         <ImportButton
           onPress={handleImport}
-          disabled={!validationResult.isValid && seedPhrase.trim() !== TEST_BYPASS_PHRASE && seedPhrase.trim() !== TEST_ERROR_PHRASE}
+          isLoading={isLoading}
+          disabled={!validationResult.isValid && localSeedPhrase.trim() !== TEST_BYPASS_PHRASE && localSeedPhrase.trim() !== TEST_ERROR_PHRASE && !isLoading}
         />
       </View>
     </OnboardingContainer>

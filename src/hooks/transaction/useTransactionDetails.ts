@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Transaction } from '@/src/types/transaction'
+import { Transaction } from '@/src/types/domain/transaction'
 import { mockTransactions } from '@/tests/mockData/transactionData'
 
 // Mock conversion rate: 1 USD = 42105.26 sats (approximately $23,750 per BTC)

@@ -1,7 +1,11 @@
-import { CurrencyType } from '@/src/config/currency'
+import { CurrencyType } from '@/src/types/domain/finance'
 
 /**
- * Get the appropriate amount based on selected currency
+ * Get the appropriate amount based on selected currency (BTC or SATS)
+ * 
+ * This function simply returns the raw amount for the requested currency type.
+ * The formatting functions will handle any necessary conversion and display formatting.
+ * 
  * @param currency The currency type to get the amount for
  * @param amounts Object containing different currency amounts
  * @returns The amount for the specified currency
@@ -9,67 +13,56 @@ import { CurrencyType } from '@/src/config/currency'
 export const getAmountForCurrency = (
   currency: CurrencyType,
   amounts: { 
-    usdAmount: number,
     btcAmount: number,
     satsAmount: number 
   }
 ) => {
-  const { usdAmount, btcAmount, satsAmount } = amounts
+  const { btcAmount, satsAmount } = amounts
   
   switch(currency) {
-    case 'USD':
-      return usdAmount
     case 'BTC':
       return btcAmount
     case 'SATS':
       return satsAmount
-    default:
-      return usdAmount
+    default: // Should not happen with CurrencyType
+      return satsAmount // Default to SATS if type is somehow invalid
   }
 }
 
 /**
- * Validates Bitcoin input to ensure it doesn't exceed maximum decimal places
+ * Validates Bitcoin input to ensure it doesn't exceed maximum decimal places for BTC or length for SATS
  * @param currentValue The current input value
  * @param newDigit The new digit being added
- * @param currency The currency type (BTC, SATS, USD)
+ * @param currency The currency type (BTC or SATS)
  * @returns boolean indicating if the input is valid
  */
 export const validateBitcoinInput = (
   currentValue: string,
   newDigit: string,
-  currency: 'BTC' | 'SATS' | 'USD'
+  currency: CurrencyType // Updated to use imported CurrencyType
 ): boolean => {
-  // For USD, we allow standard decimal input (typically 2 decimal places)
-  if (currency === 'USD') {
-    return true
-  }
-
-  // For SATS, limit to 9 digits total (without decimal places)
   if (currency === 'SATS') {
-    // If trying to add a decimal point to SATS, don't allow it
     if (newDigit === '.') {
-      return false
+      return false // SATS are whole numbers
     }
-    
-    // Remove any existing decimal points for the check (shouldn't happen with proper validation)
-    const cleanValue = currentValue.replace('.', '')
-    
-    // Allow up to 9 digits for SATS
-    return cleanValue.length < 9 || (cleanValue.length === 9 && newDigit === '')
+    // SATS can be up to 15 digits as 100,000,000 (SATS_PER_BTC) * 1,000,000 (max BTC) is large
+    // A more practical limit might be related to total supply if needed.
+    // For now, let's use a generous limit like 15 digits for SATS string length.
+    return currentValue.replace('.', '').length < 15 || (currentValue.length === 15 && newDigit === '')
   }
 
   // For BTC, enforce 8 decimal places maximum
-  const decimalIndex = currentValue.indexOf('.')
-  
-  // If there's no decimal point or we're adding a decimal point, it's valid
-  if (decimalIndex === -1 || newDigit === '.') {
-    return true
+  if (newDigit === '.' && currentValue.includes('.')) {
+    return false // Already has a decimal point
   }
-  
-  // Check if adding this digit would exceed 8 decimal places
-  const decimalPlaces = currentValue.length - decimalIndex - 1
-  
-  // If we already have 8 decimal places, don't allow more digits
-  return decimalPlaces < 8
+
+  const parts = (currentValue + newDigit).split('.')
+  if (parts.length > 1) {
+    // Check decimal part length
+    if (parts[1].length > 8) {
+      return false
+    }
+  }
+  // Further validation for overall length or max value can be added if needed
+  return true
 } 

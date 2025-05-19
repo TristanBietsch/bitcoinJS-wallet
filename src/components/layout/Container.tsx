@@ -1,17 +1,20 @@
-import React from 'react'
-import { View, ViewStyle } from 'react-native'
+import React, { ReactNode } from 'react'
+import { View } from 'react-native'
 
 interface AppProviderProps {
-  children: React.ReactNode;
-  style?: ViewStyle;
+  children: ReactNode
 }
 
-// Only export the named function, avoid default export
-export function AppProvider(props: AppProviderProps): React.ReactElement {
-  const { children, style } = props
-  
+/**
+ * Central provider for essential app contexts like Theme, Navigation, etc.
+ */
+export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   return (
-    <View style={[ { flex: 1 }, style ]}>
+    <View style={{ flex: 1 }}>
+      {/* 
+        Removed WalletProvider and PriceProvider as they are replaced by Zustand stores.
+        ThemeProvider might be added back if theme switching is implemented.
+      */}
       {children}
     </View>
   )

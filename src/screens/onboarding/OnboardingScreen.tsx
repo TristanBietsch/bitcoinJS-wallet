@@ -1,20 +1,35 @@
-import React, { useState } from 'react'
-import { OnboardingScreenProps } from '@/src/types/onboarding.types'
+import React, { useState, useCallback } from 'react'
+import { OnboardingScreenProps } from '@/src/types/ui'
 import WelcomeScreen from './start/WelcomeScreen'
 import WalletChoiceScreen from './start/WalletChoiceScreen'
 import SeedPhraseWarningScreen from './create/warning/SeedPhraseWarningScreen'
 import PreparePhraseScreen from './create/prepare/PreparePhraseScreen'
 import GenerateSeedWords from './create/generate/GenerateSeedWords'
 import ConfirmSeedWordsScreen from './create/confirm/ConfirmSeedWordsScreen'
-import ImportWalletScreen from './import/input/ImportWalletScreen'
+import ImportFlow from '@/src/screens/onboarding/import/ImportFlow'
 import SuccessScreen from './status/SuccessScreen'
 import ErrorScreen from './status/ErrorScreen'
+import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
 
 type WalletStep = 'welcome' | 'choice' | 'warning' | 'prepare' | 'generate-seed' | 'confirm-seed' | 'import' | 'success' | 'error';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [ currentStep, setCurrentStep ] = useState<WalletStep>('welcome')
   const [ error, setError ] = useState<string | null>(null)
+
+  // Reset the entire onboarding flow, clearing any stored seed phrase
+  const resetOnboarding = useCallback(async () => {
+    try {
+      // Remove stored seed phrase
+      await seedPhraseService.storeSeedPhrase('', 'primary_seed')
+      // Return to the wallet choice screen
+      setCurrentStep('choice')
+    } catch (error) {
+      console.error('Error resetting onboarding:', error)
+      setError('Could not reset wallet creation process')
+      setCurrentStep('error')
+    }
+  }, [])
 
   const handleGetStarted = () => {
     setCurrentStep('choice')
@@ -99,13 +114,19 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     case 'prepare':
       return <PreparePhraseScreen onComplete={handlePrepareComplete} onBack={handleBackToWarning} />
     case 'generate-seed':
-      return <GenerateSeedWords onComplete={handleGenerateSeedComplete} onBack={handleBackToPrepare} />
+      return (
+        <GenerateSeedWords 
+          onComplete={handleGenerateSeedComplete} 
+          onBack={handleBackToPrepare}
+          resetOnboarding={resetOnboarding}
+        />
+      )
     case 'confirm-seed':
       return <ConfirmSeedWordsScreen onComplete={handleConfirmSeedComplete} onBack={handleBackToGenerateSeed} />
     case 'import':
-      return <ImportWalletScreen 
+      return <ImportFlow 
         onComplete={handleImportComplete} 
-        onBack={handleBackToChoice} 
+        _onBack={handleBackToChoice} 
       />
     case 'success':
       return <SuccessScreen onComplete={handleSuccess} />
