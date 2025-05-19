@@ -81,10 +81,10 @@ const styles = StyleSheet.create({
     opacity   : 0.7,
   },
   success : {
-    fontSize : 16,
-    textAlign : 'center',
-    color : Colors.light.buttons.primary,
+    fontSize   : 16,
+    textAlign  : 'center',
+    color      : Colors.light.buttons.primary,
     fontWeight : 'bold',
-    marginTop : 20,
+    marginTop  : 20,
   }
 })

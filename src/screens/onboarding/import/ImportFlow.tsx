@@ -23,7 +23,7 @@ export default function ImportFlow({ onComplete, _onBack }: ImportFlowProps) {
   const { returnToInput, resetImportStore } = useImportStore.getState()
   
   // Local state to track if balance has been loaded
-  const [isWaitingForBalance, setIsWaitingForBalance] = useState(false)
+  const [ isWaitingForBalance, setIsWaitingForBalance ] = useState(false)
   
   // Handle success state - wait for balance fetch before completing
   useEffect(() => {
