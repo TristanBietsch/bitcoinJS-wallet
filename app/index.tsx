@@ -27,6 +27,11 @@ export default function Home() {
   // Use Zustand store to check wallet status with stable selector
   const { isInitialized, isSyncing } = useWalletStore(walletSelector)
 
+  // Log wallet state changes for diagnostics
+  useEffect(() => {
+    console.log(`Wallet state changed: isInitialized: ${isInitialized}, isSyncing: ${isSyncing}`)
+  }, [ isInitialized, isSyncing ])
+
   // Only show loading when initializing for the first time
   // Otherwise, wallet data will be loaded silently in the background
   const isLoading = isChecking || (!isInitialized && isSyncing)
