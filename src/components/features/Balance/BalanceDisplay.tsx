@@ -16,9 +16,8 @@ interface BalanceDisplayProps {
 }
 
 /**
- * Completely rewritten balance display with anti-flicker technology
- * Uses direct animation control and prevents any component updates
- * during background refreshes
+ * Balance display component that shows the current balance with proper currency formatting
+ * Uses animation for smooth currency transitions
  */
 const BalanceDisplay = (props: BalanceDisplayProps) => {
   const {
@@ -26,27 +25,18 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
     error,
     currency,
     formattedBalance,
+    fadeAnim,
     onRetry,
     currencySelector
   } = props
   
-  // Store component refs that should never change to avoid re-renders
-  const component = useRef({
-    // Main balance value that's displayed
-    displayValue : formattedBalance || '',
-    
-    // Animation values
-    mainOpacity : new Animated.Value(1),
-    
-    // Stable representation of loading state
-    isCurrentlyLoading : isLoading,
-    
-    // The last time the display was updated
-    lastUpdateTime : Date.now(),
-    
-    // Flag to track initial vs subsequent loads
-    hasShownInitialValue : !!formattedBalance,
-  }).current
+  // Store loading state in a ref to avoid unnecessary re-renders
+  const loadingRef = useRef(isLoading)
+  
+  // Update loading ref when prop changes
+  useEffect(() => {
+    loadingRef.current = isLoading
+  }, [ isLoading ])
   
   // Create memoized views that won't change during prop updates
   const views = useMemo(() => {
@@ -91,15 +81,15 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
         />
       ),
       
-      // Reusable balance display
-      balanceView : (displayValue: string) => (
+      // Reusable balance display - directly uses the current formattedBalance
+      balanceView : (
         <Animated.View 
           style={[
             styles.balanceDisplayContainer, 
-            { opacity: component.mainOpacity }
+            { opacity: fadeAnim }
           ]}
         >
-          {createBalanceText(displayValue, currency)}
+          {createBalanceText(formattedBalance, currency)}
         </Animated.View>
       ),
       
@@ -111,65 +101,12 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
         />
       )
     }
-  }, [ currency, error, onRetry, component.mainOpacity ])
+  }, [ currency, error, onRetry, fadeAnim, formattedBalance ])
   
-  // Update internal state without triggering re-renders
-  useEffect(() => {
-    // Skip this effect if nothing has changed
-    if (component.displayValue === formattedBalance && component.isCurrentlyLoading === isLoading) {
-      return
-    }
-    
-    // Always update loading state
-    component.isCurrentlyLoading = isLoading
-    
-    // If the balance hasn't changed, no need to update display
-    if (formattedBalance === component.displayValue) {
-      return
-    }
-    
-    // We have a real value and either:
-    // 1. We've never shown a value before, or
-    // 2. The value has actually changed
-    if (formattedBalance && 
-        (!component.hasShownInitialValue || 
-         formattedBalance !== component.displayValue)) {
-      
-      // Only animate if this isn't the first value and enough time has passed
-      const shouldAnimate = component.hasShownInitialValue && 
-                            (Date.now() - component.lastUpdateTime > 200)
-      
-      if (shouldAnimate) {
-        // Fade out
-        Animated.timing(component.mainOpacity, {
-          toValue         : 0.3,
-          duration        : 150,
-          useNativeDriver : true
-        }).start(() => {
-          // Update value while faded
-          component.displayValue = formattedBalance
-          
-          // Fade back in
-          Animated.timing(component.mainOpacity, {
-            toValue         : 1,
-            duration        : 150,
-            useNativeDriver : true
-          }).start()
-        })
-      } else {
-        // Just update without animation
-        component.displayValue = formattedBalance
-      }
-      
-      component.hasShownInitialValue = true
-      component.lastUpdateTime = Date.now()
-    }
-  }, [ formattedBalance, isLoading, component ])
-  
-  // Determine what content to render based on component state
+  // Determine what content to render based on current state
   let mainContent
   
-  if (!component.hasShownInitialValue && isLoading) {
+  if (!formattedBalance && isLoading) {
     // Initial loading state
     mainContent = views.loadingView
   } else if (error) {
@@ -179,7 +116,7 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
     // Normal display with balance
     mainContent = (
       <>
-        {views.balanceView(component.displayValue)}
+        {views.balanceView}
         
         {/* Currency selector */}
         {currencySelector && (
@@ -189,7 +126,7 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
         )}
         
         {/* Mini loader for background refreshes */}
-        {isLoading && component.hasShownInitialValue && (
+        {isLoading && formattedBalance && (
           views.miniLoaderView
         )}
       </>

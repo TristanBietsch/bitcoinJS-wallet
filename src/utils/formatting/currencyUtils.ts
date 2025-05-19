@@ -2,6 +2,10 @@ import { CurrencyType } from '@/src/types/domain/finance'
 
 /**
  * Get the appropriate amount based on selected currency (BTC or SATS)
+ * 
+ * This function simply returns the raw amount for the requested currency type.
+ * The formatting functions will handle any necessary conversion and display formatting.
+ * 
  * @param currency The currency type to get the amount for
  * @param amounts Object containing different currency amounts
  * @returns The amount for the specified currency

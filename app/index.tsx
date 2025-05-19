@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import HomeScreen from '@/src/screens/main/home/HomeScreen'
-import { isOnboardingComplete, resetOnboardingStatus } from '@/src/utils/storage'
+import { isOnboardingComplete } from '@/src/utils/storage'
 import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator } from 'react-native'
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
@@ -53,10 +53,23 @@ export default function Home() {
   }
 
   const handleResetOnboarding = async () => {
-    // Clear wallet data and reset onboarding status
-    await useWalletStore.getState().clearWallet()
-    await resetOnboardingStatus()
-    router.push('/onboarding' as any)
+    try {
+      // Clear all wallet data
+      await useWalletStore.getState().clearWallet()
+      
+      // Clear all AsyncStorage keys for a complete reset
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default
+      await AsyncStorage.clear()
+      
+      console.log('All storage keys cleared - complete app reset')
+      
+      // Navigate back to onboarding
+      router.push('/onboarding' as any)
+    } catch (error) {
+      console.error('Error resetting app:', error)
+      // Still try to navigate to onboarding even if there was an error
+      router.push('/onboarding' as any)
+    }
   }
 
   // Log state right before render decision

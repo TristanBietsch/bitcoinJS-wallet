@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native'
 import { router } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import Dropdown from '@/src/components/ui/Dropdown'
 import BalanceDisplay from '@/src/components/features/Balance/BalanceDisplay'
 import ActionButtons from '@/src/components/ui/Button/ActionButtons'
 import { useFadeAnimation } from '@/src/hooks/ui/useFadeAnimation'
-import { getAmountForCurrency } from '@/src/utils/formatting/currencyUtils'
 import { formatCurrency } from '@/src/utils/formatting/formatCurrencyValue'
 import { CURRENCY_OPTIONS, CurrencyType } from '@/src/config/currency'
 import { useSendStore } from '@/src/store/sendStore'
@@ -16,6 +15,7 @@ import AppHeader from '@/src/components/ui/Header/AppHeader'
 import { Scan } from 'lucide-react-native'
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
 import { ThemedText } from '@/src/components/ui/Text'
+import { SATS_PER_BTC } from '@/src/constants/currency'
 
 const HomeScreen = () => {
   // State for selected currency format
@@ -30,8 +30,8 @@ const HomeScreen = () => {
     refreshBalances: refreshAllData // Refetches both wallet and price
   } = useWalletBalance()
   
-  // Use fade animation hook
-  const { fadeAnim, fadeTransition } = useFadeAnimation()
+  // Use fade animation hook - use the fadeAnim value directly but not the fadeTransition function
+  const { fadeAnim } = useFadeAnimation()
   
   // We use the combined isLoading and error from the hook
   const isLoading = isDataLoading
@@ -53,25 +53,42 @@ const HomeScreen = () => {
     }, [ refreshAllData ])
   )
   
-  // balanceValues are now directly from the hook
-  const balanceValues = useMemo(() => ({
-    satsAmount,
-    btcAmount
-  }), [ satsAmount, btcAmount ])
-  
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
-    fadeTransition(() => {
+    // First fade out
+    Animated.timing(fadeAnim, {
+      toValue         : 0.3,
+      duration        : 150,
+      useNativeDriver : true
+    }).start(() => {
+      // Update currency while faded out
       setCurrency(value as CurrencyType)
+      
+      // Then fade back in
+      setTimeout(() => {
+        Animated.timing(fadeAnim, {
+          toValue         : 1,
+          duration        : 150,
+          useNativeDriver : true
+        }).start()
+      }, 50) // Small delay to ensure the new value is rendered
     })
   }
   
   // Get and format the balance (memoized to prevent unnecessary recalculations)
   const formattedBalance = useMemo(() => {
-    const amount = getAmountForCurrency(currency, balanceValues)
-    if (amount === 0) return '0' // Always show simple '0' for zero balance
-    return formatCurrency(amount, currency)
-  }, [ currency, balanceValues ])
+    // Always use the btcAmount as the source of truth
+    // Regardless of which currency is selected for display, we use the same value source
+    // and let the formatCurrency function handle the conversion and formatting
+    if (btcAmount === 0) return '0' // Always show simple '0' for zero balance
+    
+    if (currency === 'BTC') {
+      return formatCurrency(btcAmount, 'BTC')
+    } else {
+      // When displaying SATS, we convert from BTC to SATS and format
+      return formatCurrency(btcAmount * SATS_PER_BTC, 'SATS')
+    }
+  }, [ currency, btcAmount ])
   
   // Navigation handlers
   const handlePressSend = () => router.push('/send/send' as any)
