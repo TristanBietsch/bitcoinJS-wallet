@@ -138,11 +138,11 @@ export const encryptData = async (data: string): Promise<string> => {
 }
 
 // Decrypt data with the app encryption key
-export const decryptData = async (encryptedData: string): Promise<string> => {
+export const decryptData = async (encryptedData: string, keyToUse?: string): Promise<string> => {
   try {
     if (!encryptedData) return ''
     
-    const key = await getAppEncryptionKey()
+    const key = keyToUse || await getAppEncryptionKey()
     
     // Extract the IV from the stored data
     const parts = encryptedData.split(':')

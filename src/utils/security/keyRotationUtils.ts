@@ -18,12 +18,14 @@ export const rotateAllEncryptionKeys = async (): Promise<void> => {
   try {
     console.log('Starting encryption key rotation')
     
+    // Get the current key for decryption *before* generating and storing the new one.
+    const oldKey = await getAppEncryptionKey()
+
     // Generate a new encryption key
     const newKey = await generateEncryptionKey()
-    
-    // Get the current key for decryption
-    // We don't actually need to store this as decryptData will use it internally
-    await getAppEncryptionKey()
+
+    // Store the new key and make it active *before* re-encrypting data.
+    await storeAppEncryptionKey(newKey)
     
     // Get all keys from secure storage
     const allKeys = await AsyncStorage.getAllKeys()
@@ -42,10 +44,10 @@ export const rotateAllEncryptionKeys = async (): Promise<void> => {
         const currentValue = await secureStore.get(key, { noDecryption: true })
         if (!currentValue) continue
         
-        // Decrypt with the old key
-        const decrypted = await decryptData(currentValue)
+        // Decrypt with the old key, explicitly passing it
+        const decrypted = await decryptData(currentValue, oldKey)
         
-        // Re-encrypt with the new key
+        // Re-encrypt with the new key (which is now the active key)
         const reEncrypted = await encryptData(decrypted)
         
         // Store the re-encrypted value
@@ -57,9 +59,6 @@ export const rotateAllEncryptionKeys = async (): Promise<void> => {
         // Continue with other keys, don't break the whole process
       }
     }
-    
-    // Store the new key
-    await storeAppEncryptionKey(newKey)
     
     console.log('Encryption key rotation completed successfully')
   } catch (error) {
