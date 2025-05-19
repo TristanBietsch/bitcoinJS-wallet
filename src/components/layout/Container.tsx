@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react'
-// import { PriceProvider } from '@/src/context/PriceContext' // Removed
+import { View } from 'react-native'
 // import { ThemeProvider } from '@/src/context/ThemeContext' // Removed as file not found
 
 interface AppProviderProps {
@@ -10,10 +10,13 @@ interface AppProviderProps {
  * Central provider for essential app contexts like Theme, Navigation, etc.
  */
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  // return (
-  //   <ThemeProvider>
-  //     {children} 
-  //   </ThemeProvider>
-  // )
-  return <>{children}</> // Simplified to return children directly
+  return (
+    <View style={{ flex: 1 }}>
+      {/* 
+        Removed WalletProvider and PriceProvider as they are replaced by Zustand stores.
+        ThemeProvider might be added back if theme switching is implemented.
+      */}
+      {children}
+    </View>
+  )
 } 

@@ -7,9 +7,8 @@ import BalanceDisplay from '@/src/components/features/Balance/BalanceDisplay'
 import ActionButtons from '@/src/components/ui/Button/ActionButtons'
 import { useFadeAnimation } from '@/src/hooks/ui/useFadeAnimation'
 import { getAmountForCurrency } from '@/src/utils/formatting/currencyUtils'
-import { formatCurrency } from '@/tests/mockData/walletData'
+import { formatCurrency } from '@/src/utils/formatting/formatCurrencyValue'
 import { CURRENCY_OPTIONS, CurrencyType } from '@/src/config/currency'
-import { SATS_PER_BTC } from '@/src/constants/currency'
 import { useSendStore } from '@/src/store/sendStore'
 import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
@@ -29,11 +28,10 @@ const HomeScreen = () => {
   // Use the combined hook for wallet balance and price data
   const { 
     satsAmount, 
-    usdAmount, 
     btcAmount, 
     isLoading: isDataLoading, // Combined loading from wallet and price
     error: dataError,       // Combined error
-    refetch: refreshAllData // Refetches both wallet and price
+    refreshBalances: refreshAllData // Refetches both wallet and price
   } = useWalletBalance()
   
   // Use fade animation hook
@@ -64,9 +62,8 @@ const HomeScreen = () => {
   // balanceValues are now directly from the hook
   const balanceValues = useMemo(() => ({
     satsAmount,
-    usdAmount,
     btcAmount
-  }), [ satsAmount, usdAmount, btcAmount ])
+  }), [ satsAmount, btcAmount ])
   
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
@@ -77,10 +74,8 @@ const HomeScreen = () => {
   
   // Get and format the balance (memoized to prevent unnecessary recalculations)
   const formattedBalance = useMemo(() => {
-    return formatCurrency(
-      getAmountForCurrency(currency, balanceValues),
-      currency
-    )
+    const amount = getAmountForCurrency(currency, balanceValues)
+    return formatCurrency(amount, currency)
   }, [ currency, balanceValues ])
   
   // Navigation handlers

@@ -3,31 +3,23 @@ import { View, StyleSheet, ViewStyle } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 
 interface InvoiceAmountDisplayProps {
-  satsAmount: string
-  usdAmount: string
+  formattedAmount: string
   label?: string
   style?: ViewStyle
 }
 
 /**
- * Component for displaying an invoice amount with both SATS and USD values
+ * Component for displaying a formatted invoice amount (BTC or SATS)
  */
 const InvoiceAmountDisplay: React.FC<InvoiceAmountDisplayProps> = ({
-  satsAmount,
-  usdAmount,
-  label = 'Requesting Amount:',
+  formattedAmount,
+  label = 'Amount:',
   style
 }) => {
   return (
     <View style={[ styles.container, style ]}>
       <ThemedText style={styles.label}>{label}</ThemedText>
-      <View style={styles.amountWrapper}>
-        <ThemedText style={styles.amount}>
-          {satsAmount}
-        </ThemedText>
-        <ThemedText style={styles.unit}>Sats</ThemedText>
-      </View>
-      <ThemedText style={styles.usdAmount}>≈ ${usdAmount} USD</ThemedText>
+      <ThemedText style={styles.amountText}>{formattedAmount}</ThemedText>
     </View>
   )
 }
@@ -35,8 +27,8 @@ const InvoiceAmountDisplay: React.FC<InvoiceAmountDisplayProps> = ({
 const styles = StyleSheet.create({
   container : {
     alignItems        : 'center',
-    marginTop         : 56,
-    marginBottom      : 8,
+    marginTop         : 24,
+    marginBottom      : 16,
     width             : '100%',
     paddingHorizontal : 20
   },
@@ -46,27 +38,10 @@ const styles = StyleSheet.create({
     marginBottom : 12,
     fontWeight   : '500'
   },
-  amountWrapper : {
-    flexDirection : 'row',
-    alignItems    : 'baseline',
-    marginBottom  : 8
-  },
-  amount : {
-    fontSize    : 36,
-    fontWeight  : 'bold',
-    marginRight : 6
-  },
-  unit : {
-    fontSize   : 24,
-    fontWeight : '600',
-    color      : '#444',
-    marginLeft : 2
-  },
-  usdAmount : {
-    fontSize   : 16,
-    color      : '#666',
-    marginTop  : 4,
-    fontWeight : '500'
+  amountText : {
+    fontSize   : 32,
+    fontWeight : 'bold',
+    color      : '#000'
   }
 })
 

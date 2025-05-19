@@ -1,47 +1,41 @@
-import { useMemo, useEffect } from 'react'
-import { useConvertBitcoin } from '@/src/hooks/bitcoin/useConvertBitcoin'
+import { useMemo } from 'react'
+import { CurrencyType } from '@/src/types/domain/finance'
+import { SATS_PER_BTC } from '@/src/constants/currency'
 
 interface InvoiceAmountResult {
   satsAmount: string
-  usdAmount: string
   formattedAmount: string
-  formattedUsdAmount: string
 }
 
 /**
- * Hook to handle invoice amount conversions and formatting
- * @param amount - The payment amount
- * @param currency - The currency of the amount (BTC, USD, etc.)
+ * Hook to handle invoice amount formatting (SATS and BTC)
+ * @param amountStr - The payment amount as a string
+ * @param currency - The currency of the amount (BTC or SATS)
  */
 export const useInvoiceAmount = (
-  amount: string = '0',
-  currency: string = 'BTC'
+  amountStr: string = '0',
+  currency: CurrencyType = 'SATS' // Default to SATS
 ): InvoiceAmountResult => {
-  const { getConvertedAmounts, refreshPrice } = useConvertBitcoin()
-  
-  // Use the bitcoin conversion hook to get the amounts
-  const amounts = useMemo(() => {
-    return getConvertedAmounts(amount, currency)
-  }, [ amount, currency, getConvertedAmounts ])
-  
-  // Create formatted display versions of the amounts
+  const satsAmountNum = useMemo(() => {
+    const numAmount = parseFloat(amountStr) || 0
+    if (currency === 'BTC') {
+      return Math.round(numAmount * SATS_PER_BTC)
+    }
+    return Math.round(numAmount) // Assuming SATS if not BTC
+  }, [ amountStr, currency ])
+
   const formattedAmount = useMemo(() => {
-    return `${amounts.sats} Sats`
-  }, [ amounts.sats ])
-  
-  const formattedUsdAmount = useMemo(() => {
-    return `≈ $${amounts.usd} USD`
-  }, [ amounts.usd ])
-  
-  // Refresh price on initialization - using useEffect instead of useMemo to avoid render loops
-  useEffect(() => {
-    refreshPrice()
-  }, [ refreshPrice ])
-  
+    if (currency === 'BTC') {
+      // For BTC, show the original BTC amount with 'BTC' suffix
+      // Or convert satsAmountNum back to BTC for display if preferred
+      const btcDisplay = (satsAmountNum / SATS_PER_BTC).toFixed(8).replace(/\.?0+$/, "")
+      return `${btcDisplay} BTC`
+    }
+    return `${satsAmountNum} SATS` // Default to SATS display
+  }, [ satsAmountNum, currency ])
+
   return {
-    satsAmount : amounts.sats,
-    usdAmount  : amounts.usd,
+    satsAmount : String(satsAmountNum),
     formattedAmount,
-    formattedUsdAmount
   }
 } 

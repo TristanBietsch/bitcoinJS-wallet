@@ -9,6 +9,7 @@ import InvoiceContent from '@/src/components/features/Receive/InvoiceContent'
 import { useAddressGeneration } from '@/src/hooks/receive/useAddressGeneration'
 import { useInvoiceAmount } from '@/src/hooks/receive/useInvoiceAmount'
 import { useShareActions } from '@/src/hooks/receive/useShareActions'
+import { CurrencyType } from '@/src/types/domain/finance'
 
 export default function InvoiceScreen() {
   const router = useRouter()
@@ -16,8 +17,14 @@ export default function InvoiceScreen() {
   
   // Use our modular hooks
   const { address, isLoading } = useAddressGeneration()
-  const { satsAmount, usdAmount } = useInvoiceAmount(params.amount, params.currency)
-  const { handleCopy, handleShare } = useShareActions(address, { sats: satsAmount, usd: usdAmount })
+  const { satsAmount, formattedAmount } = useInvoiceAmount(
+    params.amount,
+    params.currency as CurrencyType
+  )
+  const { handleCopy, handleShare } = useShareActions({
+    address,
+    amounts : { sats: satsAmount }
+  })
   
   // Handle back navigation
   const handleBackPress = () => {
@@ -29,7 +36,7 @@ export default function InvoiceScreen() {
       <InvoiceContent
         address={address}
         satsAmount={satsAmount}
-        usdAmount={usdAmount}
+        formattedAmount={formattedAmount}
         onCopy={handleCopy}
         onShare={handleShare}
         isLoading={isLoading}

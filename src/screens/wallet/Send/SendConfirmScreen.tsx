@@ -17,10 +17,10 @@ export default function SendConfirmScreen() {
   const { 
     amount, 
     address, 
-    fee, 
+    feeSats,
+    feeRate,
     currency, 
     totalAmount,
-    totalAmountUsd
   } = useTransactionParams()
   
   // Reset error mode when mounting this screen
@@ -39,10 +39,10 @@ export default function SendConfirmScreen() {
       <TransactionSummaryFooter
         amount={amount}
         address={address}
-        fee={fee}
+        feeSats={feeSats}
+        feeRate={feeRate}
         currency={currency}
         totalAmount={totalAmount}
-        totalAmountUsd={totalAmountUsd}
         onSendPress={navigateToSendLoading}
       />
     </SafeAreaContainer>

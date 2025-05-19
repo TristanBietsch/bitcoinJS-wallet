@@ -13,8 +13,6 @@ export default function SendAmountScreen() {
   const {
     amount,
     currency,
-    balance,
-    isLoading,
     handleCurrencyChange,
     handleNumberPress,
     handleBackspace,
@@ -40,8 +38,6 @@ export default function SendAmountScreen() {
       <AmountEntrySection
         amount={amount}
         currency={currency}
-        balance={balance}
-        isLoading={isLoading}
         onCurrencyChange={handleCurrencyChange}
       />
       

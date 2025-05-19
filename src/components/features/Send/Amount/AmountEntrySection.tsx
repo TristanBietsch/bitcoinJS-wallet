@@ -7,7 +7,7 @@ import { CurrencyType } from '@/src/types/domain/finance'
 interface AmountEntrySectionProps {
   amount: string
   currency: CurrencyType
-  balance: string
+  balance?: string
   isLoading?: boolean
   onCurrencyChange: (currency: string) => void
 }
@@ -18,8 +18,6 @@ interface AmountEntrySectionProps {
 const AmountEntrySection: React.FC<AmountEntrySectionProps> = ({
   amount,
   currency,
-  balance,
-  isLoading = false,
   onCurrencyChange
 }) => {
   return (
@@ -28,14 +26,12 @@ const AmountEntrySection: React.FC<AmountEntrySectionProps> = ({
       <AmountDisplay
         amount={amount}
         currency={currency}
-        balance={balance}
       />
       
       {/* Currency Selector */}
       <View style={styles.currencySelectorContainer}>
         <CurrencySelector
           currency={currency}
-          isLoading={isLoading}
           onCurrencyChange={onCurrencyChange}
         />
       </View>

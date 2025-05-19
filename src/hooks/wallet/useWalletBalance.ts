@@ -1,70 +1,52 @@
-import { useState, useEffect } from 'react'
-// import { useGlobalBitcoinPrice } from '@/src/context/PriceContext' // Old import
-import { usePriceStore } from '@/src/store/priceStore' // New import for price
-import { useWalletStore } from '@/src/store/walletStore' // New import
+import { useEffect, useState } from 'react'
+import { useWalletStore } from '@/src/store/walletStore' // Wallet data
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
-type WalletBalanceData = {
+export interface BalanceData {
   btcAmount: number;
-  usdAmount: number;
   satsAmount: number;
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => void;
-};
+}
 
 /**
- * Custom hook to fetch and manage wallet balance data
- * Uses real wallet data from WalletContext and price data from PriceContext
+ * Custom hook to get wallet balance in BTC and SATS.
  */
-export const useWalletBalance = (): WalletBalanceData => {
-  // Get real-time Bitcoin price from priceStore
-  const btcPrice = usePriceStore(state => state.btcPrice)
-  const isPriceLoading = usePriceStore(state => state.isLoading)
-  const priceError = usePriceStore(state => state.error)
-  const fetchPrice = usePriceStore(state => state.fetchPrice) // Renamed refreshPrice to fetchPrice for consistency
-  
+export const useWalletBalance = () => { // Removed return type for now, will add back if needed
   // Get wallet data from Zustand store using individual selectors
   const balances = useWalletStore(state => state.balances)
+  const isSyncing = useWalletStore(state => state.isSyncing) // Changed from isLoading to isSyncing
   const walletError = useWalletStore(state => state.error)
-  const isWalletLoading = useWalletStore(state => state.isSyncing)
-  const refreshBalance = useWalletStore(state => state.refreshWalletData)
-  
-  // Combine balance with price data
-  const [ balanceData, setBalanceData ] = useState({
+  const refreshWalletData = useWalletStore(state => state.refreshWalletData)
+
+  // Define state for combined balance data
+  const [ balanceData, setBalanceData ] = useState<BalanceData>({
     btcAmount  : 0,
-    usdAmount  : 0,
-    satsAmount : 0
+    satsAmount : 0,
   })
-  
-  // Calculate derived values whenever the wallet balances or price changes
+
+  // Calculate derived values whenever the wallet balances changes
   useEffect(() => {
-    const btcAmount = balances.total / SATS_PER_BTC
-    const usdAmount = btcPrice ? btcAmount * btcPrice : 0
-    
-    setBalanceData({
-      btcAmount,
-      usdAmount,
-      satsAmount : balances.total
-    })
-  }, [ balances, btcPrice ])
-  
+    if (balances) {
+      const satsAmount = balances.total // total is in SATS
+      const btcAmount = satsAmount / SATS_PER_BTC
+      setBalanceData({
+        btcAmount,
+        satsAmount,
+      })
+    }
+  }, [ balances ])
+
   // Combined loading state
-  const isLoading = isPriceLoading || isWalletLoading
-  
-  // Combined error state (prioritize wallet errors over price errors)
-  const error = walletError || priceError
-  
-  // Function to refresh both price and balance data
-  const refreshAll = async () => {
-    fetchPrice() // This will call usePriceStore's fetchPrice
-    refreshBalance() // This will now call useWalletStore's refreshWalletData
+  const isLoading = isSyncing // Use isSyncing as isLoading
+
+  // Function to refresh balance data
+  const refreshBalances = (silent?: boolean) => {
+    refreshWalletData(silent)
   }
 
   return {
     ...balanceData,
     isLoading,
-    error,
-    refetch : refreshAll
+    error : walletError, // error directly from store
+    refreshBalances,
   }
 } 

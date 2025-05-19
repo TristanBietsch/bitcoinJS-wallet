@@ -8,7 +8,7 @@ import InvoiceActionButtons from './InvoiceActionButtons'
 interface InvoiceContentProps {
   address: string
   satsAmount: string
-  usdAmount: string
+  formattedAmount: string
   onCopy: () => void
   onShare: () => void
   isLoading?: boolean
@@ -21,7 +21,7 @@ interface InvoiceContentProps {
 const InvoiceContent: React.FC<InvoiceContentProps> = ({
   address,
   satsAmount,
-  usdAmount,
+  formattedAmount,
   onCopy,
   onShare,
   isLoading: _isLoading = false,
@@ -51,7 +51,7 @@ const InvoiceContent: React.FC<InvoiceContentProps> = ({
         {/* Amount Display */}
         <InvoiceAmountDisplay
           satsAmount={satsAmount}
-          usdAmount={usdAmount}
+          formattedAmount={formattedAmount}
         />
       </View>
       

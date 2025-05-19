@@ -5,53 +5,38 @@ import { CurrencyType } from '@/src/types/domain/finance'
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
 /**
- * Convert amount between different currency types
+ * Convert amount between BTC and SATS
  */
 export const convertAmount = (
-  value: string, 
-  fromCurrency: CurrencyType, 
-  toCurrency: CurrencyType,
-  btcPrice: number | null
+  value: string,
+  fromCurrency: CurrencyType,
+  toCurrency: CurrencyType
 ): string => {
-  // If price hasn't loaded or currencies are the same, return unchanged
-  if (!btcPrice || value === '0' || fromCurrency === toCurrency) return value
-  
+  if (value === '0' || fromCurrency === toCurrency) return value
+
   const numericValue = parseFloat(value)
   if (isNaN(numericValue)) return '0'
-  
-  // Convert to BTC as intermediate step
-  let valueInBTC = numericValue
-  if (fromCurrency === 'USD') {
-    valueInBTC = numericValue / btcPrice
-  } else if (fromCurrency === 'SATS') {
-    valueInBTC = numericValue / SATS_PER_BTC
+
+  let valueInSATS: number
+
+  if (fromCurrency === 'BTC') {
+    valueInSATS = Math.round(numericValue * SATS_PER_BTC)
+  } else { // fromCurrency is SATS
+    valueInSATS = numericValue
   }
-  
-  // Convert from BTC to target currency
-  let result = valueInBTC
-  if (toCurrency === 'USD') {
-    result = valueInBTC * btcPrice
-  } else if (toCurrency === 'SATS') {
-    result = valueInBTC * SATS_PER_BTC
-  }
-  
-  // Format based on currency type
+
   if (toCurrency === 'BTC') {
-    return result.toFixed(8)
-  } else if (toCurrency === 'USD') {
-    return result.toFixed(2)
-  } else {
-    // SATS should be whole numbers
-    return Math.round(result).toString()
+    return (valueInSATS / SATS_PER_BTC).toFixed(8) // BTC can have 8 decimal places
+  } else { // toCurrency is SATS
+    return String(Math.round(valueInSATS)) // SATS are whole numbers
   }
 }
 
 /**
- * Format displayed amount based on currency
+ * Basic formatting for displayed amount (currently just returns the amount)
+ * More specific formatting is handled by formatBitcoinAmount in formatCurrencyValue.tsx
  */
-export const formatAmount = (amount: string, currency: CurrencyType): string => {
-  if (currency === 'USD') {
-    return amount.includes('.') ? amount : `${amount}.00`
-  }
+export const formatAmount = (amount: string, _currency: CurrencyType): string => {
+  // Removed USD specific formatting, further formatting can be specialized elsewhere
   return amount
 } 

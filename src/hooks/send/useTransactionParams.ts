@@ -3,53 +3,44 @@
  */
 import { useSendStore } from '@/src/store/sendStore'
 import { CurrencyType } from '@/src/types/domain/finance'
-import { calculateTransactionFee, getFeeInCurrency, TransactionFee } from '@/src/utils/send/feeCalculations'
+import { calculateTransactionFee, getFeeInCurrency } from '@/src/utils/send/feeCalculations'
 
-interface TransactionParams {
+export interface TransactionParams {
   amount: number
   currency: CurrencyType
-  fee: TransactionFee
-  feeInCurrency: number
-  totalAmount: number
-  totalAmountUsd: number
+  feeSats: number // Renamed from fee.sats for clarity at top level
+  feeBtc: number  // Renamed from fee.btc
+  feeRate: number // Added feeRate
+  totalAmount: number // Total in the specified currency (amount + feeInCurrency)
   address: string
   speed: string
 }
 
 /**
- * Hook to parse route parameters and calculate transaction details
+ * Hook to get calculated transaction parameters from the send store.
  */
 export const useTransactionParams = (): TransactionParams => {
   const { address, speed, customFee, amount: storeAmount, currency: storeCurrency } = useSendStore()
-  
-  // Parse amount from store, not from route params
+
   const amount = parseFloat(storeAmount || '0')
-  const currency = storeCurrency as CurrencyType
-  
-  // Calculate fee based on selected speed or custom fee
-  const fee = calculateTransactionFee(speed, customFee)
-  
-  // Calculate fee in the correct currency
-  const feeInCurrency = getFeeInCurrency(fee, currency)
-  
+  // Ensure currency is one of the allowed types, defaulting to SATS
+  const currency = (storeCurrency === 'BTC' || storeCurrency === 'SATS') ? storeCurrency : 'SATS'
+
+  const feeCalculated = calculateTransactionFee(speed, customFee)
+  const feeInCurrency = getFeeInCurrency(feeCalculated, currency)
+  const feeBtcValue = getFeeInCurrency(feeCalculated, 'BTC') // Calculate BTC fee
+
   // Calculate total amount (amount + fee)
   const totalAmount = amount + feeInCurrency
-  
-  // Calculate USD equivalent for total amount
-  const totalAmountUsd = currency === 'USD' 
-    ? totalAmount 
-    : fee.usd + (currency === 'SATS' 
-        ? amount * fee.usd / fee.sats 
-        : amount * fee.usd / (fee.sats / 100000000))
-  
+
   return {
     amount,
     currency,
-    fee,
-    feeInCurrency,
+    feeSats : feeCalculated.sats,
+    feeBtc  : feeBtcValue,
+    feeRate : feeCalculated.feeRate,
     totalAmount,
-    totalAmountUsd,
     address,
-    speed
+    speed,
   }
 } 

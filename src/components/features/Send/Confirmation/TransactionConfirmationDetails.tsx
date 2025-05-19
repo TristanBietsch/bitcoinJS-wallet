@@ -2,7 +2,7 @@ import React from 'react'
 import { View, StyleSheet, TouchableOpacity, Linking } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ExternalLink } from 'lucide-react-native'
-import { formatConfirmationValue, formatTotalWithUsdEquivalent } from '@/src/utils/formatting/formatCurrencyValue'
+import { formatConfirmationValue } from '@/src/utils/formatting/formatCurrencyValue'
 import { formatAddressIntoLines } from '@/src/utils/formatting/formatAddress'
 import { CurrencyType } from '@/src/types/domain/finance'
 import { TransactionFee } from '@/src/utils/transactions/feeCalculator'
@@ -14,7 +14,6 @@ type TransactionConfirmationDetailsProps = {
   fee: TransactionFee
   currency: CurrencyType
   totalAmount: number
-  totalAmountUsd?: number
 }
 
 /**
@@ -26,7 +25,6 @@ export const TransactionConfirmationDetails = ({
   fee,
   currency,
   totalAmount,
-  totalAmountUsd
 }: TransactionConfirmationDetailsProps) => {
   const addressLines = formatAddressIntoLines(address)
   
@@ -68,7 +66,7 @@ export const TransactionConfirmationDetails = ({
       
       <View style={[ styles.detailRow, styles.totalRow ]}>
         <ThemedText style={[ styles.label, styles.bold ]}>Total</ThemedText>
-        {formatTotalWithUsdEquivalent(totalAmount, currency, totalAmountUsd || totalAmount)}
+        {formatConfirmationValue(totalAmount, currency)}
       </View>
     </View>
   )
