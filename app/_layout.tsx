@@ -17,7 +17,17 @@ import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils'
 import { isOnboardingComplete } from '@/src/utils/storage'
 
 // Routes where bottom navigation should be hidden
-const HIDDEN_NAV_ROUTES = [ '/receive', '/send', '/transaction', '/onboarding', '/about', '/settings', '/support', '/main/menu', '/main/qr' ]
+const HIDDEN_NAV_ROUTES = [
+  '/receive',
+  '/send',
+  '/transaction',
+  '/onboarding',
+  '/about',
+  '/settings',
+  '/support',
+  '/main/menu',
+  '/main/qr'
+]
 
 const LOCK_TIMEOUT = 5 * 60 * 1000 // 5 minutes in milliseconds
 
@@ -67,8 +77,28 @@ export default function RootLayout() {
   
   // Initialize wallet and security features when app loads
   useEffect(() => {
-    // Initialize wallet from secure storage
-    initializeWallet()
+    const initApp = async () => {
+      try {
+        // Initialize wallet from storage
+        await initializeWallet()
+        
+        // If no wallet was found and we're not already on onboarding screen,
+        // redirect to onboarding
+        if (!useWalletStore.getState().wallet && !pathname.includes('onboarding')) {
+          console.log('No wallet found, redirecting to onboarding')
+          router.replace('/onboarding' as any)
+        }
+      } catch (error) {
+        console.error('Failed to initialize wallet:', error)
+        // On any error, redirect to onboarding as a fallback
+        if (!pathname.includes('onboarding')) {
+          router.replace('/onboarding' as any)
+        }
+      }
+    }
+    
+    // Run initialization
+    initApp()
     
     // Schedule encryption key rotation (returns cleanup function)
     const cleanupKeyRotation = scheduleKeyRotation()
@@ -77,7 +107,7 @@ export default function RootLayout() {
     return () => {
       cleanupKeyRotation()
     }
-  }, [ initializeWallet ])
+  }, [ initializeWallet, pathname ])
   
   // Check if bottom navigation should be hidden for current route
   const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.startsWith(route))

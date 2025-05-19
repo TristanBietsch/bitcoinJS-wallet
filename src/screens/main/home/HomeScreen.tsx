@@ -15,15 +15,11 @@ import { Colors } from '@/src/constants/colors'
 import AppHeader from '@/src/components/ui/Header/AppHeader'
 import { Scan } from 'lucide-react-native'
 import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
-import { useWalletStore } from '@/src/store/walletStore'
 import { ThemedText } from '@/src/components/ui/Text'
-import { OnboardingButton } from '@/src/components/ui/Button'
 
 const HomeScreen = () => {
   // State for selected currency format
   const [ currency, setCurrency ] = useState<CurrencyType>('BTC')
-  
-  const appWallet = useWalletStore(state => state.wallet)
   
   // Use the combined hook for wallet balance and price data
   const { 
@@ -117,24 +113,17 @@ const HomeScreen = () => {
     </TouchableOpacity>
   )
 
-  if (!appWallet && isDataLoading === false) {
+  // Show loading state if data is still loading
+  if (isLoading) {
     return (
-      <View style={styles.containerNoWallet}> 
+      <View style={styles.container}>
         <AppHeader 
           showMenuIcon={true} 
           onMenuPress={handleMenuPress}
           leftComponent={scanButton}
         />
-        <View style={styles.noWalletContent}>
-          <ThemedText style={styles.noWalletTitle}>No Wallet Found</ThemedText>
-          <ThemedText style={styles.noWalletText}>
-            Please create a new wallet or import an existing one to get started.
-          </ThemedText>
-          <OnboardingButton 
-            label="Go to Setup"
-            onPress={() => router.replace('/onboarding' as any)}
-            style={{marginTop: 20, width: '80%'}}
-          />
+        <View style={styles.loadingContainer}>
+          <ThemedText>Loading wallet information...</ThemedText>
         </View>
       </View>
     )
@@ -178,27 +167,10 @@ const styles = StyleSheet.create({
     padding         : 0,
     paddingBottom   : 100,
   },
-  containerNoWallet : {
-    flex            : 1,
-    backgroundColor : 'white',
-  },
-  noWalletContent : {
+  loadingContainer : {
     flex           : 1,
     justifyContent : 'center',
     alignItems     : 'center',
-    padding        : 20,
-  },
-  noWalletTitle : {
-    fontSize     : 22,
-    fontWeight   : 'bold',
-    marginBottom : 16,
-    textAlign    : 'center',
-  },
-  noWalletText : {
-    fontSize     : 16,
-    textAlign    : 'center',
-    opacity      : 0.7,
-    marginBottom : 24,
   },
   actionButtonsWrapper : {
     position : 'absolute',
