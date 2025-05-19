@@ -3,28 +3,23 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native'
 import { OnboardingContainer } from '@/src/components/ui/OnboardingScreen'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
-import { bitcoinWalletService } from '@/src/services/bitcoin/wallet/bitcoinWalletService'
+// import { bitcoinWalletService } from '@/src/services/bitcoin/wallet/bitcoinWalletService' // No longer needed for validation here
 
 interface CheckingSeedPhraseImportProps {
-  seedPhrase: string
-  onComplete: () => void
-  onError: (message?: string) => void
-  isTestBypass?: boolean
+  // seedPhrase: string // Removed as it's not used
 }
 
 /**
  * Screen component shown during seed phrase import verification
  */
 export default function CheckingSeedPhraseImport({ 
-  seedPhrase,
-  onComplete,
-  onError,
-  isTestBypass = false
+  // seedPhrase // Removed
 }: CheckingSeedPhraseImportProps) {
   const [ status, setStatus ] = useState('Validating seed phrase...')
   
   useEffect(() => {
-    // Add a timer to track processing time and provide better feedback
+    // Timer for cycling through status messages for better UX
+    // This is purely for display while the store is processing the import.
     const timer = setInterval(() => {
       setStatus(currentStatus => {
         if (currentStatus === 'Validating seed phrase...') {
@@ -41,46 +36,7 @@ export default function CheckingSeedPhraseImport({
     return () => clearInterval(timer)
   }, [])
   
-  useEffect(() => {
-    let isMounted = true
-    
-    async function processImport() {
-      // If it's a test bypass, just complete after a delay
-      if (isTestBypass) {
-        setTimeout(() => {
-          if (isMounted) onComplete()
-        }, 2000)
-        return
-      }
-      
-      try {
-        // Validate the seed phrase first
-        if (!bitcoinWalletService.validateMnemonic(seedPhrase)) {
-          throw new Error('Invalid seed phrase')
-        }
-        
-        // For test purposes, ensure minimum loading time for UX consistency
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        
-        // Complete the import process only if component is still mounted
-        if (isMounted) onComplete()
-      } catch (error) {
-        // Only send error if component is still mounted
-        if (isMounted) {
-          console.error('Error during wallet import:', error)
-          const errorMessage = error instanceof Error ? error.message : 'Failed to import wallet'
-          onError(errorMessage)
-        }
-      }
-    }
-    
-    processImport()
-    
-    // Cleanup function to prevent state updates on unmounted component
-    return () => {
-      isMounted = false
-    }
-  }, [ seedPhrase, onComplete, onError, isTestBypass ])
+  // Removed the useEffect that called processImport, onComplete, onError
   
   return (
     <OnboardingContainer>
@@ -88,8 +44,9 @@ export default function CheckingSeedPhraseImport({
         <ActivityIndicator size="large" color={Colors.light.buttons.primary} />
         <ThemedText style={styles.title}>Importing Wallet</ThemedText>
         <ThemedText style={styles.description}>
-          {status}
+          {status} {/* Display cycled status */}
         </ThemedText>
+        {/* Optionally display parts of seedPhrase if needed for UI, though usually not here */}
       </View>
     </OnboardingContainer>
   )

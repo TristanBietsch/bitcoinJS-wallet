@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
-// import { useWallet } from '@/src/context/WalletContext' // Old import
+// import { useGlobalBitcoinPrice } from '@/src/context/PriceContext' // Old import
+import { usePriceStore } from '@/src/store/priceStore' // New import for price
 import { useWalletStore } from '@/src/store/walletStore' // New import
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
@@ -18,8 +18,11 @@ type WalletBalanceData = {
  * Uses real wallet data from WalletContext and price data from PriceContext
  */
 export const useWalletBalance = (): WalletBalanceData => {
-  // Get real-time Bitcoin price from context
-  const { btcPrice, isLoading: isPriceLoading, error: priceError, refreshPrice } = useGlobalBitcoinPrice()
+  // Get real-time Bitcoin price from priceStore
+  const btcPrice = usePriceStore(state => state.btcPrice)
+  const isPriceLoading = usePriceStore(state => state.isLoading)
+  const priceError = usePriceStore(state => state.error)
+  const fetchPrice = usePriceStore(state => state.fetchPrice) // Renamed refreshPrice to fetchPrice for consistency
   
   // Get wallet data from Zustand store using individual selectors
   const balances = useWalletStore(state => state.balances)
@@ -54,7 +57,7 @@ export const useWalletBalance = (): WalletBalanceData => {
   
   // Function to refresh both price and balance data
   const refreshAll = async () => {
-    refreshPrice()
+    fetchPrice() // This will call usePriceStore's fetchPrice
     refreshBalance() // This will now call useWalletStore's refreshWalletData
   }
 

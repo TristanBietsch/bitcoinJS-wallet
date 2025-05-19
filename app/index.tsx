@@ -12,11 +12,12 @@ export default function Home() {
   
   const isInitialized = useWalletStore(state => state.isInitialized)
   const isSyncing = useWalletStore(state => state.isSyncing)
+  const wallet = useWalletStore(state => state.wallet)
 
   // Log wallet state changes for diagnostics
   useEffect(() => {
-    console.log(`Wallet state changed: isInitialized: ${isInitialized}, isSyncing: ${isSyncing}`)
-  }, [ isInitialized, isSyncing ])
+    console.log(`Wallet state changed (effect): isInitialized: ${isInitialized}, isSyncing: ${isSyncing}, wallet: ${JSON.stringify(wallet)}`)
+  }, [ isInitialized, isSyncing, wallet ])
 
   // Only show loading when initializing for the first time
   // Otherwise, wallet data will be loaded silently in the background
@@ -57,6 +58,9 @@ export default function Home() {
     await resetOnboardingStatus()
     router.push('/onboarding' as any)
   }
+
+  // Log state right before render decision
+  console.log(`Home component render: isLoading: ${isLoading}, isChecking: ${isChecking}, isInitialized: ${isInitialized}, isSyncing: ${isSyncing}, wallet object: ${JSON.stringify(wallet)}`)
 
   if (isLoading) {
     return (

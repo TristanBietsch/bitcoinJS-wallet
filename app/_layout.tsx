@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useWalletStore } from '@/src/store/walletStore'
 import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils'
 import { isOnboardingComplete } from '@/src/utils/storage'
+import { usePriceStore } from '@/src/store/priceStore'
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [ '/receive', '/send', '/transaction', '/onboarding', '/about', '/settings', '/support', '/main/menu', '/main/qr' ]
@@ -70,12 +71,15 @@ export default function RootLayout() {
     // Initialize wallet from secure storage
     initializeWallet()
     
+    // Initialize price fetching
+    usePriceStore.getState().initializePriceFetching()
     // Schedule encryption key rotation (returns cleanup function)
     const cleanupKeyRotation = scheduleKeyRotation()
     
     // Clean up when component unmounts
     return () => {
       cleanupKeyRotation()
+      usePriceStore.getState().clearPriceFetchingInterval() // Clear price fetching interval
     }
   }, [ initializeWallet ])
   
@@ -91,17 +95,19 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={styles.container}>
-        <AppProvider>
-          <View style={styles.content}>
-            <Slot />
-          </View>
-          {!shouldHideNav && <TabBottomNavigation />}
-          <StatusBar style="auto" />
-        </AppProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <>
+      <SafeAreaProvider>
+        <GestureHandlerRootView style={styles.container}>
+          <AppProvider>
+            <View style={styles.content}>
+              <Slot />
+            </View>
+            {!shouldHideNav && <TabBottomNavigation />}
+            <StatusBar style="auto" />
+          </AppProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </>
   )
 }
 

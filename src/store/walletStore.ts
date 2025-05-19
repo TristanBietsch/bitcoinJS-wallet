@@ -120,7 +120,11 @@ export const useWalletStore = create<WalletState>()(
             set({ 
               isSyncing     : false, 
               isInitialized : true,
-              wallet        : null 
+              wallet        : null,
+              seedPhrase    : null,
+              balances      : { confirmed: 0, unconfirmed: 0, total: 0 },
+              transactions  : [],
+              lastSyncTime  : 0
             })
             return
           }
@@ -168,6 +172,9 @@ export const useWalletStore = create<WalletState>()(
             error         : errorMessage,
             wallet        : null,
             seedPhrase    : null,
+            balances      : { confirmed: 0, unconfirmed: 0, total: 0 },
+            transactions  : [],
+            lastSyncTime  : 0,
             isSyncing     : false,
             isInitialized : true
           })

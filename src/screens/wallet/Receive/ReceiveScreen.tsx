@@ -9,13 +9,14 @@ import NumberPad from '@/src/components/ui/NumberPad'
 
 // Import hooks and stores
 import { useReceiveStore } from '@/src/store/receiveStore'
-import { useBitcoinPrice } from '@/src/hooks/bitcoin/useBitcoinPrice'
+import { usePriceStore } from '@/src/store/priceStore'
 import { useReceiveHandlers } from '@/src/handlers/receiveHandlers'
 import { getWalletBalanceDisplay } from '@/src/utils/mockData/walletMockData'
 
 export default function ReceiveScreen() {
-  // Use our custom hook for Bitcoin price
-  const { btcPrice, isLoading } = useBitcoinPrice()
+  // Use price store for Bitcoin price
+  const btcPrice = usePriceStore(state => state.btcPrice)
+  const isLoadingPrice = usePriceStore(state => state.isLoading)
   
   // Use our store for state management
   const { 
@@ -40,7 +41,7 @@ export default function ReceiveScreen() {
           amount={amount}
           currency={currency}
           balance={balance}
-          isLoading={isLoading}
+          isLoading={isLoadingPrice}
           onCurrencyChange={(newCurrency) => handleCurrencyChange(newCurrency, btcPrice)}
         />
       </View>

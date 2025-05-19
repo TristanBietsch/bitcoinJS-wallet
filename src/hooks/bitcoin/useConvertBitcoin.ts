@@ -1,4 +1,4 @@
-import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
+import { usePriceStore } from '@/src/store/priceStore'
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
 interface ConvertedAmounts {
@@ -10,8 +10,11 @@ interface ConvertedAmounts {
  * Hook for Bitcoin amount conversion and price fetching
  */
 export const useConvertBitcoin = () => {
-  // Use the shared global price context
-  const { btcPrice, isLoading, error, refreshPrice } = useGlobalBitcoinPrice()
+  // Use the price store
+  const btcPrice = usePriceStore(state => state.btcPrice)
+  const isLoading = usePriceStore(state => state.isLoading)
+  const error = usePriceStore(state => state.error)
+  const fetchPrice = usePriceStore(state => state.fetchPrice)
 
   // Convert amount to SATS and USD
   const getConvertedAmounts = (amount: string, currency: string): ConvertedAmounts => {
@@ -45,6 +48,6 @@ export const useConvertBitcoin = () => {
     isLoading,
     error,
     getConvertedAmounts,
-    refreshPrice
+    refreshPrice : fetchPrice
   }
 } 

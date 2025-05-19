@@ -10,6 +10,7 @@ const COINCAP_API_URL = 'https://api.coincap.io/v2/assets/bitcoin'
 
 // Cache configuration
 const CACHE_DURATION_MS = 30 * 1000 // 30 seconds
+const API_CALL_COOLDOWN_MS = 60 * 1000 // 1 minute cooldown after a direct API call failure
 
 // Cache storage
 interface PriceCache {
@@ -21,6 +22,25 @@ interface PriceCache {
 let cache: PriceCache = {
   price     : null,
   timestamp : null
+}
+
+// Cooldown state (in-memory)
+const apiCooldowns = {
+  coinGecko : 0,
+  coinCap   : 0,
+}
+
+const canCallApi = (apiName: 'coinGecko' | 'coinCap'): boolean => {
+  const now = Date.now()
+  if (now < apiCooldowns[apiName]) {
+    console.warn(`${apiName} API is on cooldown. Next attempt possible in ${Math.ceil((apiCooldowns[apiName] - now) / 1000)}s`)
+    return false
+  }
+  return true
+}
+
+const setApiCooldown = (apiName: 'coinGecko' | 'coinCap') => {
+  apiCooldowns[apiName] = Date.now() + API_CALL_COOLDOWN_MS
 }
 
 /**
@@ -37,25 +57,35 @@ export const getBTCPrice = async (): Promise<number> => {
     }
   }
 
-  // Try fetching from CoinGecko first
-  try {
-    const response = await axios.get(COINGECKO_API_URL, { timeout: 5000 })
-    
-    if (response.data?.bitcoin?.usd) {
-      const price = response.data.bitcoin.usd
-      // Update cache
-      cache = {
-        price     : price,
-        timestamp : now
+  // Try CoinGecko
+  if (canCallApi('coinGecko')) {
+    try {
+      const response = await axios.get(COINGECKO_API_URL, { timeout: 5000 })
+      
+      if (response.data?.bitcoin?.usd) {
+        const price = response.data.bitcoin.usd
+        // Update cache
+        cache = {
+          price     : price,
+          timestamp : now
+        }
+        apiCooldowns.coinGecko = 0 // Reset cooldown on success
+        return price
       }
-      return price
+      
+      throw new Error('Invalid response format from CoinGecko')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.warn('CoinGecko API request failed, setting cooldown. Error:', errorMessage)
+      setApiCooldown('coinGecko') 
+      // Fall through to CoinCap or further error handling
     }
-    
-    throw new Error('Invalid response format from CoinGecko')
-  } catch (error) {
-    console.warn('CoinGecko API request failed, trying CoinCap fallback:', error)
-    
-    // Fall back to CoinCap
+  } else {
+    console.warn('Skipping CoinGecko due to active cooldown.')
+  }
+
+  // Fall back to CoinCap
+  if (canCallApi('coinCap')) {
     try {
       const response = await axios.get(COINCAP_API_URL, { timeout: 5000 })
       
@@ -66,20 +96,25 @@ export const getBTCPrice = async (): Promise<number> => {
           price     : price,
           timestamp : now
         }
+        apiCooldowns.coinCap = 0 // Reset cooldown on success
         return price
       }
       
       throw new Error('Invalid response format from CoinCap')
     } catch (fallbackError) {
-      console.error('All price API requests failed:', fallbackError)
-      
-      // If we have any cached price, return it as last resort, even if expired
-      if (cache.price !== null) {
-        console.warn('Returning stale cached price as last resort')
-        return cache.price
-      }
-      
-      throw new Error('Failed to fetch Bitcoin price from all sources')
+      const errorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
+      console.warn('CoinCap API request failed, setting cooldown. Error:', errorMessage)
+      setApiCooldown('coinCap')
+      // Fall through to final error handling
     }
+  } else {
+    console.warn('Skipping CoinCap due to active cooldown.')
   }
+
+  console.error('All price API requests failed or are on cooldown.')
+  if (cache.price !== null) {
+    console.warn('Returning stale cached price as last resort.')
+    return cache.price
+  }
+  throw new Error('Failed to fetch Bitcoin price from all sources (possibly due to cooldowns or API issues).')
 } 

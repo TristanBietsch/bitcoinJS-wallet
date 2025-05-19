@@ -5,7 +5,7 @@ import { ThemedText } from '@/src/components/ui/Text'
 import { OnboardingButton } from '@/src/components/ui/Button'
 import { XCircle } from 'lucide-react-native'
 import { Colors } from '@/src/constants/colors'
-import { useImport } from '@/src/features/wallet/import/ImportContext'
+import { useImportStore } from '@/src/store/importStore'
 
 interface ErrorImportProps {
   onTryAgain: () => void
@@ -16,7 +16,7 @@ interface ErrorImportProps {
  * Screen displayed when wallet import fails
  */
 export default function ErrorImport({ onTryAgain, onBack }: ErrorImportProps) {
-  const { error } = useImport()
+  const importError = useImportStore(state => state.importError)
   
   return (
     <OnboardingContainer>
@@ -28,7 +28,7 @@ export default function ErrorImport({ onTryAgain, onBack }: ErrorImportProps) {
         <OnboardingTitle>Import Failed</OnboardingTitle>
         
         <ThemedText style={styles.description}>
-          {error || 'There was a problem importing your wallet. Please check your seed phrase and try again.'}
+          {importError || 'There was a problem importing your wallet. Please check your seed phrase and try again.'}
         </ThemedText>
         
         <View style={styles.buttonContainer}>

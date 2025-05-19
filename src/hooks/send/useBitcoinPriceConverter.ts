@@ -1,12 +1,15 @@
-import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
+import { usePriceStore } from '@/src/store/priceStore'
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
 // Currency type definition
 export type CurrencyType = 'USD' | 'BTC' | 'SATS'
 
 export const useBitcoinPriceConverter = () => {
-  // Use the shared global price context
-  const { btcPrice, isLoading, error, refreshPrice } = useGlobalBitcoinPrice()
+  // Use the price store
+  const btcPrice = usePriceStore(state => state.btcPrice)
+  const isLoading = usePriceStore(state => state.isLoading)
+  const error = usePriceStore(state => state.error)
+  const fetchPrice = usePriceStore(state => state.fetchPrice)
   
   // Convert amount between currencies using real rates
   const convertAmount = (value: string, fromCurrency: CurrencyType, toCurrency: CurrencyType): string => {
@@ -48,6 +51,6 @@ export const useBitcoinPriceConverter = () => {
     isLoading,
     error,
     convertAmount,
-    refreshPrice
+    refreshPrice : fetchPrice
   }
 } 

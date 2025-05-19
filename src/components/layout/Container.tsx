@@ -1,21 +1,19 @@
-import React from 'react'
-import { View, ViewStyle } from 'react-native'
-import { PriceProvider } from '@/src/context/PriceContext'
+import React, { ReactNode } from 'react'
+// import { PriceProvider } from '@/src/context/PriceContext' // Removed
+// import { ThemeProvider } from '@/src/context/ThemeContext' // Removed as file not found
 
 interface AppProviderProps {
-  children: React.ReactNode;
-  style?: ViewStyle;
+  children: ReactNode
 }
 
-// Container component that provides global context providers
-export function AppProvider(props: AppProviderProps): React.ReactElement {
-  const { children, style } = props
-  
-  return (
-    <View style={[ { flex: 1 }, style ]}>
-      <PriceProvider>
-        {children}
-      </PriceProvider>
-    </View>
-  )
+/**
+ * Central provider for essential app contexts like Theme, Navigation, etc.
+ */
+export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  // return (
+  //   <ThemeProvider>
+  //     {children} 
+  //   </ThemeProvider>
+  // )
+  return <>{children}</> // Simplified to return children directly
 } 

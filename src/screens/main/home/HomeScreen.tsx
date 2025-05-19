@@ -15,64 +15,58 @@ import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
 import AppHeader from '@/src/components/ui/Header/AppHeader'
 import { Scan } from 'lucide-react-native'
-import { useGlobalBitcoinPrice } from '@/src/context/PriceContext'
-import { useWalletBalance } from '@/src/store/walletStore'
+import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
+import { useWalletStore } from '@/src/store/walletStore'
+import { ThemedText } from '@/src/components/ui/Text'
+import { OnboardingButton } from '@/src/components/ui/Button'
 
 const HomeScreen = () => {
   // State for selected currency format
   const [ currency, setCurrency ] = useState<CurrencyType>('BTC')
   
-  // Use our Zustand store instead of context
-  // Get only what we need, minimizing re-renders
-  const { balances, error: walletError, refreshBalance } = useWalletBalance()
+  const appWallet = useWalletStore(state => state.wallet)
   
-  // Manual refresh state (only for explicit user-triggered refresh)
-  const [ isManualRefresh, setIsManualRefresh ] = useState(false)
-  
-  // Use price context for USD conversion
-  const { btcPrice, isLoading: isPriceLoading, error: priceError } = useGlobalBitcoinPrice()
+  // Use the combined hook for wallet balance and price data
+  const { 
+    satsAmount, 
+    usdAmount, 
+    btcAmount, 
+    isLoading: isDataLoading, // Combined loading from wallet and price
+    error: dataError,       // Combined error
+    refetch: refreshAllData // Refetches both wallet and price
+  } = useWalletBalance()
   
   // Use fade animation hook
   const { fadeAnim, fadeTransition } = useFadeAnimation()
   
-  // Combined error state
-  const error = walletError || priceError
-  
-  // We only show a loading indicator during price fetching or manual refresh
-  // Balance updates happen silently in the background with no UI flicker
-  const isLoading = isPriceLoading || isManualRefresh
+  // We use the combined isLoading and error from the hook
+  const isLoading = isDataLoading
+  const error = dataError
   
   // Get access to store reset functions
   const resetSendStore = useSendStore(state => state.reset)
   const resetReceiveStore = useReceiveStore(state => state.resetState)
   
-  // Reset any stored send and receive data when component mounts
   useEffect(() => {
     resetSendStore()
     resetReceiveStore()
-  }, [])
+    // Initialize price fetching when the component mounts, if not already started
+    // usePriceStore.getState().initializePriceFetching() // This is now in _layout.tsx
+  }, [ resetSendStore, resetReceiveStore ]) // Removed price store init
   
-  // Background refresh when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      // Silent refresh (no loading indicator)
-      refreshBalance(true)
+      refreshAllData() // Refreshes both price and balance silently by default from hook logic
       return () => {}
-    }, [ refreshBalance ])
+    }, [ refreshAllData ])
   )
   
-  // Calculated balance values (using useMemo to prevent recalculations)
-  const balanceValues = useMemo(() => {
-    const btcAmount = balances.total / SATS_PER_BTC // Convert sats to BTC
-    const usdAmount = btcPrice ? btcAmount * btcPrice : 0
-    const satsAmount = balances.total
-    
-    return {
-      btcAmount,
-      usdAmount,
-      satsAmount
-    }
-  }, [ balances.total, btcPrice ])
+  // balanceValues are now directly from the hook
+  const balanceValues = useMemo(() => ({
+    satsAmount,
+    usdAmount,
+    btcAmount
+  }), [ satsAmount, usdAmount, btcAmount ])
   
   // Handle currency change with animation
   const handleCurrencyChange = (value: string) => {
@@ -105,10 +99,7 @@ const HomeScreen = () => {
   
   // Handle manual balance refresh (with visible loading)
   const handleManualRefresh = () => {
-    setIsManualRefresh(true)
-    refreshBalance(false).finally(() => {
-      setIsManualRefresh(false)
-    })
+    refreshAllData() // This now refreshes both wallet balance and price
   }
 
   // Currency dropdown component
@@ -130,6 +121,29 @@ const HomeScreen = () => {
       <Scan size={24} color={Colors.light.text} />
     </TouchableOpacity>
   )
+
+  if (!appWallet && isDataLoading === false) {
+    return (
+      <View style={styles.containerNoWallet}> 
+        <AppHeader 
+          showMenuIcon={true} 
+          onMenuPress={handleMenuPress}
+          leftComponent={scanButton}
+        />
+        <View style={styles.noWalletContent}>
+          <ThemedText style={styles.noWalletTitle}>No Wallet Found</ThemedText>
+          <ThemedText style={styles.noWalletText}>
+            Please create a new wallet or import an existing one to get started.
+          </ThemedText>
+          <OnboardingButton 
+            label="Go to Setup"
+            onPress={() => router.replace('/onboarding' as any)}
+            style={{marginTop: 20, width: '80%'}}
+          />
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View style={styles.container}>
@@ -168,6 +182,28 @@ const styles = StyleSheet.create({
     backgroundColor : 'white',
     padding         : 0,
     paddingBottom   : 100,
+  },
+  containerNoWallet : {
+    flex            : 1,
+    backgroundColor : 'white',
+  },
+  noWalletContent : {
+    flex           : 1,
+    justifyContent : 'center',
+    alignItems     : 'center',
+    padding        : 20,
+  },
+  noWalletTitle : {
+    fontSize     : 22,
+    fontWeight   : 'bold',
+    marginBottom : 16,
+    textAlign    : 'center',
+  },
+  noWalletText : {
+    fontSize     : 16,
+    textAlign    : 'center',
+    opacity      : 0.7,
+    marginBottom : 24,
   },
   actionButtonsWrapper : {
     position : 'absolute',
