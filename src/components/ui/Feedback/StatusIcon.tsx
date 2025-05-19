@@ -1,64 +1,46 @@
 import React from 'react'
-import { View, StyleSheet, ViewStyle } from 'react-native'
-import { Check, X, AlertCircle, Info } from 'lucide-react-native'
-import { StatusType, getStatusColors } from '@/src/types/ui'
+import { View, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+
+type StatusType = 'success' | 'error' | 'warning' | 'info'
 
 interface StatusIconProps {
-  type: StatusType
-  size?: number
-  strokeWidth?: number
-  containerStyle?: ViewStyle
+  type: StatusType;
+  size?: number;
 }
 
 /**
  * A reusable status icon component that displays the appropriate icon based on status type
  */
-const StatusIcon: React.FC<StatusIconProps> = ({
-  type,
-  size = 90,
-  strokeWidth = 2,
-  containerStyle
-}) => {
-  const colors = getStatusColors(type)
-  
-  // Render the appropriate icon based on status type
-  const renderIcon = () => {
+export default function StatusIcon({ type, size = 60 }: StatusIconProps) {
+  const getIconInfo = () => {
     switch (type) {
       case 'success':
-        return <Check size={size} color={colors.icon} strokeWidth={strokeWidth} />
+        return { name: 'checkmark-circle', color: '#4CAF50' }
       case 'error':
-        return <X size={size} color={colors.icon} strokeWidth={strokeWidth} />
+        return { name: 'close-circle', color: '#F44336' }
       case 'warning':
-        return <AlertCircle size={size} color={colors.icon} strokeWidth={strokeWidth} />
+        return { name: 'warning', color: '#FF9800' }
       case 'info':
-        return <Info size={size} color={colors.icon} strokeWidth={strokeWidth} />
-      case 'loading':
-        return <Info size={size} color={colors.icon} strokeWidth={strokeWidth} />
+        return { name: 'information-circle', color: '#2196F3' }
       default:
-        return <Info size={size} color={colors.icon} strokeWidth={strokeWidth} />
+        return { name: 'checkmark-circle', color: '#4CAF50' }
     }
   }
-  
+
+  const { name, color } = getIconInfo()
+
   return (
-    <View style={[
-      styles.iconContainer,
-      { backgroundColor: colors.background },
-      containerStyle
-    ]}>
-      {renderIcon()}
+    <View style={styles.container}>
+      <Ionicons name={name as any} size={size} color={color} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  iconContainer : {
-    width          : 160,
-    height         : 160,
-    borderRadius   : 80,
+  container : {
     alignItems     : 'center',
     justifyContent : 'center',
-    marginVertical : 40
-  }
-})
-
-export default StatusIcon 
+    marginVertical : 20,
+  },
+}) 

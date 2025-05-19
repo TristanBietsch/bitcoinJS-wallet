@@ -7,24 +7,39 @@ import { router } from 'expo-router'
 import { Colors } from '@/src/constants/colors'
 import { useWalletStore } from '@/src/store/walletStore'
 
+// Define the state type for proper TypeScript typing
+interface WalletState {
+  isInitialized: boolean;
+  isSyncing: boolean;
+  wallet: any;
+  initializeWallet: () => Promise<void>;
+}
+
+// Create a separate selector to prevent infinite re-renders
+const walletSelector = (state: WalletState) => ({
+  isInitialized : state.isInitialized,
+  isSyncing     : state.isSyncing
+})
+
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)
   
-  // Use Zustand store to check wallet status
-  const { isInitialized, hasWallet, isSyncing, initializeWallet } = useWalletStore(state => ({
-    isInitialized    : state.isInitialized,
-    hasWallet        : !!state.wallet,
-    isSyncing        : state.isSyncing,
-    initializeWallet : state.initializeWallet
-  }))
+  // Use Zustand store to check wallet status with stable selector
+  const { isInitialized, isSyncing } = useWalletStore(walletSelector)
 
   // Only show loading when initializing for the first time
   // Otherwise, wallet data will be loaded silently in the background
   const isLoading = isChecking || (!isInitialized && isSyncing)
 
+  // Use a separate effect to check onboarding status on component mount only
   useEffect(() => {
-    checkOnboardingStatus()
-  }, [])
+    const runCheck = async () => {
+      await checkOnboardingStatus()
+    }
+    
+    // Call the async function
+    runCheck()
+  }, []) // Empty dependency array ensures this runs only once
 
   const checkOnboardingStatus = async () => {
     try {
@@ -34,10 +49,8 @@ export default function Home() {
       if (!completed) {
         // Redirect to onboarding route if not completed
         router.push('/onboarding' as any)
-      } else {
-        // If onboarding is complete, the wallet will be loaded automatically
-        // by the RootLayout component, so we don't need to do it here
       }
+      // No else block to reduce unnecessary code execution
     } catch (error) {
       console.error('Error checking onboarding status:', error)
       // If there's an error, we'll assume onboarding needs to be done

@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useRef, memo, useMemo } from 'react'
+import React, { ReactNode, useEffect, useRef, useMemo } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import LoadingIndicator from '@/src/components/ui/Feedback/LoadingIndicator'
