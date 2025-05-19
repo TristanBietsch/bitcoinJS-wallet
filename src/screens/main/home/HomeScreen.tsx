@@ -44,34 +44,14 @@ const HomeScreen = () => {
   useEffect(() => {
     resetSendStore()
     resetReceiveStore()
-    // Initialize price fetching when the component mounts, if not already started
-    // usePriceStore.getState().initializePriceFetching() // This is now in _layout.tsx
-  }, [ resetSendStore, resetReceiveStore ]) // Removed price store init
+  }, [ resetSendStore, resetReceiveStore ])
   
   useFocusEffect(
     React.useCallback(() => {
-      refreshAllData() // Refreshes both price and balance silently by default from hook logic
+      refreshAllData(true) // Use silent refresh to avoid UI flashing
       return () => {}
     }, [ refreshAllData ])
   )
-  
-  // Add a timeout to handle cases where loading might get stuck
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null
-    if (isLoading) {
-      timer = setTimeout(() => {
-        // If still loading after 10 seconds, log it and attempt a silent refresh
-        // to potentially resolve the state without a visual loading flash if data arrives.
-        console.warn('HomeScreen loading timed out after 10s, attempting silent refresh.')
-        refreshAllData(true) // Attempt a silent refresh
-      }, 10000) // 10-second timeout
-    }
-    return () => {
-      if (timer) {
-        clearTimeout(timer)
-      }
-    }
-  }, [ isLoading, refreshAllData ])
   
   // balanceValues are now directly from the hook
   const balanceValues = useMemo(() => ({
@@ -89,6 +69,7 @@ const HomeScreen = () => {
   // Get and format the balance (memoized to prevent unnecessary recalculations)
   const formattedBalance = useMemo(() => {
     const amount = getAmountForCurrency(currency, balanceValues)
+    if (amount === 0) return '0' // Always show simple '0' for zero balance
     return formatCurrency(amount, currency)
   }, [ currency, balanceValues ])
   
@@ -108,7 +89,7 @@ const HomeScreen = () => {
   
   // Handle manual balance refresh (with visible loading)
   const handleManualRefresh = () => {
-    refreshAllData() // This now refreshes both wallet balance and price
+    refreshAllData(false) // Use visible refresh for manual updates
   }
 
   // Currency dropdown component
@@ -117,7 +98,7 @@ const HomeScreen = () => {
       options={CURRENCY_OPTIONS}
       selectedValue={currency}
       onSelect={handleCurrencyChange}
-      title="Select Currency"
+      title="Display Balance As"
       cancelButtonLabel="Cancel"
       backgroundColor={Colors.light.buttons.primary}
       disabled={isLoading || !!error}
@@ -131,8 +112,8 @@ const HomeScreen = () => {
     </TouchableOpacity>
   )
 
-  // Show loading state if data is still loading
-  if (isLoading) {
+  // Show loading state if data is still loading on initial render
+  if (isLoading && (!btcAmount && !satsAmount)) {
     return (
       <View style={styles.container}>
         <AppHeader 

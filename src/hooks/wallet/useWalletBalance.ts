@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useWalletStore } from '@/src/store/walletStore' // Wallet data
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
@@ -10,10 +10,10 @@ export interface BalanceData {
 /**
  * Custom hook to get wallet balance in BTC and SATS.
  */
-export const useWalletBalance = () => { // Removed return type for now, will add back if needed
+export const useWalletBalance = () => {
   // Get wallet data from Zustand store using individual selectors
   const balances = useWalletStore(state => state.balances)
-  const isSyncing = useWalletStore(state => state.isSyncing) // Changed from isLoading to isSyncing
+  const isSyncing = useWalletStore(state => state.isSyncing) 
   const walletError = useWalletStore(state => state.error)
   const refreshWalletData = useWalletStore(state => state.refreshWalletData)
 
@@ -26,27 +26,28 @@ export const useWalletBalance = () => { // Removed return type for now, will add
   // Calculate derived values whenever the wallet balances changes
   useEffect(() => {
     if (balances) {
-      const satsAmount = balances.total // total is in SATS
+      const satsAmount = balances.total || 0 // total is in SATS, default to 0 if undefined
       const btcAmount = satsAmount / SATS_PER_BTC
-      setBalanceData({
-        btcAmount,
-        satsAmount,
-      })
+      
+      // Only update state if values actually changed
+      if (balanceData.satsAmount !== satsAmount || balanceData.btcAmount !== btcAmount) {
+        setBalanceData({
+          btcAmount,
+          satsAmount,
+        })
+      }
     }
-  }, [ balances ])
+  }, [ balances, balanceData ])
 
-  // Combined loading state
-  const isLoading = isSyncing // Use isSyncing as isLoading
-
-  // Function to refresh balance data
-  const refreshBalances = (silent?: boolean) => {
+  // Function to refresh balance data with better control over the silent parameter
+  const refreshBalances = useCallback((silent = false) => {
     refreshWalletData(silent)
-  }
+  }, [ refreshWalletData ])
 
   return {
     ...balanceData,
-    isLoading,
-    error : walletError, // error directly from store
+    isLoading : isSyncing,
+    error     : walletError,
     refreshBalances,
   }
 } 

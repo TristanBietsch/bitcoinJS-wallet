@@ -7,15 +7,17 @@ import { CurrencyType } from '@/src/types/domain/finance'
  * Generic number formatter (can be expanded for BTC/SATS specific needs if required)
  * @param amount The amount to format
  * @param currencyType The currency type (BTC or SATS)
- * @returns Formatted currency string
+ * @returns Formatted currency string without currency suffix (UI handles that separately)
  */
 export const formatCurrency = (amount: number, currencyType: CurrencyType): string => {
-  // Basic formatting, can be made more specific for BTC/SATS if needed
   if (currencyType === 'BTC') {
-    return `${amount.toFixed(8)} BTC` // Example: Show 8 decimal places for BTC
+    // For BTC, show 8 decimal places
+    return amount.toFixed(8)
   }
-  // SATS are typically whole numbers
-  return `${Math.round(amount)} SATS`
+  // For SATS, show whole numbers with thousand separators for readability
+  return Math.round(amount).toLocaleString('en-US', {
+    maximumFractionDigits : 0
+  })
 }
 
 /**

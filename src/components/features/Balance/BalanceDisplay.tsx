@@ -46,9 +46,6 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
     
     // Flag to track initial vs subsequent loads
     hasShownInitialValue : !!formattedBalance,
-    
-    // Currency suffix for SATS
-    currencySuffix : currency === 'SATS' ? ' Sats' : '',
   }).current
   
   // Create memoized views that won't change during prop updates
@@ -62,15 +59,21 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
               {value}
             </ThemedText>
             <ThemedText style={styles.satsLabel}>
-              Sats
+              SATS
             </ThemedText>
           </View>
         )
       }
+      // BTC case
       return (
-        <ThemedText style={styles.balanceAmount}>
-          {value}
-        </ThemedText>
+        <View style={styles.balanceRow}>
+          <ThemedText style={styles.balanceAmount}>
+            {value}
+          </ThemedText>
+          <ThemedText style={styles.satsLabel}>
+            BTC
+          </ThemedText>
+        </View>
       )
     }
     
@@ -108,29 +111,29 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
         />
       )
     }
-  }, [ currency, error, onRetry ])
+  }, [ currency, error, onRetry, component.mainOpacity ])
   
   // Update internal state without triggering re-renders
   useEffect(() => {
-    // Skip this effect if we're just toggling loading state and already have a value
-    if (component.displayValue && 
-        component.hasShownInitialValue && 
-        formattedBalance === component.displayValue) {
-      component.isCurrentlyLoading = isLoading
+    // Skip this effect if nothing has changed
+    if (component.displayValue === formattedBalance && component.isCurrentlyLoading === isLoading) {
       return
     }
     
     // Always update loading state
     component.isCurrentlyLoading = isLoading
     
-    // Only update display if we have a real value and
-    // 1. We've never shown a value before
+    // If the balance hasn't changed, no need to update display
+    if (formattedBalance === component.displayValue) {
+      return
+    }
+    
+    // We have a real value and either:
+    // 1. We've never shown a value before, or
     // 2. The value has actually changed
-    // 3. We're not in a loading state
     if (formattedBalance && 
         (!component.hasShownInitialValue || 
-         formattedBalance !== component.displayValue || 
-         !isLoading)) {
+         formattedBalance !== component.displayValue)) {
       
       // Only animate if this isn't the first value and enough time has passed
       const shouldAnimate = component.hasShownInitialValue && 
@@ -162,11 +165,6 @@ const BalanceDisplay = (props: BalanceDisplayProps) => {
       component.lastUpdateTime = Date.now()
     }
   }, [ formattedBalance, isLoading, component ])
-  
-  // Currency suffix needs to be tracked separately
-  useEffect(() => {
-    component.currencySuffix = currency === 'SATS' ? ' Sats' : ''
-  }, [ currency, component ])
   
   // Determine what content to render based on component state
   let mainContent

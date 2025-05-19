@@ -2,11 +2,7 @@
  * Currency options configuration
  */
 
-// Currency type
-export type CurrencyType = 'BTC' | 'SATS';
+// Re-export from constants to ensure consistency
+import { CurrencyType, CURRENCY_OPTIONS } from '@/src/constants/currency'
 
-// Currency options for dropdown selectors
-export const CURRENCY_OPTIONS = [
-  { label: 'BTC', value: 'BTC' },
-  { label: 'SATS', value: 'SATS' },
-] 
+export { CurrencyType, CURRENCY_OPTIONS } 
