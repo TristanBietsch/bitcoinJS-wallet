@@ -98,9 +98,14 @@ export default function ImportWalletScreen({ onBack }: ImportWalletScreenProps) 
           <SeedPhraseInput
             value={localSeedPhrase}
             onChangeText={(text) => {
-              localHandleSeedPhraseChange(text)
+              // Only allow letters and spaces
+              const lettersAndSpacesOnly = text.replace(/[^a-zA-Z\s]/g, '')
+              // Normalize to lowercase for consistent validation regardless of input case
+              const normalizedText = lettersAndSpacesOnly.toLowerCase()
+              
+              localHandleSeedPhraseChange(normalizedText)
               // Show validation feedback once user starts typing
-              if (!showValidation && text.trim()) {
+              if (!showValidation && normalizedText.trim()) {
                 setShowValidation(true)
               }
             }}

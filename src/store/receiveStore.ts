@@ -39,7 +39,7 @@ export const useReceiveStore = create<ReceiveStore>((set, get) => ({
   },
   
   handleNumberPress : (num) => {
-    const { amount, currency } = get() // currency might be needed for validation soon
+    const { amount } = get() // currency might be needed for validation soon
     // set({ conversionDisabled: false }) // Removed
     
     // Basic input concatenation, validation might be added based on currency (e.g. decimal places for BTC)

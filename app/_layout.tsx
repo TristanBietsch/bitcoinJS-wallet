@@ -13,7 +13,7 @@ import { useFonts } from 'expo-font'
 import { StyleSheet } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useWalletStore } from '@/src/store/walletStore'
-import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils'
+// import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils' // Temporarily removed
 import { isOnboardingComplete } from '@/src/utils/storage'
 
 // Routes where bottom navigation should be hidden
@@ -35,6 +35,7 @@ export default function RootLayout() {
   const pathname = usePathname()
   const appState = useRef(AppState.currentState)
   const [ lastActiveTime, setLastActiveTime ] = useState<number>(Date.now())
+  const [ isAppInitialized, setIsAppInitialized ] = useState(false)
   
   // Get wallet initialization function from our store
   const initializeWallet = useWalletStore(state => state.initializeWallet)
@@ -48,18 +49,11 @@ export default function RootLayout() {
         const timeInBackground = Date.now() - lastActiveTime
         if (timeInBackground > LOCK_TIMEOUT && wallet) {
           console.log('App was in background for too long. Locking wallet.')
-          await clearWallet() // This clears seed phrase from memory and wallet object
-          // Wallet will be re-initialized by initializeWallet() or user action if needed
-          // Optionally, navigate to a specific screen or show a lock overlay
-          // For now, relying on initializeWallet to repopulate if user navigates to wallet areas.
-          // Or, force re-initialization if not on onboarding
+          await clearWallet()
           const onboardingCompleted = await isOnboardingComplete()
           if (onboardingCompleted) {
-             // If onboarding is done, and we just cleared the wallet, re-initialize it.
-             // This will prompt for decryption if necessary or load from store.
             initializeWallet()
           } else {
-            // If onboarding is not complete, go to onboarding screen
             router.replace('/onboarding' as any)
           }
         }
@@ -77,37 +71,38 @@ export default function RootLayout() {
   
   // Initialize wallet and security features when app loads
   useEffect(() => {
+    if (isAppInitialized) {
+      return // Already initialized, do nothing
+    }
+
     const initApp = async () => {
       try {
-        // Initialize wallet from storage
+        console.log('Running App Initialization...')
         await initializeWallet()
         
-        // If no wallet was found and we're not already on onboarding screen,
-        // redirect to onboarding
         if (!useWalletStore.getState().wallet && !pathname.includes('onboarding')) {
           console.log('No wallet found, redirecting to onboarding')
           router.replace('/onboarding' as any)
         }
       } catch (error) {
         console.error('Failed to initialize wallet:', error)
-        // On any error, redirect to onboarding as a fallback
         if (!pathname.includes('onboarding')) {
           router.replace('/onboarding' as any)
         }
+      } finally {
+        setIsAppInitialized(true) // Mark as initialized regardless of outcome to prevent re-looping this specific logic
       }
     }
     
-    // Run initialization
     initApp()
     
-    // Schedule encryption key rotation (returns cleanup function)
-    const cleanupKeyRotation = scheduleKeyRotation()
+    // Key rotation scheduling is temporarily disabled
+    // const cleanupKeyRotation = scheduleKeyRotation()
     
-    // Clean up when component unmounts
-    return () => {
-      cleanupKeyRotation()
-    }
-  }, [ initializeWallet, pathname ])
+    // return () => {
+    //   cleanupKeyRotation()
+    // }
+  }, [ initializeWallet, pathname, isAppInitialized ])
   
   // Check if bottom navigation should be hidden for current route
   const shouldHideNav = HIDDEN_NAV_ROUTES.some(route => pathname.startsWith(route))
@@ -118,6 +113,11 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return null
+  }
+  
+  if (!isAppInitialized && fontsLoaded) {
+    // Optionally return a global loading screen until isAppInitialized is true
+    // For simplicity, we currently allow Slot to render, and initApp handles redirection.
   }
 
   return (

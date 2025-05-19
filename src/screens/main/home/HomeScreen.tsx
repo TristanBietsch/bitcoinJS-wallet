@@ -55,6 +55,24 @@ const HomeScreen = () => {
     }, [ refreshAllData ])
   )
   
+  // Add a timeout to handle cases where loading might get stuck
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+    if (isLoading) {
+      timer = setTimeout(() => {
+        // If still loading after 10 seconds, log it and attempt a silent refresh
+        // to potentially resolve the state without a visual loading flash if data arrives.
+        console.warn('HomeScreen loading timed out after 10s, attempting silent refresh.')
+        refreshAllData(true) // Attempt a silent refresh
+      }, 10000) // 10-second timeout
+    }
+    return () => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+    }
+  }, [ isLoading, refreshAllData ])
+  
   // balanceValues are now directly from the hook
   const balanceValues = useMemo(() => ({
     satsAmount,

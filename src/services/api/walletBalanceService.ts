@@ -5,8 +5,6 @@
 import axios from 'axios'
 
 // API endpoints for different networks
-const BLOCKSTREAM_MAINNET_API = 'https://blockstream.info/api'
-const BLOCKSTREAM_TESTNET_API = 'https://blockstream.info/testnet/api'
 const MEMPOOL_MAINNET_API = 'https://mempool.space/api'
 const MEMPOOL_TESTNET_API = 'https://mempool.space/testnet/api'
 
@@ -18,6 +16,10 @@ interface AddressBalanceResponse {
 
 // Cache configuration
 const CACHE_DURATION_MS = 60 * 1000 // 60 seconds
+
+// Rate limiting configuration
+const RATE_LIMIT_DURATION_MS = 10 * 1000 // 10 seconds
+let lastRequestTimestamp = 0
 
 // Cache structure
 interface BalanceCache {
@@ -39,6 +41,21 @@ const walletBalanceServiceImpl = {
     isTestnet = true,
     forceRefresh = false
   ): Promise<AddressBalanceResponse> => {
+    const now = Date.now()
+
+    // If no address is provided, return zero balance immediately
+    if (!address) {
+      console.log('No address provided, returning zero balance.')
+      return { confirmed: 0, unconfirmed: 0 }
+    }
+
+    // Check rate limit first
+    if (!forceRefresh && (now - lastRequestTimestamp < RATE_LIMIT_DURATION_MS)) {
+      console.log('Rate limit active, using cached or potentially stale data.')
+      const cached = walletBalanceServiceImpl.getCachedBalance(address, true) 
+      if (cached) return cached
+    }
+
     // Check cache first unless force refresh is requested
     if (!forceRefresh) {
       const cachedBalance = walletBalanceServiceImpl.getCachedBalance(address)
@@ -49,62 +66,24 @@ const walletBalanceServiceImpl = {
     }
 
     console.log(`Fetching balance for ${isTestnet ? 'testnet' : 'mainnet'} address: ${address}`)
+    lastRequestTimestamp = now
     
     try {
-      // Try Blockstream API first
-      return await walletBalanceServiceImpl.fetchFromBlockstream(address, isTestnet)
-    } catch (blockstreamError) {
-      console.warn('Blockstream API failed, falling back to Mempool:', blockstreamError)
-      
-      try {
-        // Fall back to Mempool API
-        return await walletBalanceServiceImpl.fetchFromMempool(address, isTestnet)
-      } catch (_mempoolError) {
-        console.error('All balance API requests failed')
+      // Fetch directly from Mempool API
+      return await walletBalanceServiceImpl.fetchFromMempool(address, isTestnet)
+    } catch (error) {
+      console.error('Mempool API request failed:', error)
         
-        // For development environment, use dummy data rather than failing completely
-        if (__DEV__) {
-          console.warn('Using dummy balance data for development')
-          const dummyBalance = walletBalanceServiceImpl.getDummyBalance(address)
-          walletBalanceServiceImpl.updateCache(address, dummyBalance)
-          return dummyBalance
-        }
-        
-        throw new Error('Failed to fetch balance from all available services')
-      }
-    }
-  },
-  
-  /**
-   * Fetch balance from Blockstream API
-   */
-  fetchFromBlockstream : async (
-    address: string,
-    isTestnet: boolean
-  ): Promise<AddressBalanceResponse> => {
-    const baseUrl = isTestnet ? BLOCKSTREAM_TESTNET_API : BLOCKSTREAM_MAINNET_API
-    const response = await axios.get(`${baseUrl}/address/${address}`, {
-      timeout : 10000
-    })
-    
-    // Validate and transform response
-    if (
-      response.data &&
-      typeof response.data.chain_stats === 'object' &&
-      typeof response.data.mempool_stats === 'object'
-    ) {
-      // Blockstream format has chain_stats (confirmed) and mempool_stats (unconfirmed)
-      const balance: AddressBalanceResponse = {
-        confirmed   : response.data.chain_stats.funded_txo_sum - response.data.chain_stats.spent_txo_sum,
-        unconfirmed : response.data.mempool_stats.funded_txo_sum - response.data.mempool_stats.spent_txo_sum
+      // For development environment, use dummy data rather than failing completely
+      if (__DEV__) {
+        console.warn('Using dummy balance data for development')
+        const dummyBalance = walletBalanceServiceImpl.getDummyBalance(address)
+        walletBalanceServiceImpl.updateCache(address, dummyBalance)
+        return dummyBalance
       }
       
-      // Update cache
-      walletBalanceServiceImpl.updateCache(address, balance)
-      return balance
+      throw new Error('Failed to fetch balance from Mempool API')
     }
-    
-    throw new Error('Invalid response format from Blockstream API')
   },
   
   /**
@@ -119,9 +98,7 @@ const walletBalanceServiceImpl = {
       timeout : 10000
     })
     
-    // Validate and transform response
     if (response.data && typeof response.data === 'object') {
-      // Mempool format is different from Blockstream
       const chainStats = response.data.chain_stats || { funded_txo_sum: 0, spent_txo_sum: 0 }
       const mempoolStats = response.data.mempool_stats || { funded_txo_sum: 0, spent_txo_sum: 0 }
       
@@ -130,7 +107,6 @@ const walletBalanceServiceImpl = {
         unconfirmed : mempoolStats.funded_txo_sum - mempoolStats.spent_txo_sum
       }
       
-      // Update cache
       walletBalanceServiceImpl.updateCache(address, balance)
       return balance
     }
@@ -140,13 +116,17 @@ const walletBalanceServiceImpl = {
   
   /**
    * Get cached balance if available and not expired
+   * @param allowStaleIfRateLimited - If true, returns cached data even if it's slightly past CACHE_DURATION_MS, used when rate limited.
    */
-  getCachedBalance : (address: string): AddressBalanceResponse | null => {
+  getCachedBalance : (address: string, allowStaleIfRateLimited = false): AddressBalanceResponse | null => {
     const now = Date.now()
     const cached = balanceCache.find(entry => entry.address === address)
     
-    if (cached && now - cached.timestamp < CACHE_DURATION_MS) {
-      return cached.data
+    if (cached) {
+      const isCacheValid = now - cached.timestamp < CACHE_DURATION_MS
+      if (isCacheValid || (allowStaleIfRateLimited && now - cached.timestamp < RATE_LIMIT_DURATION_MS + CACHE_DURATION_MS)) {
+        return cached.data
+      }
     }
     
     return null
@@ -156,10 +136,7 @@ const walletBalanceServiceImpl = {
    * Update the balance cache
    */
   updateCache : (address: string, data: AddressBalanceResponse): void => {
-    // Find existing cache entry
     const existingIndex = balanceCache.findIndex(entry => entry.address === address)
-    
-    // Update or add new entry
     const newEntry: BalanceCache = {
       address,
       data,
@@ -177,15 +154,13 @@ const walletBalanceServiceImpl = {
    * Get dummy balance data for development
    */
   getDummyBalance : (address: string): AddressBalanceResponse => {
-    // Use the address string to generate a consistent but random-looking balance
-    // This helps with testing different scenarios
     const addressSum = address
       .split('')
       .reduce((sum, char) => sum + char.charCodeAt(0), 0) % 1000000
     
     return {
-      confirmed   : addressSum * 100, // 0 to 100,000,000 sats (0-1 BTC)
-      unconfirmed : Math.floor(addressSum / 10) * 10 // Smaller unconfirmed amount
+      confirmed   : addressSum * 100, 
+      unconfirmed : Math.floor(addressSum / 10) * 10
     }
   }
 }

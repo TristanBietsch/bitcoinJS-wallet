@@ -228,10 +228,9 @@ export const useWalletStore = create<WalletState>()(
             set({ error: errorMessage })
           }
         } finally {
-          // Only update loading state if not a silent refresh
-          if (!silent) {
-            set({ isSyncing: false })
-          }
+          // Always update loading state to false, even when errors occur
+          // This was previously only done if (!silent)
+          set({ isSyncing: false })
         }
       },
       
