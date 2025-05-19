@@ -13,7 +13,7 @@ import {
   trackSeedPhraseReveal,
 } from '@/src/handlers/wallet/seedPhraseHandlers'
 import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
-import { keyManagement } from '@/src/services/bitcoin/wallet/keyManagement'
+import { keyManagement } from '@/src/services/bitcoin/wallet/keyManagementService'
 import { BITCOIN_NETWORK } from '@/src/config/bitcoinNetwork'
 import showConfirmationDialog from '@/src/components/ui/Dialog/ConfirmationDialog'
 

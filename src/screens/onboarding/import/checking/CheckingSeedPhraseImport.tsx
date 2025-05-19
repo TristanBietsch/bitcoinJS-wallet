@@ -3,18 +3,14 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native'
 import { OnboardingContainer } from '@/src/components/ui/OnboardingScreen'
 import { ThemedText } from '@/src/components/ui/Text'
 import { Colors } from '@/src/constants/colors'
-// import { bitcoinWalletService } from '@/src/services/bitcoin/wallet/bitcoinWalletService' // No longer needed for validation here
 
 interface CheckingSeedPhraseImportProps {
-  // seedPhrase: string // Removed as it's not used
 }
 
 /**
  * Screen component shown during seed phrase import verification
  */
-export default function CheckingSeedPhraseImport({ 
-  // seedPhrase // Removed
-}: CheckingSeedPhraseImportProps) {
+export default function CheckingSeedPhraseImport({}: CheckingSeedPhraseImportProps) {
   const [ status, setStatus ] = useState('Validating seed phrase...')
   
   useEffect(() => {
@@ -36,7 +32,7 @@ export default function CheckingSeedPhraseImport({
     return () => clearInterval(timer)
   }, [])
   
-  // Removed the useEffect that called processImport, onComplete, onError
+
   
   return (
     <OnboardingContainer>

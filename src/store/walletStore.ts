@@ -1,8 +1,5 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-// SecureStore is now only used through secureStore utility
-// import * as Keychain from 'react-native-keychain' // Unused
-// import { Platform } from 'react-native' // Unused
 import { BitcoinWallet } from '@/src/services/bitcoin/wallet/bitcoinWalletService'
 import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
 import { validateMnemonic } from '@/src/services/bitcoin/wallet/keyManagementService'
@@ -10,14 +7,7 @@ import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivation
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
 import { walletBalanceService } from '@/src/services/api/walletBalanceService'
 import { secureStore } from '@/src/services/storage/secureStore'
-import { 
-  // encryptData, // Unused in this file now
-  // decryptData, // Unused in this file now
-  // encryptWithWebCrypto, // Unused in this file now
-  // decryptWithWebCrypto, // Unused in this file now
-  deriveStorageKey,
-  // generateRandomGarbageData // Unused in this file now
-} from '@/src/utils/security/encryptionUtils'
+import { deriveStorageKey } from '@/src/utils/security/encryptionUtils'
 
 // Define the wallet store state type
 interface WalletState {

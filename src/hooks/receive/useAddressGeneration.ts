@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { generateBitcoinAddress } from '@/src/services/bitcoin/addressService'
+import { getNewAddress } from '@/src/services/bitcoin/address/addressService'
 
 interface AddressGenerationResult {
   address: string
@@ -20,7 +20,7 @@ export const useAddressGeneration = (): AddressGenerationResult => {
     try {
       setIsLoading(true)
       setError(null)
-      const addr = await generateBitcoinAddress()
+      const addr = await getNewAddress()
       setAddress(addr)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to generate address'))

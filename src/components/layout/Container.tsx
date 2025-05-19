@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react'
 import { View } from 'react-native'
-// import { ThemeProvider } from '@/src/context/ThemeContext' // Removed as file not found
 
 interface AppProviderProps {
   children: ReactNode

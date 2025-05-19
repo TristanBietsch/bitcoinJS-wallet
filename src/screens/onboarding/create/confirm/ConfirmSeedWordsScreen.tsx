@@ -13,7 +13,7 @@ import ErrorSeedPhrase from '../error/ErrorSeedPhrase'
 import SuccessSeedPhrase from '../success/SuccessSeedPhrase'
 import { Colors } from '@/src/constants/colors'
 import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
-import { keyManagement } from '@/src/services/bitcoin/wallet/keyManagement'
+import { keyManagement } from '@/src/services/bitcoin/wallet/keyManagementService'
 import { BITCOIN_NETWORK } from '@/src/config/bitcoinNetwork'
 
 interface ConfirmSeedWordsScreenProps {
