@@ -1,10 +1,13 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 // import { ImportProvider, useImport } from './ImportContext' // Removed
 import { useImportStore } from '@/src/store/importStore' // New store
 import ImportWalletScreen from '@/src/screens/onboarding/import/input/ImportWalletScreen'
 import CheckingSeedPhraseImport from '@/src/screens/onboarding/import/checking/CheckingSeedPhraseImport'
 // import SuccessImport from '@/src/screens/onboarding/import/success/SuccessImport' // No longer used
 import ErrorImport from '@/src/screens/onboarding/import/error/ErrorImport'
+import { View, ActivityIndicator } from 'react-native'
+import { Colors } from '@/src/constants/colors'
+import { ThemedText } from '@/src/components/ui/Text'
 
 interface ImportFlowProps {
   onComplete?: () => void
@@ -18,6 +21,25 @@ export default function ImportFlow({ onComplete, _onBack }: ImportFlowProps) {
   // const isTestBypass = useImportStore(state => state.isTestBypass) // No longer used
   // Actions from useImportStore (getState() for actions)
   const { returnToInput, resetImportStore } = useImportStore.getState()
+  
+  // Local state to track if balance has been loaded
+  const [isWaitingForBalance, setIsWaitingForBalance] = useState(false)
+  
+  // Handle success state - wait for balance fetch before completing
+  useEffect(() => {
+    if (importFlowState === 'success' && !isWaitingForBalance) {
+      setIsWaitingForBalance(true)
+      
+      // Use a timeout to allow the app to render and balance to update
+      // The balance fetch is triggered in the importStore.startChecking method
+      setTimeout(() => {
+        if (onComplete) {
+          onComplete()
+        }
+        resetImportStore() // Clean up store after completion
+      }, 1000) // Give a bit of time for the balance to load
+    }
+  }, [ importFlowState, onComplete, resetImportStore, isWaitingForBalance ])
 
   useEffect(() => {
     // Reset store when component unmounts or flow is re-entered, to ensure clean state
@@ -25,10 +47,6 @@ export default function ImportFlow({ onComplete, _onBack }: ImportFlowProps) {
       resetImportStore()
     }
   }, [ resetImportStore ])
-
-  // The onComplete for the whole flow, passed from parent (e.g. OnboardingScreen)
-  // This is now called directly in the 'success' case via setTimeout
-  // const handleImportProcessCompleted = () => { ... } // No longer needed here
 
   // Render the appropriate screen based on state
   switch (importFlowState) {
@@ -40,16 +58,13 @@ export default function ImportFlow({ onComplete, _onBack }: ImportFlowProps) {
       )
     
     case 'success':
-      // Skip the internal success screen and directly call the main completion handler.
-      // This prevents the duplicate success screen issue.
-      // Use setTimeout to ensure this runs after the current render cycle.
-      setTimeout(() => {
-        if (onComplete) {
-          onComplete()
-        }
-        resetImportStore() // Clean up store after completion
-      }, 0)
-      return null // Return null or a minimal loading indicator if preferred
+      // Show a loading indicator while waiting for balance to be fetched
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={Colors.light.buttons.primary} />
+          <ThemedText style={{ marginTop: 16 }}>Loading wallet balance...</ThemedText>
+        </View>
+      )
     
     case 'error':
       // _onBack for ErrorImport could also be returnToInput if that's the desired flow

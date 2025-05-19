@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { TEST_ERROR_PHRASE, TEST_BYPASS_PHRASE } from '@/src/constants/testing'
 import { bitcoinWalletService, BitcoinWallet } from '@/src/services/bitcoin/wallet/bitcoinWalletService'
+import { useWalletStore } from '@/src/store/walletStore'
 
 type ImportState = 'input' | 'checking' | 'success' | 'error'
 
@@ -51,8 +52,23 @@ export const useImportStore = create<ImportStoreState>((set, get) => ({
         return
       }
       
+      // Import the wallet using bitcoinWalletService first
       const imported = await bitcoinWalletService.importFromMnemonic(phrase)
-      set({ importedWallet: imported, importFlowState: 'success' })
+      
+      // Then use the walletStore's importWallet function to fully set up the wallet 
+      // and trigger balance fetching
+      const importSuccess = await useWalletStore.getState().importWallet(phrase)
+      
+      if (importSuccess) {
+        // Only set success if the wallet was successfully imported in the wallet store
+        set({ importedWallet: imported, importFlowState: 'success' })
+        
+        // Explicitly fetch wallet balance immediately (not silently)
+        // This ensures the balance shows up right away
+        await useWalletStore.getState().refreshWalletData(false)
+      } else {
+        throw new Error('Failed to import wallet')
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error during import'
       set({ importError: errorMessage, importFlowState: 'error' })

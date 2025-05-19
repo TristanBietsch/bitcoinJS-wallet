@@ -275,8 +275,9 @@ export const useWalletStore = create<WalletState>()(
             isInitialized : true 
           })
           
-          // Fetch initial balances
-          await get().refreshWalletData(true)
+          // Fetch initial balances - use non-silent refresh for better UX
+          // This will show a loading indicator and ensure the balance is displayed right away
+          await get().refreshWalletData(false)
           
           return true
         } catch (error) {
