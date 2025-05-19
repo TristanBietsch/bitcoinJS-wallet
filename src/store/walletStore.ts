@@ -6,8 +6,7 @@ import { validateMnemonic } from '@/src/services/bitcoin/wallet/keyManagementSer
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
 import { walletBalanceService } from '@/src/services/api/walletBalanceService'
-import { secureStore } from '@/src/services/storage/secureStore'
-import { deriveStorageKey } from '@/src/utils/security/encryptionUtils'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Define the wallet store state type
 interface WalletState {
@@ -34,36 +33,31 @@ interface WalletState {
   clearWallet: () => Promise<void>
 }
 
-// Create secure storage for sensitive data with enhanced encryption
-const secureStorage = {
+// Create basic storage for data (temporary implementation)
+// WARNING: No encryption - for development use only
+const simpleStorage = {
   getItem : async (key: string): Promise<string | null> => {
     try {
-      // For all persistent data, use our enhanced secure store with derived keys
-      const derivedKey = deriveStorageKey('nummus_wallet', key)
-      return await secureStore.get(derivedKey)
+      return await AsyncStorage.getItem(`wallet_${key}`)
     } catch (error) {
-      console.error('Error retrieving from secure storage:', error)
+      console.error('Error retrieving from storage:', error)
       return null
     }
   },
   
   setItem : async (key: string, value: string): Promise<void> => {
     try {
-      // For all persistent data, use our enhanced secure store with derived keys
-      const derivedKey = deriveStorageKey('nummus_wallet', key)
-      await secureStore.set(derivedKey, value)
+      await AsyncStorage.setItem(`wallet_${key}`, value)
     } catch (error) {
-      console.error('Error saving to secure storage:', error)
+      console.error('Error saving to storage:', error)
     }
   },
   
   removeItem : async (key: string): Promise<void> => {
     try {
-      // For all persistent data, use our enhanced secure store with derived keys
-      const derivedKey = deriveStorageKey('nummus_wallet', key)
-      await secureStore.delete(derivedKey)
+      await AsyncStorage.removeItem(`wallet_${key}`)
     } catch (error) {
-      console.error('Error removing from secure storage:', error)
+      console.error('Error removing from storage:', error)
     }
   }
 }
@@ -86,7 +80,7 @@ export const useWalletStore = create<WalletState>()(
       error         : null,
       isInitialized : false,
       
-      // Initialize wallet from secure storage
+      // Initialize wallet from storage
       initializeWallet : async () => {
         try {
           // Set initializing state
@@ -102,7 +96,7 @@ export const useWalletStore = create<WalletState>()(
             return
           }
           
-          // Try to retrieve seed phrase from secure storage
+          // Try to retrieve seed phrase from storage
           const storedSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
           
           if (!storedSeedPhrase) {
@@ -251,7 +245,7 @@ export const useWalletStore = create<WalletState>()(
             throw new Error('Invalid seed phrase')
           }
           
-          // Save seed phrase to secure storage
+          // Save seed phrase to storage
           await seedPhraseService.storeSeedPhrase(seedPhrase)
           
           // Create wallet
@@ -300,7 +294,7 @@ export const useWalletStore = create<WalletState>()(
       // Clear wallet data completely
       clearWallet : async () => {
         try {
-          // Clear data from secure storage
+          // Clear data from storage
           await seedPhraseService.removeSeedPhrase()
           
           // Reset store state
@@ -326,7 +320,7 @@ export const useWalletStore = create<WalletState>()(
     }),
     {
       name    : 'nummus-wallet-storage',
-      storage : createJSONStorage(() => secureStorage),
+      storage : createJSONStorage(() => simpleStorage),
       
       // Only store non-sensitive data in persisted state
       // Seed phrase is stored separately via seedPhraseService

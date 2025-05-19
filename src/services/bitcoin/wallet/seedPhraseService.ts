@@ -1,7 +1,6 @@
 import * as bip39 from 'bip39'
 import { Buffer } from 'buffer'
-import { secureStore } from '@/src/services/storage/secureStore'
-import { rotateEncryptionKey, generateRandomGarbageData } from '@/src/utils/security/encryptionUtils'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 /**
  * Seed phrase word length options
@@ -11,6 +10,7 @@ export type WordCount = 12 | 24
 /**
  * Service for managing BIP39 seed phrases
  * Handles generation, validation, and conversion to seeds
+ * NOTE: This implementation has NO encryption - FOR DEVELOPMENT USE ONLY
  */
 export const seedPhraseService = {
   /**
@@ -61,19 +61,17 @@ export const seedPhraseService = {
   },
   
   /**
-   * Securely store a seed phrase with app-level encryption
+   * Store a seed phrase (temporarily with NO encryption)
    * 
    * @param mnemonic The mnemonic seed phrase to store
    * @param id Optional identifier (defaults to 'primary_seed')
    * @returns Promise resolving when storage is complete
    */
   storeSeedPhrase : async (mnemonic: string, id: string = 'primary_seed'): Promise<void> => {
-    // Use a more secure storage key derived from the ID
-    await secureStore.set(`seed_phrase_${id}`, mnemonic)
-    
-    // If this is a new wallet, rotate the encryption key
-    // This ensures each seed phrase is encrypted with a fresh key
-    await rotateEncryptionKey()
+    // TEMPORARY IMPLEMENTATION - STORES UNENCRYPTED
+    // TODO: Replace with proper secure storage
+    await AsyncStorage.setItem(`temp_seedphrase_${id}`, mnemonic)
+    console.warn('WARNING: Seed phrase stored WITHOUT encryption - FOR DEVELOPMENT USE ONLY')
   },
   
   /**
@@ -83,29 +81,20 @@ export const seedPhraseService = {
    * @returns Promise resolving to the seed phrase or null if not found
    */
   retrieveSeedPhrase : async (id: string = 'primary_seed'): Promise<string | null> => {
-    return secureStore.get(`seed_phrase_${id}`)
+    // TEMPORARY IMPLEMENTATION - NO ENCRYPTION
+    // TODO: Replace with proper secure storage retrieval
+    return AsyncStorage.getItem(`temp_seedphrase_${id}`)
   },
   
   /**
-   * Remove a stored seed phrase from secure storage with secure deletion
+   * Remove a stored seed phrase
    * 
    * @param id Optional identifier (defaults to 'primary_seed')
    * @returns Promise resolving when removal is complete
    */
   removeSeedPhrase : async (id: string = 'primary_seed'): Promise<void> => {
-    const key = `seed_phrase_${id}`
-    
-    try {
-      // First overwrite with garbage data to ensure it's not recoverable
-      const garbageData = await generateRandomGarbageData(1024)
-      await secureStore.set(key, garbageData)
-      
-      // Then delete it
-      await secureStore.delete(key)
-    } catch (error) {
-      console.error('Error securely removing seed phrase:', error)
-      // Still try regular deletion as fallback
-      await secureStore.delete(key)
-    }
+    // TEMPORARY IMPLEMENTATION - NO ENCRYPTION
+    // TODO: Replace with proper secure deletion
+    await AsyncStorage.removeItem(`temp_seedphrase_${id}`)
   }
 } 

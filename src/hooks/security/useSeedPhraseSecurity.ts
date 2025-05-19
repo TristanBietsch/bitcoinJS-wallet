@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { 
-  setupSeedPhraseProtection, 
-  secureStoreSeedPhrase,
+  setupSeedPhraseProtection,
   clearSeedPhraseFromMemory
 } from '@/src/utils/security/seedPhraseProtection'
 import { createSecureDataContainer } from '@/src/utils/security/memoryProtection'
@@ -9,6 +8,7 @@ import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseServi
 
 /**
  * Custom hook to handle seed phrase security features
+ * NOTE: THIS IS TEMPORARY IMPLEMENTATION WITH NO ENCRYPTION - FOR DEVELOPMENT USE ONLY
  */
 export const useSeedPhraseSecurity = (seedPhrase: string) => {
   // Create secure container for seed phrase
@@ -53,11 +53,13 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
   }, [ seedPhrase ])
   
   /**
-   * Securely store the seed phrase and handle cleanup
+   * Store the seed phrase
+   * TEMPORARY IMPLEMENTATION WITH NO ENCRYPTION - FOR DEVELOPMENT USE ONLY
    */
   const securelyStoreSeedPhrase = async (): Promise<boolean> => {
     try {
-      console.log('Attempting to securely store seed phrase...')
+      console.log('Attempting to store seed phrase...')
+      console.warn('WARNING: Seed phrase will be stored WITHOUT encryption - FOR DEVELOPMENT USE ONLY')
       
       // Get the seed phrase from the secure container
       const securePhrase = secureContainer.getValue()
@@ -67,29 +69,18 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
         return false
       }
       
-      // First try using the simple seedPhraseService
-      try {
-        console.log('Storing with seedPhraseService...')
-        await seedPhraseService.storeSeedPhrase(securePhrase, 'primary_seed')
-        console.log('Successfully stored seed phrase with seedPhraseService')
-        return true
-      } catch (serviceError) {
-        console.error('Failed to store with seedPhraseService, trying alternative:', serviceError)
-        
-        // Fall back to direct secure storage
-        const seedPhraseId = `wallet_seed_${Date.now()}`
-        await secureStoreSeedPhrase(seedPhraseId, securePhrase)
-        console.log('Successfully stored seed phrase with direct method')
-      }
-        
-        // Clear it from memory
-        clearSeedPhraseFromMemory(seedPhrase)
-        secureContainer.clear()
-        
-        return true
+      // Store with the seedPhraseService
+      await seedPhraseService.storeSeedPhrase(securePhrase, 'primary_seed')
+      console.log('Successfully stored seed phrase with seedPhraseService')
+      
+      // Clear it from memory
+      clearSeedPhraseFromMemory(seedPhrase)
+      secureContainer.clear()
+      
+      return true
     } catch (error) {
-      console.error('Failed to securely store seed phrase:', error)
-      setError('Failed to securely store seed phrase. Please try again.')
+      console.error('Failed to store seed phrase:', error)
+      setError('Failed to store seed phrase. Please try again.')
       return false
     }
   }
