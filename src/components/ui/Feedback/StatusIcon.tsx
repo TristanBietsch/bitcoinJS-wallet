@@ -1,8 +1,7 @@
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-
-type StatusType = 'success' | 'error' | 'warning' | 'info'
+import { StatusType } from '@/src/types/ui/status.types'
 
 interface StatusIconProps {
   type: StatusType;
@@ -13,6 +12,14 @@ interface StatusIconProps {
  * A reusable status icon component that displays the appropriate icon based on status type
  */
 export default function StatusIcon({ type, size = 60 }: StatusIconProps) {
+  if (type === 'loading') {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size={size / 2} color="#2196F3" />
+      </View>
+    )
+  }
+
   const getIconInfo = () => {
     switch (type) {
       case 'success':
@@ -24,7 +31,7 @@ export default function StatusIcon({ type, size = 60 }: StatusIconProps) {
       case 'info':
         return { name: 'information-circle', color: '#2196F3' }
       default:
-        return { name: 'checkmark-circle', color: '#4CAF50' }
+        return { name: 'information-circle', color: 'gray' }
     }
   }
 

@@ -7,25 +7,11 @@ import { router } from 'expo-router'
 import { Colors } from '@/src/constants/colors'
 import { useWalletStore } from '@/src/store/walletStore'
 
-// Define the state type for proper TypeScript typing
-interface WalletState {
-  isInitialized: boolean;
-  isSyncing: boolean;
-  wallet: any;
-  initializeWallet: () => Promise<void>;
-}
-
-// Create a separate selector to prevent infinite re-renders
-const walletSelector = (state: WalletState) => ({
-  isInitialized : state.isInitialized,
-  isSyncing     : state.isSyncing
-})
-
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)
   
-  // Use Zustand store to check wallet status with stable selector
-  const { isInitialized, isSyncing } = useWalletStore(walletSelector)
+  const isInitialized = useWalletStore(state => state.isInitialized)
+  const isSyncing = useWalletStore(state => state.isSyncing)
 
   // Log wallet state changes for diagnostics
   useEffect(() => {

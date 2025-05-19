@@ -24,7 +24,7 @@ const LOCK_TIMEOUT = 5 * 60 * 1000 // 5 minutes in milliseconds
 export default function RootLayout() {
   const pathname = usePathname()
   const appState = useRef(AppState.currentState)
-  const [lastActiveTime, setLastActiveTime] = useState<number>(Date.now())
+  const [ lastActiveTime, setLastActiveTime ] = useState<number>(Date.now())
   
   // Get wallet initialization function from our store
   const initializeWallet = useWalletStore(state => state.initializeWallet)
