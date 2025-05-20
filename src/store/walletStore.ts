@@ -5,8 +5,17 @@ import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseServi
 import { validateMnemonic } from '@/src/services/bitcoin/wallet/keyManagementService'
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
-import { walletBalanceService } from '@/src/services/api/walletBalanceService'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import {
+  EsploraUTXO, 
+  ProcessedTransaction 
+} from '../types/blockchain.types'
+import {
+  getUTXOs,
+  getTransactionHistory,
+  calculateWalletBalance,
+} from '../services/bitcoin/blockchain'
+import type { EsploraTransaction } from '../types/blockchain.types'
 
 // Define the wallet store state type
 interface WalletState {
@@ -18,7 +27,8 @@ interface WalletState {
     unconfirmed: number
     total: number
   }
-  transactions: any[] // Replace with proper transaction type
+  utxos: EsploraUTXO[]
+  transactions: ProcessedTransaction[]
   
   // Sync and loading states
   lastSyncTime: number
@@ -28,7 +38,7 @@ interface WalletState {
   
   // Actions
   initializeWallet: () => Promise<void>
-  refreshWalletData: (silent?: boolean) => Promise<void>
+  refreshWalletData: (silent?: boolean, addressToRefresh?: string) => Promise<void>
   importWallet: (seedPhrase: string) => Promise<boolean>
   clearWallet: () => Promise<void>
 }
@@ -71,9 +81,10 @@ export const useWalletStore = create<WalletState>()(
       seedPhrase : null,
       balances   : {
         confirmed   : 0,
-        unconfirmed : 0,
+        unconfirmed : 0, 
         total       : 0
       },
+      utxos         : [],
       transactions  : [],
       lastSyncTime  : 0,
       isSyncing     : false,
@@ -107,6 +118,7 @@ export const useWalletStore = create<WalletState>()(
               wallet        : null,
               seedPhrase    : null,
               balances      : { confirmed: 0, unconfirmed: 0, total: 0 },
+              utxos         : [],
               transactions  : [],
               lastSyncTime  : 0
             })
@@ -157,6 +169,7 @@ export const useWalletStore = create<WalletState>()(
             wallet        : null,
             seedPhrase    : null,
             balances      : { confirmed: 0, unconfirmed: 0, total: 0 },
+            utxos         : [],
             transactions  : [],
             lastSyncTime  : 0,
             isSyncing     : false,
@@ -165,72 +178,81 @@ export const useWalletStore = create<WalletState>()(
         }
       },
       
-      // Refresh wallet data (balances, transactions)
-      refreshWalletData : async (silent = false) => {
+      // Refresh wallet data (balances, transactions, UTXOs)
+      refreshWalletData : async (silent = false, addressToRefresh?: string) => {
         const { wallet } = get()
-        if (!wallet) return
+        
+        // Determine the address to use for fetching data
+        // Use the provided addressToRefresh, or default to the primary nativeSegwit address from the wallet state
+        const primaryAddress = addressToRefresh || (wallet?.addresses.nativeSegwit[0] || null)
+
+        if (!primaryAddress) {
+          if (!silent) {
+            set({ error: 'No wallet address available to refresh data.', isSyncing: false })
+          }
+          console.warn('refreshWalletData: No address available.')
+          return
+        }
         
         try {
-          // Only show loading state if not silent refresh
           if (!silent) {
             set({ isSyncing: true, error: null })
           }
           
-          // Get the primary receiving address
-          const address = wallet.addresses.nativeSegwit[0]
+          // Fetch UTXOs
+          const fetchedUtxos = await getUTXOs(primaryAddress)
           
-          // Fetch balance from service
-          const balanceData = await walletBalanceService.getAddressBalance(address)
-          
-          // Calculate total balance
-          const total = balanceData.confirmed + balanceData.unconfirmed
-          
-          // Only update if balance has changed to avoid unnecessary renders
-          const currentBalances = get().balances
-          const hasChanged = 
-            currentBalances.confirmed !== balanceData.confirmed || 
-            currentBalances.unconfirmed !== balanceData.unconfirmed
-          
-          if (hasChanged) {
-            // Update balances in store
-            set({ 
-              balances : {
-                confirmed   : balanceData.confirmed,
-                unconfirmed : balanceData.unconfirmed,
-                total
-              },
-              // Also update wallet object's balance
-              wallet : {
-                ...wallet,
-                balances : {
-                  confirmed   : balanceData.confirmed,
-                  unconfirmed : balanceData.unconfirmed
-                }
-              },
-              lastSyncTime : Date.now(),
-            })
-            
-            console.log('Wallet balance updated:', balanceData)
-          } else {
-            console.log('Balance unchanged, skipping update')
-            // Still update sync time
-            set({ lastSyncTime: Date.now() })
+          // Calculate balance from UTXOs
+          const newTotalBalance = calculateWalletBalance(fetchedUtxos)
+          // For now, set confirmed balance to total and unconfirmed to 0.
+          // A more accurate unconfirmed balance would require deeper tx analysis.
+          const newBalances = {
+            confirmed   : newTotalBalance, 
+            unconfirmed : 0, // Placeholder - requires more logic for unconfirmed from mempool Txs
+            total       : newTotalBalance,
           }
+
+          // Fetch Transaction History
+          const fetchedTransactions = await getTransactionHistory(primaryAddress)
           
-          // TODO: Add transaction history fetching here
+          // Process transactions (example)
+          const processedTransactions: ProcessedTransaction[] = fetchedTransactions.map((tx: EsploraTransaction) => ({
+            txid        : tx.txid,
+            confirmed   : tx.status.confirmed,
+            blockHeight : tx.status.block_height,
+            blockTime   : tx.status.block_time,
+            fee         : tx.fee,
+            // TODO: Add more processing logic: valueTransacted, direction, etc.
+          }))
+
+          // Update store state
+          set(state => ({
+            balances     : newBalances,
+            utxos        : fetchedUtxos,
+            transactions : processedTransactions,
+            lastSyncTime : Date.now(),
+            isSyncing    : false, // Set isSyncing to false here after all fetches
+            // Update wallet object's balance if it exists
+            wallet       : state.wallet ? {
+              ...state.wallet,
+              balances : { // Assuming BitcoinWallet type also has this structure
+                confirmed   : newBalances.confirmed,
+                unconfirmed : newBalances.unconfirmed,
+              }
+            } : null,
+          }))
+          
+          console.log(`Wallet data refreshed for address: ${primaryAddress}`)
           
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error refreshing wallet'
-          console.error('Error refreshing wallet:', errorMessage)
+          console.error(`Error refreshing wallet data for address ${primaryAddress}:`, errorMessage, error)
           
-          // Only set error state if not a silent refresh
           if (!silent) {
-            set({ error: errorMessage })
+            set({ error: errorMessage, isSyncing: false })
+          } else {
+            set({ isSyncing: false }) // Still ensure isSyncing is false on silent errors
           }
-        } finally {
-          // Always update loading state to false, even when errors occur
-          // This was previously only done if (!silent)
-          set({ isSyncing: false })
         }
       },
       
@@ -306,6 +328,7 @@ export const useWalletStore = create<WalletState>()(
               unconfirmed : 0,
               total       : 0
             },
+            utxos         : [],
             transactions  : [],
             lastSyncTime  : 0,
             isSyncing     : false,
