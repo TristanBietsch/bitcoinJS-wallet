@@ -18,6 +18,14 @@ export const useCameraScanner = () => {
   const router = useRouter()
   const { setAddress, setAmount } = useSendStore()
   
+  // Define handleClose before the useEffect that uses it
+  const handleClose = useCallback(() => {
+    if (hasNavigatedRef.current) return
+    
+    hasNavigatedRef.current = true
+    router.back()
+  }, [ router ])
+  
   // Reset scanning state when component mounts
   useEffect(() => {
     setIsScanning(true)
@@ -34,7 +42,7 @@ export const useCameraScanner = () => {
       setIsScanning(false)
       backHandler.remove()
     }
-  }, [])
+  }, [ handleClose ])
 
   // Process the scanned QR code data
   const handleQRCodeScanned = useCallback((data: string) => {
@@ -93,14 +101,6 @@ export const useCameraScanner = () => {
       'Failed to access camera. Please check your camera permissions.',
       [ { text: 'OK', onPress: () => router.back() } ]
     )
-  }, [ router ])
-  
-  // Close the scanner and go back
-  const handleClose = useCallback(() => {
-    if (hasNavigatedRef.current) return
-    
-    hasNavigatedRef.current = true
-    router.back()
   }, [ router ])
 
   return {

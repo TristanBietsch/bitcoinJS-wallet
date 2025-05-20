@@ -13,7 +13,6 @@ import {
 import {
   getUTXOs,
   getTransactionHistory,
-  calculateWalletBalance,
 } from '../services/bitcoin/blockchain'
 import type { EsploraTransaction } from '../types/blockchain.types'
 
@@ -182,8 +181,6 @@ export const useWalletStore = create<WalletState>()(
       refreshWalletData : async (silent = false, addressToRefresh?: string) => {
         const { wallet } = get()
         
-        // Determine the address to use for fetching data
-        // Use the provided addressToRefresh, or default to the primary nativeSegwit address from the wallet state
         const primaryAddress = addressToRefresh || (wallet?.addresses.nativeSegwit[0] || null)
 
         if (!primaryAddress) {
@@ -199,43 +196,90 @@ export const useWalletStore = create<WalletState>()(
             set({ isSyncing: true, error: null })
           }
           
-          // Fetch UTXOs
           const fetchedUtxos = await getUTXOs(primaryAddress)
-          
-          // Calculate balance from UTXOs
-          const newTotalBalance = calculateWalletBalance(fetchedUtxos)
-          // For now, set confirmed balance to total and unconfirmed to 0.
-          // A more accurate unconfirmed balance would require deeper tx analysis.
-          const newBalances = {
-            confirmed   : newTotalBalance, 
-            unconfirmed : 0, // Placeholder - requires more logic for unconfirmed from mempool Txs
-            total       : newTotalBalance,
-          }
-
-          // Fetch Transaction History
           const fetchedTransactions = await getTransactionHistory(primaryAddress)
           
-          // Process transactions (example)
-          const processedTransactions: ProcessedTransaction[] = fetchedTransactions.map((tx: EsploraTransaction) => ({
-            txid        : tx.txid,
-            confirmed   : tx.status.confirmed,
-            blockHeight : tx.status.block_height,
-            blockTime   : tx.status.block_time,
-            fee         : tx.fee,
-            // TODO: Add more processing logic: valueTransacted, direction, etc.
-          }))
+          const allWalletAddresses = wallet 
+            ? Object.values(wallet.addresses).flat()
+            : []
 
-          // Update store state
+          const processedTransactions: ProcessedTransaction[] = fetchedTransactions.map((tx: EsploraTransaction) => {
+            let netAmount = 0
+            let isSending = false
+            let isReceiving = false
+
+            tx.vin.forEach(input => {
+              if (input.prevout && input.prevout.scriptpubkey_address && allWalletAddresses.includes(input.prevout.scriptpubkey_address)) {
+                isSending = true
+                netAmount -= input.prevout.value
+              }
+            })
+
+            tx.vout.forEach(output => {
+              if (output.scriptpubkey_address && allWalletAddresses.includes(output.scriptpubkey_address)) {
+                isReceiving = true
+                netAmount += output.value
+              }
+            })
+            
+            let direction: 'sent' | 'received' | 'self'
+            if (isSending && isReceiving) {
+              direction = 'self'
+            } else if (isSending) {
+              direction = 'sent'
+              if (direction === 'sent') {
+                let amountSentToOthers = 0
+                tx.vout.forEach(output => {
+                  if (!(output.scriptpubkey_address && allWalletAddresses.includes(output.scriptpubkey_address))) {
+                    amountSentToOthers += output.value                 
+                  }
+                })
+                netAmount = -amountSentToOthers
+              }
+            } else if (isReceiving) {
+              direction = 'received'
+            } else {
+              direction = 'self' 
+              netAmount = 0
+            }
+
+            return {
+              txid        : tx.txid,
+              confirmed   : tx.status.confirmed,
+              blockHeight : tx.status.block_height,
+              blockTime   : tx.status.block_time,
+              fee         : tx.fee,
+              netAmount,
+              direction,
+            }
+          })
+
+          let confirmedBalance = 0
+          let unconfirmedBalance = 0
+          fetchedUtxos.forEach(utxo => {
+            if (utxo.status.confirmed) {
+              confirmedBalance += utxo.value
+            } else {
+              unconfirmedBalance += utxo.value
+            }
+          })
+          const totalBalance = confirmedBalance + unconfirmedBalance
+
+          const newBalances = {
+            confirmed   : confirmedBalance,
+            unconfirmed : unconfirmedBalance,
+            total       : totalBalance,
+          }
+
           set(state => ({
             balances     : newBalances,
             utxos        : fetchedUtxos,
             transactions : processedTransactions,
             lastSyncTime : Date.now(),
-            isSyncing    : false, // Set isSyncing to false here after all fetches
-            // Update wallet object's balance if it exists
+            isSyncing    : false,
             wallet       : state.wallet ? {
               ...state.wallet,
-              balances : { // Assuming BitcoinWallet type also has this structure
+              balances : { 
                 confirmed   : newBalances.confirmed,
                 unconfirmed : newBalances.unconfirmed,
               }
@@ -251,7 +295,7 @@ export const useWalletStore = create<WalletState>()(
           if (!silent) {
             set({ error: errorMessage, isSyncing: false })
           } else {
-            set({ isSyncing: false }) // Still ensure isSyncing is false on silent errors
+            set({ isSyncing: false })
           }
         }
       },

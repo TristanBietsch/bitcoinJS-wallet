@@ -1,108 +1,74 @@
-import { useQuery, useMutation, useQueryClient, QueryKey } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useWalletStore } from '../../store/walletStore'
-import {
-  // getUTXOs, // Not called directly, used in store
-  // getTransactionHistory, // Not called directly, used in store
-  getFeeEstimates,
-  broadcastTransaction,
-  // calculateWalletBalance, // Not called directly, used in store
-} from '../../services/bitcoin/blockchain'
-import {
-  CURRENT_NETWORK,
-} from '../../config/env'
-// import type { EsploraUTXO } from '../../types/blockchain.types'; // Not directly used here
-import type { /* EsploraUTXO, */ ProcessedTransaction } from '../../types/blockchain.types' // ProcessedTransaction is used in return type
-// import { useEffect } from 'react' // Removed unused useEffect
+import { getUTXOs, getTransactionHistory } from '../../services/bitcoin/blockchain'
+import type { 
+    EsploraTransaction, 
+    EsploraUTXO
+} from '../../types/blockchain.types' // Corrected import path for types
 
-interface UseWalletSyncOptions {
-  currentAddress: string | null;
-  enableAutoRefresh?: boolean;
-  autoRefreshInterval?: number;
-}
-
-export function useWalletSync({ currentAddress }: UseWalletSyncOptions) {
-  const queryClient = useQueryClient()
-
-  const storeActions = useWalletStore(state => ({ 
-    refreshWalletDataInStore : state.refreshWalletData, 
+export function useWalletSync() {
+  const {
+    wallet,
+    isSyncing: storeIsSyncing, // Zustand's syncing state
+    lastSyncTime: storeLastSyncTime,
+    error: storeError,
+  } = useWalletStore(state => ({
+    wallet       : state.wallet,
+    isSyncing    : state.isSyncing,
+    lastSyncTime : state.lastSyncTime,
+    error        : state.error,
   }))
-  const walletState = useWalletStore(state => ({
-    balance            : state.balances.total,
-    utxos              : state.utxos,
-    transactions       : state.transactions as ProcessedTransaction[], // Explicitly type here
-    lastSyncTimestamp  : state.lastSyncTime,
-    isSyncingFromStore : state.isSyncing,
-    errorFromStore     : state.error,
-  }))
-
-  const getQueryKey = (key: string): QueryKey => [ key, currentAddress, CURRENT_NETWORK ]
-
-  // Define the query function for refreshing store data
-  const refreshStoreDataQueryFn = async () => {
-    if (!currentAddress) return null
-    await storeActions.refreshWalletDataInStore(true, currentAddress) // true for silent from RQ perspective
-    return true // Indicate success for React Query
-  }
-
-  // This query is the main trigger for the Zustand store's refreshWalletData action.
-  // The store action itself handles fetching UTXOs, Txs, and calculating balance.
-  const walletRefreshQuery = useQuery({
-    queryKey             : getQueryKey('walletStoreRefreshTrigger'),
-    queryFn              : refreshStoreDataQueryFn,
-    enabled              : !!currentAddress,
-    refetchOnWindowFocus : true,
-  })
-
-  // Rely on type inference for getFeeEstimates return type
-  const feeEstimatesQuery = useQuery({
-    queryKey             : [ 'feeEstimates', CURRENT_NETWORK ],
-    queryFn              : getFeeEstimates,
-    staleTime            : 300000,
-    refetchOnWindowFocus : false,
-  })
-
-  const broadcastTxMutation = useMutation({
-    mutationFn : broadcastTransaction,
-    onSuccess  : () => {
-      queryClient.invalidateQueries({ queryKey: getQueryKey('walletStoreRefreshTrigger') })
-      console.log('Transaction broadcasted successfully, triggering wallet data refresh...')
-    },
-    onError : (error: Error) => {
-      console.error('Failed to broadcast transaction:', error.message)
-    },
-  })
-
-  const refreshWalletData = () => {
-    if (currentAddress) {
-      queryClient.invalidateQueries({ queryKey: getQueryKey('walletStoreRefreshTrigger') })
-    }
-  }
   
-  // Consolidate loading and error states from React Query and Zustand
-  const isLoadingWalletData = walletRefreshQuery.isLoading || walletState.isSyncingFromStore || walletRefreshQuery.isFetching
-  const walletDataError = walletRefreshQuery.error || (walletState.errorFromStore ? new Error(walletState.errorFromStore) : null)
-  const isErrorWalletData = walletRefreshQuery.isError || !!walletDataError
+  const { refreshWalletData } = useWalletStore.getState()
+
+  const _queryClient = useQueryClient() // Prefixed with underscore as it's not used currently
+  const primaryAddress = wallet?.addresses.nativeSegwit[0]
+
+  const utxosQuery = useQuery<EsploraUTXO[], Error>({
+    queryKey : [ 'utxos', primaryAddress ], 
+    queryFn  : () => {
+      if (!primaryAddress) throw new Error('Primary address not available for fetching UTXOs.')
+      return getUTXOs(primaryAddress)
+    },
+    enabled : !!primaryAddress,
+  })
+
+  const transactionsQuery = useQuery<EsploraTransaction[], Error>({
+    queryKey : [ 'transactions', primaryAddress ], 
+    queryFn  : () => {
+      if (!primaryAddress) throw new Error('Primary address not available for fetching transactions.')
+      return getTransactionHistory(primaryAddress)
+    },
+    enabled : !!primaryAddress,
+  })
+  
+  const isQueryFetching = utxosQuery.isFetching || transactionsQuery.isFetching
+  const queryError = utxosQuery.error || transactionsQuery.error
+
+  const syncWallet = async () => {
+    if (!primaryAddress) {
+      console.warn('[useWalletSync] Cannot sync: Wallet address not available.')
+      // store.setError could be called here, but refreshWalletData should also handle it.
+      return
+    }
+    // Let refreshWalletData in the store handle its own isSyncing and error states.
+    await refreshWalletData(false, primaryAddress) // silent = false, allows store to manage its full sync state
+  }
+
+  useEffect(() => {
+    if (primaryAddress && !storeIsSyncing && !isQueryFetching) {
+      // syncWallet(); // Uncomment to enable auto-sync behavior
+    }
+  }, [ primaryAddress, storeIsSyncing, isQueryFetching, refreshWalletData ])
 
   return {
-    // Data from Zustand Store
-    balance           : walletState.balance,
-    utxos             : walletState.utxos,
-    transactions      : walletState.transactions,
-    lastSyncTimestamp : walletState.lastSyncTimestamp,
-
-    // Status for wallet data sync
-    isLoadingWalletData,
-    isErrorWalletData,
-    errorWalletData : walletDataError,
-
-    // Fee Estimates
-    feeEstimates          : feeEstimatesQuery.data,
-    isLoadingFeeEstimates : feeEstimatesQuery.isLoading,
-    isErrorFeeEstimates   : feeEstimatesQuery.isError,
-    errorFeeEstimates     : feeEstimatesQuery.error as Error | null,
-
-    // Actions
-    broadcastTx : broadcastTxMutation,
-    refreshWalletData,
+    isLoading    : isQueryFetching, // Reflects React Query's fetching state (isFetching is often better than isLoading for this pattern)
+    isSyncing    : storeIsSyncing,  // Reflects Zustand's isSyncing state (primarily set by refreshWalletData)
+    error        : queryError ? queryError.message : storeError, // Prefer React Query error, fallback to store error
+    syncWallet,
+    lastSyncTime : storeLastSyncTime,
+    utxos        : utxosQuery.data, // Raw data from React Query
+    transactions : transactionsQuery.data, // Raw data from React Query
   }
 } 

@@ -44,14 +44,14 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
         secureContainer.clear()
       }
     }
-  }, [ ]) // Only run on mount/unmount
+  }, [ secureContainer, seedPhrase ])
   
   // Update secure container when seedPhrase changes and is valid
   useEffect(() => {
     if (seedPhrase && seedPhrase.trim()) {
       secureContainer.setValue(seedPhrase.trim())
     }
-  }, [ seedPhrase ])
+  }, [ seedPhrase, secureContainer ])
   
   /**
    * Store the seed phrase

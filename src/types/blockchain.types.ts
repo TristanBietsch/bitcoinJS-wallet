@@ -88,6 +88,8 @@ export interface ProcessedTransaction {
   blockHeight?: number | null;
   blockTime?: number | null;
   fee: number;
+  netAmount: number; // Net change in wallet balance due to this tx (positive for received, negative for sent)
+  direction: 'sent' | 'received' | 'self'; // 'self' for consolidation or sending to own addresses
 }
 
 export interface WalletState {

@@ -1,7 +1,7 @@
 /**
  * Hook for handling transaction processing logic
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'expo-router'
 import { mockTransactions } from '@/tests/mockData/transactionData'
 import { useTransactionValidation } from '@/src/hooks/send/useTransactionValidation'
@@ -38,15 +38,15 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
   // Track processing completion
   const completedRef = useRef(false)
   
-  // Navigate to the error screen
-  const navigateToErrorScreen = () => {
+  // Wrap navigateToErrorScreen in useCallback
+  const navigateToErrorScreen = useCallback(() => {
     // Still set the error state in case component is still mounted
     setIsLoading(false)
     setError("Error occurred during transaction")
     
     // Navigate to the error screen
     router.replace('/send/error' as any)
-  }
+  }, [ router, setIsLoading, setError ])
   
   useEffect(() => {
     // Store the initial error mode when the effect runs
@@ -126,7 +126,7 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
     return () => {
       isMounted = false
     }
-  }, [ router, isValid, validationError, errorMode, setErrorMode ])
+  }, [ router, isValid, validationError, errorMode, setErrorMode, navigateToErrorScreen ])
   
   return { error, isLoading }
 } 

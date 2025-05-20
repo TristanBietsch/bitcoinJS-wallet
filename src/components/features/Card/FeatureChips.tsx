@@ -53,7 +53,7 @@ export const FeatureChips: React.FC<FeatureChipsProps> = ({ features }) => {
         }),
       ])
     ).start()
-  }, [])
+  }, [ firstRowAnim, secondRowAnim ])
 
   const renderMarqueeRow = (items: string[], translateX: Animated.Value) => {
     return (

@@ -81,7 +81,16 @@ export const useSendAddressScreen = () => {
     } else if (storedSpeed) {
       handleSpeedChangeBase(storedSpeed as SpeedTier)
     }
-  }, [ storedAddress, storedSpeed, storedCustomFee ])
+  }, [ 
+    storedAddress, 
+    storedSpeed, 
+    storedCustomFee,
+    checkClipboard,
+    handleAddressChange,
+    handleSpeedChangeBase,
+    resetStore,
+    setCustomFee
+  ])
 
   const handleQRScan = () => {
     // Navigate to the QR scanner screen
