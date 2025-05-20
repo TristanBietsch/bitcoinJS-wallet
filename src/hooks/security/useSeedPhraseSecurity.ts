@@ -102,6 +102,6 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
     securelyStoreSeedPhrase,
     error,
     loading,
-    clearError: () => setError(null)
+    clearError : () => setError(null)
   }
 } 

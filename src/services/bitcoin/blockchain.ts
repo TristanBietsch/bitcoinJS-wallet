@@ -1,15 +1,17 @@
 import { z } from 'zod'
-import {
+import type {
   EsploraUTXO,
-  EsploraUTXOSchema,
   EsploraTransaction,
-  EsploraTransactionSchema,
   EsploraFeeEstimates,
-  EsploraFeeEstimatesSchema,
   FeeRates,
-} from '../../types/blockchain.types'
-import { ESPLORA_API_BASE_URL } from '../../config/env'
-import { fetchWithRetry, FetchRetryError } from '../../utils/network/fetchWithRetry'
+} from '@/src/types/blockchain.types'
+import {
+  EsploraUTXOSchema,
+  EsploraTransactionSchema,
+  EsploraFeeEstimatesSchema
+} from '@/src/types/blockchain.types'
+import { ESPLORA_API_BASE_URL } from '@/src/config/env'
+import { fetchWithRetry, FetchRetryError } from '@/src/utils/network/fetchWithRetry'
 
 /**
  * Fetches Unspent Transaction Outputs (UTXOs) for a given Bitcoin address.
@@ -64,8 +66,8 @@ export async function getFeeEstimates(): Promise<FeeRates> {
 
     const feeRates: FeeRates = {
       fast   : parsedEsploraFees['1'] || parsedEsploraFees['2'] || parsedEsploraFees['3'] || 20,
-      normal : parsedEsploraFees['6'] || parsedEsploraFees['3'] || parsedEsploraFees['12'] || 10,
-      slow   : parsedEsploraFees['144'] || parsedEsploraFees['72'] || parsedEsploraFees['24'] || 2,
+      normal : parsedEsploraFees['6'] || parsedEsploraFees['3'] || parsedEsploraFees['10'] || parsedEsploraFees['12'] || 10,
+      slow   : parsedEsploraFees['144'] || parsedEsploraFees['72'] || parsedEsploraFees['200'] || parsedEsploraFees['24'] || 2,
     }
     if (feeRates.fast <= 0 || feeRates.normal <= 0 || feeRates.slow <= 0) {
         console.warn("Invalid fee rates from Esplora, using defaults", feeRates, parsedEsploraFees)

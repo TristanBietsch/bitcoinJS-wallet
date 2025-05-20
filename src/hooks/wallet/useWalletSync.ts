@@ -11,7 +11,7 @@ import {
   CURRENT_NETWORK,
 } from '../../config/env'
 // import type { EsploraUTXO } from '../../types/blockchain.types'; // Not directly used here
-import type { /* EsploraUTXO, */ FeeRates, ProcessedTransaction } from '../../types/blockchain.types' // ProcessedTransaction is used in return type
+import type { /* EsploraUTXO, */ ProcessedTransaction } from '../../types/blockchain.types' // ProcessedTransaction is used in return type
 // import { useEffect } from 'react' // Removed unused useEffect
 
 interface UseWalletSyncOptions {
@@ -47,31 +47,27 @@ export function useWalletSync({ currentAddress }: UseWalletSyncOptions) {
   // This query is the main trigger for the Zustand store's refreshWalletData action.
   // The store action itself handles fetching UTXOs, Txs, and calculating balance.
   const walletRefreshQuery = useQuery({
-    queryKey: getQueryKey('walletStoreRefreshTrigger'),
-    queryFn: refreshStoreDataQueryFn,
-    enabled: !!currentAddress,
-    refetchOnWindowFocus: true,
+    queryKey             : getQueryKey('walletStoreRefreshTrigger'),
+    queryFn              : refreshStoreDataQueryFn,
+    enabled              : !!currentAddress,
+    refetchOnWindowFocus : true,
   })
 
-  const { 
-    data: feeEstimates, 
-    isLoading: isLoadingFeeEstimates,
-    isError: isErrorFeeEstimates, 
-    error: errorFeeEstimates 
-  } = useQuery({
-    queryKey: ['feeEstimates', CURRENT_NETWORK],
-    queryFn: getFeeEstimates,
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+  // Rely on type inference for getFeeEstimates return type
+  const feeEstimatesQuery = useQuery({
+    queryKey             : [ 'feeEstimates', CURRENT_NETWORK ],
+    queryFn              : getFeeEstimates,
+    staleTime            : 300000,
+    refetchOnWindowFocus : false,
   })
 
   const broadcastTxMutation = useMutation({
-    mutationFn: broadcastTransaction,
-    onSuccess: () => {
+    mutationFn : broadcastTransaction,
+    onSuccess  : () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey('walletStoreRefreshTrigger') })
       console.log('Transaction broadcasted successfully, triggering wallet data refresh...')
     },
-    onError: (error: Error) => {
+    onError : (error: Error) => {
       console.error('Failed to broadcast transaction:', error.message)
     },
   })
@@ -97,13 +93,13 @@ export function useWalletSync({ currentAddress }: UseWalletSyncOptions) {
     // Status for wallet data sync
     isLoadingWalletData,
     isErrorWalletData,
-    errorWalletData   : walletDataError,
+    errorWalletData : walletDataError,
 
     // Fee Estimates
-    feeEstimates,
-    isLoadingFeeEstimates,
-    isErrorFeeEstimates,
-    errorFeeEstimates : errorFeeEstimates as Error | null,
+    feeEstimates          : feeEstimatesQuery.data,
+    isLoadingFeeEstimates : feeEstimatesQuery.isLoading,
+    isErrorFeeEstimates   : feeEstimatesQuery.isError,
+    errorFeeEstimates     : feeEstimatesQuery.error as Error | null,
 
     // Actions
     broadcastTx : broadcastTxMutation,
