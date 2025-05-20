@@ -76,14 +76,14 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
       
       try {
         await seedPhraseService.storeSeedPhrase(securePhrase)
-        console.log('Successfully stored seed phrase with seedPhraseService')
-        
-        // Clear it from memory
-        clearSeedPhraseFromMemory(seedPhrase)
-        secureContainer.clear()
-        
+      console.log('Successfully stored seed phrase with seedPhraseService')
+      
+      // Clear it from memory
+      clearSeedPhraseFromMemory(seedPhrase)
+      secureContainer.clear()
+      
         setLoading(false)
-        return true
+      return true
       } catch (error) {
         console.error('Failed to store seed phrase:', error)
         setError('Failed to store seed phrase. Please try again.')

@@ -80,7 +80,7 @@ export const useWalletStore = create<WalletState>()(
       seedPhrase : null,
       balances   : {
         confirmed   : 0,
-        unconfirmed : 0, 
+        unconfirmed : 0,
         total       : 0
       },
       utxos         : [],
@@ -259,7 +259,7 @@ export const useWalletStore = create<WalletState>()(
           fetchedUtxos.forEach(utxo => {
             if (utxo.status.confirmed) {
               confirmedBalance += utxo.value
-            } else {
+          } else {
               unconfirmedBalance += utxo.value
             }
           })

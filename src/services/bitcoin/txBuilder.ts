@@ -83,68 +83,57 @@ export function buildTransaction(
     totalOutputValue += output.value
   })
 
-  // Estimate transaction weight and calculate fee
-  // Number of inputs and outputs are now known. Change output will be added if necessary.
-  // Assuming primarily P2WPKH inputs and outputs for this estimation.
-  const estimatedWeight = estimateTxVirtualBytes(
+  // Initial fee & weight estimation assuming a change output might be needed
+  const initialEstimatedWeight = estimateTxVirtualBytes(
     inputs.length, 
     outputs.length + 1, // +1 for potential change output
-    inputs.map(() => 'P2WPKH'), // Assume all inputs are P2WPKH for this simple estimator
-    [ ...outputs.map(() => 'P2WPKH'), 'P2WPKH' ] // Assume outputs and change are P2WPKH
+    inputs.map(() => 'P2WPKH'), 
+    [ ...outputs.map(() => 'P2WPKH'), 'P2WPKH' ] 
   )
-  const calculatedFee = Math.ceil(estimatedWeight * feeRate)
+  const initialCalculatedFee = Math.ceil(initialEstimatedWeight * feeRate)
 
-  if (totalInputValue < totalOutputValue + calculatedFee) {
+  if (totalInputValue < totalOutputValue + initialCalculatedFee) {
     throw new Error(
-      `Insufficient funds. Needed: ${totalOutputValue + calculatedFee}, Available: ${totalInputValue}. Fee: ${calculatedFee}`
+      `Insufficient funds. Needed: ${totalOutputValue + initialCalculatedFee} (outputs + initial fee), Available: ${totalInputValue}. Fee: ${initialCalculatedFee}`
     )
   }
 
-  const changeValue = totalInputValue - totalOutputValue - calculatedFee
+  const changeValue = totalInputValue - totalOutputValue - initialCalculatedFee
+  let finalFeeDetails: TransactionFeeDetails
 
   if (changeValue > DUST_THRESHOLD) {
     psbt.addOutput({
       address : changeAddress,
       value   : changeValue,
     })
-  } else if (changeValue > 0 && changeValue <= DUST_THRESHOLD) {
-    // Change is dust, add to fee instead of creating a dust output
-    // The PSBT library might handle this by not adding the output, or fee needs recalculation.
-    // For simplicity, we assume the fee calculated is what we pay, and this dust amount goes to miners.
-    // No action to add output, the fee effectively increases. Check if existing outputs need adjustment
-    // or if the fee calculation should be re-run to absorb this. Simpler: let it be absorbed by miners.
-    // The `calculatedFee` would then be `totalInputValue - totalOutputValue`.
-    // Let's re-evaluate the calculated fee if change is dust:
-    const actualFeePaid = totalInputValue - totalOutputValue
-    if (actualFeePaid < calculatedFee) {
-        // This scenario implies the initial fee calculation was too low if change is now dust.
-        // This can get complex. For now, we stick to the initial calculatedFee and if change is dust,
-        // it just means the miners get a bit more than the target feeRate if we don't add change output.
-        // Or, more correctly, if change is dust, don't create change output, the fee is totalInputValue - totalOutputValue
-        // The feeDetails should reflect the *actual* fee paid.
-        const feeDetails: TransactionFeeDetails = {
-            feeRate,
-            estimatedWeight, // This might be slightly off now if change output isn't added
-            calculatedFee : actualFeePaid, 
-          }
-          // No change output is added. The fee is now totalInputValue - totalOutputValue.
-          // We must ensure this new fee is acceptable (e.g. not negative, and reasonable)
-          if (actualFeePaid < 0) throw new Error("Internal error: Negative fee after attempting to handle dust.")
-          // Update fee details to reflect actual fee if change is dust and not added.
-          return { psbt, feeDetails }
+    finalFeeDetails = {
+      feeRate,
+      estimatedWeight : initialEstimatedWeight, // Weight estimate included change
+      calculatedFee   : initialCalculatedFee,     // Fee was based on this weight
     }
-    // If changeValue is dust, it means it will be added to the fee.
-    // The psbt.addOutput for change will not be called.
-    // The effective fee will be totalInputValue - totalOutputValue.
-  }
-  // If changeValue is 0, no change output is added.
-  // If changeValue is negative, the insufficient funds error above should have caught it.
+  } else {
+    // Change is dust, zero, or negative (though negative should be caught by insufficient funds).
+    // No change output is added. The actual fee paid is totalInputValue - totalOutputValue.
+    const actualFeePaid = totalInputValue - totalOutputValue
 
-  const feeDetails: TransactionFeeDetails = {
-    feeRate,
-    estimatedWeight,
-    calculatedFee,
+    if (actualFeePaid < 0) { // Should ideally not happen if prior check is robust
+      throw new Error(`Internal error: Negative fee (${actualFeePaid}) calculated when change is dust or zero.`)
+    }
+
+    // Re-estimate weight for a transaction with NO change output for more accurate reporting.
+    const estimatedWeightWithoutChange = estimateTxVirtualBytes(
+      inputs.length,
+      outputs.length, // Only recipient outputs, no change
+      inputs.map(() => 'P2WPKH'),
+      outputs.map(() => 'P2WPKH')
+    )
+    
+    finalFeeDetails = {
+      feeRate,
+      estimatedWeight : estimatedWeightWithoutChange, // More accurate weight for the actual tx
+      calculatedFee   : actualFeePaid,
+    }
   }
 
-  return { psbt, feeDetails }
+  return { psbt, feeDetails: finalFeeDetails }
 } 
