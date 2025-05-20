@@ -45,7 +45,7 @@ export class BitcoinWalletService {
       if (isDevelopment) {
         try {
           // First try the normal way
-          await seedPhraseService.storeSeedPhrase(mnemonic, 'primary_seed')
+          await seedPhraseService.storeSeedPhrase(mnemonic)
           console.log('Seed phrase stored successfully with normal method')
         } catch (storageError) {
           console.warn('Secure storage failed, using development mode fallback:', storageError)
@@ -56,7 +56,7 @@ export class BitcoinWalletService {
         }
       } else {
         // Production code - must use secure storage
-        await seedPhraseService.storeSeedPhrase(mnemonic, 'primary_seed')
+        await seedPhraseService.storeSeedPhrase(mnemonic)
       }
       
       // Pre-validate that we can derive addresses before proceeding

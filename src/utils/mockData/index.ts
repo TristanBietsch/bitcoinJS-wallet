@@ -1,2 +1,1 @@
-// Re-export mock data from their new location for backward compatibility
-export * from '../testing/mockWallet' 
+// Re-export mock data - nothing currently exported

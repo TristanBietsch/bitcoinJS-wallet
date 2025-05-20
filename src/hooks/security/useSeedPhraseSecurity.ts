@@ -14,6 +14,7 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
   // Create secure container for seed phrase
   const [ secureContainer ] = useState(() => createSecureDataContainer<string>(''))
   const [ error, setError ] = useState<string | null>(null)
+  const [ loading, setLoading ] = useState(false)
   
   // Set up security protections when hook mounts
   useEffect(() => {
@@ -70,17 +71,29 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
       }
       
       // Store with the seedPhraseService
-      await seedPhraseService.storeSeedPhrase(securePhrase, 'primary_seed')
-      console.log('Successfully stored seed phrase with seedPhraseService')
+      setLoading(true)
+      setError(null)
       
-      // Clear it from memory
-      clearSeedPhraseFromMemory(seedPhrase)
-      secureContainer.clear()
-      
-      return true
+      try {
+        await seedPhraseService.storeSeedPhrase(securePhrase)
+        console.log('Successfully stored seed phrase with seedPhraseService')
+        
+        // Clear it from memory
+        clearSeedPhraseFromMemory(seedPhrase)
+        secureContainer.clear()
+        
+        setLoading(false)
+        return true
+      } catch (error) {
+        console.error('Failed to store seed phrase:', error)
+        setError('Failed to store seed phrase. Please try again.')
+        setLoading(false)
+        return false
+      }
     } catch (error) {
       console.error('Failed to store seed phrase:', error)
       setError('Failed to store seed phrase. Please try again.')
+      setLoading(false)
       return false
     }
   }
@@ -88,6 +101,7 @@ export const useSeedPhraseSecurity = (seedPhrase: string) => {
   return {
     securelyStoreSeedPhrase,
     error,
-    clearError : () => setError(null)
+    loading,
+    clearError: () => setError(null)
   }
 } 

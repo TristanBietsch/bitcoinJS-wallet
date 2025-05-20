@@ -21,7 +21,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   const resetOnboarding = useCallback(async () => {
     try {
       // Remove stored seed phrase
-      await seedPhraseService.storeSeedPhrase('', 'primary_seed')
+      await seedPhraseService.storeSeedPhrase('')
       // Return to the wallet choice screen
       setCurrentStep('choice')
     } catch (error) {

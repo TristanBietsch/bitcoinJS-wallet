@@ -46,59 +46,46 @@ export function useWalletSync({ currentAddress }: UseWalletSyncOptions) {
 
   // This query is the main trigger for the Zustand store's refreshWalletData action.
   // The store action itself handles fetching UTXOs, Txs, and calculating balance.
-  const {
-    isLoading: isLoadingStoreRefresh,
-    isError: isErrorStoreRefresh,
-    error: errorStoreRefresh,
-    isFetching: isFetchingStoreRefresh, // Use isFetching for background updates
-  } = useQuery(
-    getQueryKey('walletStoreRefreshTrigger'),
-    refreshStoreDataQueryFn, // Use the defined function
-    {
-      enabled              : !!currentAddress,
-      refetchOnWindowFocus : true,
-      // Let the store handle its own success/error states for data population.
-      // This query just ensures the process is triggered.
-    }
-  )
+  const walletRefreshQuery = useQuery({
+    queryKey: getQueryKey('walletStoreRefreshTrigger'),
+    queryFn: refreshStoreDataQueryFn,
+    enabled: !!currentAddress,
+    refetchOnWindowFocus: true,
+  })
 
   const { 
     data: feeEstimates, 
     isLoading: isLoadingFeeEstimates,
     isError: isErrorFeeEstimates, 
     error: errorFeeEstimates 
-  } = useQuery<FeeRates, Error>(
-    [ 'feeEstimates', CURRENT_NETWORK ],
-    getFeeEstimates,
-    {
-      staleTime            : 300000, // 5 minutes
-      refetchOnWindowFocus : false,
-    }
-  )
+  } = useQuery({
+    queryKey: ['feeEstimates', CURRENT_NETWORK],
+    queryFn: getFeeEstimates,
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
+  })
 
-  const broadcastTxMutation = useMutation<string, Error, string, unknown>(
-    broadcastTransaction, // Pass the function reference directly
-    {
-      onSuccess : () => {
-        queryClient.invalidateQueries(getQueryKey('walletStoreRefreshTrigger'))
-        console.log('Transaction broadcasted successfully, triggering wallet data refresh...')
-      },
-      onError : (error: Error) => {
-        console.error('Failed to broadcast transaction:', error.message)
-      },
-    }
-  )
+  const broadcastTxMutation = useMutation({
+    mutationFn: broadcastTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getQueryKey('walletStoreRefreshTrigger') })
+      console.log('Transaction broadcasted successfully, triggering wallet data refresh...')
+    },
+    onError: (error: Error) => {
+      console.error('Failed to broadcast transaction:', error.message)
+    },
+  })
 
   const refreshWalletData = () => {
     if (currentAddress) {
-      queryClient.invalidateQueries(getQueryKey('walletStoreRefreshTrigger'))
+      queryClient.invalidateQueries({ queryKey: getQueryKey('walletStoreRefreshTrigger') })
     }
   }
   
   // Consolidate loading and error states from React Query and Zustand
-  const isLoadingWalletData = isLoadingStoreRefresh || walletState.isSyncingFromStore || isFetchingStoreRefresh
-  const walletDataError = errorStoreRefresh || (walletState.errorFromStore ? new Error(walletState.errorFromStore) : null)
-  const isErrorWalletDataFinal = isErrorStoreRefresh || !!walletDataError
+  const isLoadingWalletData = walletRefreshQuery.isLoading || walletState.isSyncingFromStore || walletRefreshQuery.isFetching
+  const walletDataError = walletRefreshQuery.error || (walletState.errorFromStore ? new Error(walletState.errorFromStore) : null)
+  const isErrorWalletData = walletRefreshQuery.isError || !!walletDataError
 
   return {
     // Data from Zustand Store
@@ -109,7 +96,7 @@ export function useWalletSync({ currentAddress }: UseWalletSyncOptions) {
 
     // Status for wallet data sync
     isLoadingWalletData,
-    isErrorWalletData : isErrorWalletDataFinal,
+    isErrorWalletData,
     errorWalletData   : walletDataError,
 
     // Fee Estimates
