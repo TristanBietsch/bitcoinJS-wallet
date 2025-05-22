@@ -4,19 +4,16 @@ import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivation
 import { BITCOIN_NETWORK } from '@/src/config/bitcoinNetwork'
 import * as bitcoin from 'bitcoinjs-lib' // For network objects
 import { retrieveMnemonic } from '@/src/services/wallet/secureStorageService' // Import new service
-
-// Placeholder function - this needs to be implemented properly
-// to manage address indices.
-const getNextAddressIndex = async (): Promise<number> => {
-  console.warn('TODO: Implement proper address index management')
-  return 0
-}
+import {
+  getNextReceiveAddressIndex,
+  storeNextReceiveAddressIndex,
+} from '@/src/services/wallet/addressStateService' // Import new service functions
 
 interface AddressGenerationResult {
   address: string
   isLoading: boolean
   error: Error | null
-  regenerateAddress: () => Promise<void>
+  regenerateAddress: () => Promise<void> // Allows re-triggering fetchAddress
 }
 
 /**
@@ -51,20 +48,23 @@ export const useAddressGeneration = (): AddressGenerationResult => {
         network = bitcoin.networks.regtest
       }
       
-      // Get the next address index to derive
-      const nextIndex = await getNextAddressIndex()
+      // Get the current index to use for derivation
+      const currentIndex = await getNextReceiveAddressIndex()
       
       // Derive one new native segwit address
       const derivedAddresses = deriveAddresses(
         mnemonic,
         network,
         'native_segwit', // Or choose another type like 'segwit' or 'legacy'
-        nextIndex,
+        currentIndex, // Use the retrieved current index
         1 // Derive one address
       )
       
       if (derivedAddresses && derivedAddresses.length > 0) {
-        setAddress(derivedAddresses[0].address)
+        const newAddress = derivedAddresses[0].address
+        setAddress(newAddress)
+        // Successfully derived and set an address, now store the *next* index
+        await storeNextReceiveAddressIndex(currentIndex + 1)
       } else {
         throw new Error('Failed to derive address. No addresses returned.')
       }
@@ -86,7 +86,11 @@ export const useAddressGeneration = (): AddressGenerationResult => {
   // Generate address on initial load
   useEffect(() => {
     fetchAddress()
-  }, [])
+    // Note: If fetchAddress could be called multiple times by other means (e.g. regenerateAddress),
+    // and you want to avoid multiple calls on mount if regenerateAddress changes identity,
+    // you might pass an empty dependency array or a more stable reference if needed.
+    // For now, assuming fetchAddress is stable or only intended to run on mount / explicit regeneration.
+  }, []) // Empty dependency array ensures it runs once on mount
   
   return {
     address,
