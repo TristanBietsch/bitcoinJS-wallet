@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useWalletStore } from '../../store/walletStore'
-import { getUTXOs, getTransactionHistory } from '../../services/bitcoin/blockchain'
+import { getUtxos, getTxs } from '../../services/bitcoin/blockchain'
 import type { 
     EsploraTransaction, 
     EsploraUTXO
@@ -26,19 +26,19 @@ export function useWalletSync() {
   const primaryAddress = wallet?.addresses.nativeSegwit[0]
 
   const utxosQuery = useQuery<EsploraUTXO[], Error>({
-    queryKey : [ 'utxos', primaryAddress ], 
+    queryKey : [ 'utxos', primaryAddress ],
     queryFn  : () => {
       if (!primaryAddress) throw new Error('Primary address not available for fetching UTXOs.')
-      return getUTXOs(primaryAddress)
+      return getUtxos(primaryAddress)
     },
     enabled : !!primaryAddress,
   })
 
   const transactionsQuery = useQuery<EsploraTransaction[], Error>({
-    queryKey : [ 'transactions', primaryAddress ], 
+    queryKey : [ 'transactions', primaryAddress ],
     queryFn  : () => {
       if (!primaryAddress) throw new Error('Primary address not available for fetching transactions.')
-      return getTransactionHistory(primaryAddress)
+      return getTxs(primaryAddress)
     },
     enabled : !!primaryAddress,
   })

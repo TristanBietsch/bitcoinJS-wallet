@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useWalletStore } from '../../store/walletStore' // To get current network and invalidate queries
-import { getUTXOs } from '../../services/bitcoin/blockchain'
+import { getUtxos } from '../../services/bitcoin/blockchain'
 import { normalizeUtxosForSigning, selectUtxosSimple, AddressToPathMapper, PublicKeyDeriver } from '../../utils/bitcoin/utxo'
 import { buildTransaction } from '../../services/bitcoin/txBuilder'
 import { signTransaction } from '../../services/bitcoin/txSigner'
@@ -73,7 +73,7 @@ export function useSendBitcoin() {
 
       // 1. Fetch UTXOs for the wallet (using primary address for now)
       // In a real wallet, you'd fetch UTXOs for all relevant addresses or use a UTXO set from walletStore.
-      const availableEsploraUtxos = await getUTXOs(primaryFromAddress)
+      const availableEsploraUtxos = await getUtxos(primaryFromAddress)
       if (!availableEsploraUtxos || availableEsploraUtxos.length === 0) {
         throw new Error('No UTXOs available to make a transaction.')
       }

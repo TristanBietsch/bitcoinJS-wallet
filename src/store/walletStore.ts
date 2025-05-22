@@ -11,8 +11,8 @@ import {
   ProcessedTransaction 
 } from '../types/blockchain.types'
 import {
-  getUTXOs,
-  getTransactionHistory,
+  getUtxos,
+  getTxs,
 } from '../services/bitcoin/blockchain'
 import type { EsploraTransaction } from '../types/blockchain.types'
 
@@ -197,8 +197,8 @@ export const useWalletStore = create<WalletState>()(
             set({ isSyncing: true, error: null })
           }
           
-          const fetchedUtxos = await getUTXOs(primaryAddress)
-          const fetchedTransactions = await getTransactionHistory(primaryAddress)
+          const fetchedUtxos: EsploraUTXO[] = await getUtxos(primaryAddress)
+          const fetchedTransactions: EsploraTransaction[] = await getTxs(primaryAddress)
           
           const allWalletAddresses = wallet 
             ? Object.values(wallet.addresses).flat()
@@ -257,10 +257,10 @@ export const useWalletStore = create<WalletState>()(
 
           let confirmedBalance = 0
           let unconfirmedBalance = 0
-          fetchedUtxos.forEach(utxo => {
+          fetchedUtxos.forEach((utxo: EsploraUTXO) => {
             if (utxo.status.confirmed) {
               confirmedBalance += utxo.value
-          } else {
+            } else {
               unconfirmedBalance += utxo.value
             }
           })

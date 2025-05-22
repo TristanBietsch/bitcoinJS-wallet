@@ -1,4 +1,4 @@
-import { broadcastTransaction as broadcastViaBlockchainService } from './blockchain' // Assuming blockchain.ts is in the same directory
+import { broadcastTx as broadcastViaBlockchainService } from './blockchain' // Assuming blockchain.ts is in the same directory
 // import type { FetchRetryError } from '../../utils/network/fetchWithRetry' // Removed as not currently used for specific instance checking
 
 /**

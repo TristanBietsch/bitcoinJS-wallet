@@ -1,8 +1,8 @@
 import {
-  getUTXOs,
-  getTransactionHistory,
+  getUtxos,
+  getTxs,
   getFeeEstimates,
-  broadcastTransaction,
+  broadcastTx,
   calculateWalletBalance,
   getTransactionDetails,
 } from '@/src/services/bitcoin/blockchain'
@@ -63,53 +63,53 @@ describe('Blockchain Service', () => {
     mockFetchWithRetry.mockClear()
   })
 
-  describe('getUTXOs', () => {
+  describe('getUtxos', () => {
     it('should fetch and parse UTXOs successfully', async () => {
       mockFetchWithRetry.mockResolvedValueOnce([ importedMockEsploraUtxo ]) 
-      const utxos = await getUTXOs(mockAddress)
+      const utxos = await getUtxos(mockAddress)
       expect(mockFetchWithRetry).toHaveBeenCalledWith(`${ASSERT_MOCK_ESPLORA_API_BASE_URL}/address/${mockAddress}/utxo`)
       expect(utxos).toEqual([ importedMockEsploraUtxo ])
     })
 
     it('should throw if address is not provided', async () => {
-      await expect(getUTXOs('')).rejects.toThrow('Address is required to fetch UTXOs')
+      await expect(getUtxos('')).rejects.toThrow('Address is required to fetch UTXOs')
     })
 
     it('should re-throw FetchRetryError on API failure', async () => {
       const apiError = new MockedFetchRetryError('API Down', { status: 500, message: 'API Down' })
       mockFetchWithRetry.mockRejectedValueOnce(apiError)
-      await expect(getUTXOs(mockAddress)).rejects.toThrow(apiError)
+      await expect(getUtxos(mockAddress)).rejects.toThrow(apiError)
     })
 
     it('should throw ZodError on invalid data format', async () => {
       const invalidData = [ { ...importedMockEsploraUtxo, value: ('not-a-number' as any) } ]
       mockFetchWithRetry.mockResolvedValueOnce(invalidData)
-      await expect(getUTXOs(mockAddress)).rejects.toThrow(z.ZodError)
+      await expect(getUtxos(mockAddress)).rejects.toThrow(z.ZodError)
     })
   })
 
-  describe('getTransactionHistory', () => {
+  describe('getTxs', () => {
     it('should fetch and parse transaction history successfully', async () => {
       mockFetchWithRetry.mockResolvedValueOnce([ importedMockEsploraTransaction ]) 
-      const txs = await getTransactionHistory(mockAddress)
+      const txs = await getTxs(mockAddress)
       expect(mockFetchWithRetry).toHaveBeenCalledWith(`${ASSERT_MOCK_ESPLORA_API_BASE_URL}/address/${mockAddress}/txs`)
       expect(txs).toEqual([ importedMockEsploraTransaction ])
     })
 
     it('should throw if address is not provided', async () => {
-        await expect(getTransactionHistory('')).rejects.toThrow('Address is required to fetch transaction history')
+        await expect(getTxs('')).rejects.toThrow('Address is required to fetch transaction history')
     })
 
     it('should re-throw FetchRetryError on API failure', async () => {
       const apiError = new MockedFetchRetryError('API Error', { message: 'Failed' })
       mockFetchWithRetry.mockRejectedValueOnce(apiError)
-      await expect(getTransactionHistory(mockAddress)).rejects.toThrow(apiError)
+      await expect(getTxs(mockAddress)).rejects.toThrow(apiError)
     })
 
     it('should throw ZodError on invalid data format', async () => {
       const invalidData = [ { ...importedMockEsploraTransaction, fee: ('not-a-fee' as any) } ]
       mockFetchWithRetry.mockResolvedValueOnce(invalidData)
-      await expect(getTransactionHistory(mockAddress)).rejects.toThrow(z.ZodError)
+      await expect(getTxs(mockAddress)).rejects.toThrow(z.ZodError)
     })
   })
 
@@ -145,11 +145,11 @@ describe('Blockchain Service', () => {
     })
   })
 
-  describe('broadcastTransaction', () => {
+  describe('broadcastTx', () => {
     const rawTxHex = '0100000001....txhexdata....00000000'
     it('should broadcast transaction and return txid successfully', async () => {
       mockFetchWithRetry.mockResolvedValueOnce(mockTxId)
-      const txid = await broadcastTransaction(rawTxHex)
+      const txid = await broadcastTx(rawTxHex)
       expect(mockFetchWithRetry).toHaveBeenCalledWith(`${ASSERT_MOCK_ESPLORA_API_BASE_URL}/tx`, {
         method            : 'POST',
         headers           : { 'Content-Type': 'text/plain' },
@@ -160,18 +160,18 @@ describe('Blockchain Service', () => {
     })
 
     it('should throw if txHex is not provided', async () => {
-        await expect(broadcastTransaction('')).rejects.toThrow('Transaction hex is required to broadcast')
+        await expect(broadcastTx('')).rejects.toThrow('Transaction hex is required to broadcast')
     })
 
     it('should throw if an invalid txid is returned', async () => {
       mockFetchWithRetry.mockResolvedValueOnce('invalid-txid-format')
-      await expect(broadcastTransaction(rawTxHex)).rejects.toThrow('Invalid txid received from Esplora')
+      await expect(broadcastTx(rawTxHex)).rejects.toThrow('Invalid txid received from Esplora')
     })
 
     it('should re-throw FetchRetryError on API failure', async () => {
       const apiError = new MockedFetchRetryError('Broadcast failed', { message: 'Error' })
       mockFetchWithRetry.mockRejectedValueOnce(apiError)
-      await expect(broadcastTransaction(rawTxHex)).rejects.toThrow(apiError)
+      await expect(broadcastTx(rawTxHex)).rejects.toThrow(apiError)
     })
   })
 
