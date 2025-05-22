@@ -3,21 +3,12 @@ import { useState, useEffect } from 'react'
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { BITCOIN_NETWORK } from '@/src/config/bitcoinNetwork'
 import * as bitcoin from 'bitcoinjs-lib' // For network objects
+import { retrieveMnemonic } from '@/src/services/wallet/secureStorageService' // Import new service
 
-// Placeholder functions - these need to be implemented properly
-// to securely fetch mnemonic and manage address indices.
-const getMnemonicFromSecureStore = async (): Promise<string> => {
-  // In a real app, this would fetch the mnemonic from secure storage
-  console.warn('TODO: Implement secure mnemonic retrieval')
-  // For now, returning a TEST mnemonic. DO NOT USE IN PRODUCTION.
-  return 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
-}
-
+// Placeholder function - this needs to be implemented properly
+// to manage address indices.
 const getNextAddressIndex = async (): Promise<number> => {
-  // In a real app, this would get the next unused address index,
-  // possibly from app state or storage, and increment it.
   console.warn('TODO: Implement proper address index management')
-  // For now, returning a fixed index for testing.
   return 0
 }
 
@@ -41,10 +32,13 @@ export const useAddressGeneration = (): AddressGenerationResult => {
       setIsLoading(true)
       setError(null)
       
-      // Get mnemonic (securely!)
-      const mnemonic = await getMnemonicFromSecureStore()
+      const mnemonic = await retrieveMnemonic() // Use the new service function
       if (!mnemonic) {
-        throw new Error('Mnemonic not found. Wallet may not be initialized.')
+        // It's crucial to handle this case in the UI.
+        // For example, prompt the user to create or import a wallet.
+        setError(new Error('Wallet not set up. Mnemonic not found.'))
+        setIsLoading(false)
+        return
       }
       
       // Determine bitcoinjs-lib network object
@@ -76,7 +70,13 @@ export const useAddressGeneration = (): AddressGenerationResult => {
       }
       
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to generate address'))
+      let errorMessage = 'Failed to generate address'
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'string') {
+        errorMessage = err
+      }
+      setError(new Error(errorMessage))
       console.error('Error generating Bitcoin address:', err)
     } finally {
       setIsLoading(false)
