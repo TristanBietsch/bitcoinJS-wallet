@@ -8,6 +8,7 @@ interface InvoiceActionButtonsProps {
   onShare: () => void
   onCopy: () => void
   style?: ViewStyle
+  disabled?: boolean
 }
 
 /**
@@ -16,28 +17,33 @@ interface InvoiceActionButtonsProps {
 const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
   onShare,
   onCopy,
-  style
+  style,
+  disabled = false,
 }) => {
   // Calculate dynamic button width based on screen size
   const screenWidth = Dimensions.get('window').width
   const shareButtonWidth = screenWidth * 0.6 // 60% of screen width
   
+  const buttonOpacity = disabled ? 0.5 : 1 // Style for disabled state
+
   return (
     <View style={[ styles.container, style ]}>
       {/* Share Button */}
       <TouchableOpacity 
-        style={[ styles.shareButton, { width: shareButtonWidth } ]}
+        style={[ styles.shareButton, { width: shareButtonWidth, opacity: buttonOpacity } ]}
         onPress={onShare}
+        disabled={disabled}
       >
         <ThemedText style={styles.shareButtonText}>Share</ThemedText>
       </TouchableOpacity>
       
       {/* Copy Button */}
       <TouchableOpacity 
-        style={styles.copyButton}
+        style={[ styles.copyButton, { opacity: buttonOpacity } ]}
         onPress={onCopy}
+        disabled={disabled}
       >
-        <Copy size={24} color="#000" />
+        <Copy size={24} color={disabled ? '#a0a0a0' : '#000'} />
       </TouchableOpacity>
     </View>
   )

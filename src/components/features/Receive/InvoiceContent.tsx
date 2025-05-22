@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, StyleSheet, ViewStyle } from 'react-native'
+import { ThemedText } from '@/src/components/ui/Text'
 import QRCodeDisplay from './QRCodeDisplay'
 import AddressDisplay from './AddressDisplay'
 import InvoiceAmountDisplay from './InvoiceAmountDisplay'
@@ -13,6 +14,7 @@ interface InvoiceContentProps {
   onShare: () => void
   isLoading?: boolean
   isGeneratingAddress?: boolean
+  addressGenerationError?: string | null
   style?: ViewStyle
   receivedAmountSats?: number
   paymentStatusError?: string | null
@@ -31,6 +33,7 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
     onShare,
     isLoading,
     isGeneratingAddress,
+    addressGenerationError,
     style,
     receivedAmountSats,
     paymentStatusError,
@@ -38,7 +41,7 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
   
   // Use a placeholder value when loading to prevent QR code errors
   const qrValue = (() => {
-    if (isGeneratingAddress || !address) {
+    if (addressGenerationError || isGeneratingAddress || !address) {
       return ''
     }
     const amountInSats = parseFloat(satsAmount)
@@ -53,34 +56,51 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
     <View style={[ styles.container, style ]}>
       {/* Main content container */}
       <View style={styles.contentContainer}>
-        {/* QR Code with Address Display directly below */}
-        <View style={styles.qrContainer}>
-          <QRCodeDisplay 
-            value={qrValue}
-            horizontalPadding={30}
-          />
-          
-          {/* Display address directly below QR code */}
-          <AddressDisplay 
-            address={address}
-            showLabel={false}
-          />
-        </View>
-        
-        {/* Amount Display */}
-        <InvoiceAmountDisplay
-          formattedAmount={formattedAmount}
-          satsAmount={satsAmount}
-          receivedAmountSats={receivedAmountSats}
-          paymentStatusError={paymentStatusError}
-        />
+        {addressGenerationError && (
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorTextAddressGeneration}>
+              Error generating address: {addressGenerationError}
+            </ThemedText>
+            <ThemedText style={styles.errorHintText}>
+              Please ensure your wallet is set up correctly and try again.
+            </ThemedText>
+          </View>
+        )}
+
+        {!addressGenerationError && (
+          <>
+            <View style={styles.qrContainer}>
+              <QRCodeDisplay 
+                value={qrValue}
+                horizontalPadding={30}
+              />
+              
+              {/* Display address directly below QR code */}
+              <AddressDisplay 
+                address={address}
+                showLabel={false}
+              />
+            </View>
+            
+            {/* Amount Display */}
+            <InvoiceAmountDisplay
+              formattedAmount={formattedAmount}
+              satsAmount={satsAmount}
+              receivedAmountSats={receivedAmountSats}
+              paymentStatusError={paymentStatusError}
+            />
+          </>
+        )}
       </View>
       
       {/* Action Buttons - now positioned at bottom with absolute positioning */}
-      <InvoiceActionButtons 
-        onCopy={onCopy}
-        onShare={onShare}
-      />
+      {!addressGenerationError && (
+        <InvoiceActionButtons 
+          onCopy={onCopy}
+          onShare={onShare}
+          disabled={isLoading}
+        />
+      )}
     </View>
   )
 }
@@ -90,21 +110,41 @@ const styles = StyleSheet.create({
     width          : '100%',
     alignItems     : 'center',
     justifyContent : 'flex-start',
-    paddingTop     : 16, 
+    paddingTop     : 16,
     flex           : 1,
-    position       : 'relative'
+    position       : 'relative',
   },
   contentContainer : {
     width         : '100%',
     alignItems    : 'center',
-    paddingBottom : 140 // Add padding at the bottom to account for buttons
+    paddingBottom : 140,
   },
   qrContainer : {
     marginTop    : 16,
     marginBottom : 0,
     alignItems   : 'center',
-    width        : '100%'
-  }
+    width        : '100%',
+  },
+  errorContainer : {
+    padding         : 20,
+    marginVertical  : 20,
+    alignItems      : 'center',
+    width           : '90%',
+    backgroundColor : '#ffe0e0',
+    borderRadius    : 8,
+  },
+  errorTextAddressGeneration : {
+    fontSize     : 16,
+    color        : '#D8000C',
+    fontWeight   : 'bold',
+    textAlign    : 'center',
+    marginBottom : 8,
+  },
+  errorHintText : {
+    fontSize  : 14,
+    color     : '#555',
+    textAlign : 'center',
+  },
 })
 
 export default InvoiceContent 

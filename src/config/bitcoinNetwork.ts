@@ -11,8 +11,8 @@
 // Valid Bitcoin network types
 export type BitcoinNetworkType = 'regtest' | 'testnet' | 'mainnet'
 
-// Default to regtest if not specified
-const defaultNetwork: BitcoinNetworkType = 'regtest'
+// Default to testnet for development
+const defaultNetwork: BitcoinNetworkType = 'testnet'
 
 // Read network from environment variable if available
 const envNetwork = process.env.BITCOIN_NETWORK as BitcoinNetworkType | undefined

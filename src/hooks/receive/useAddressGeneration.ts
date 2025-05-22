@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { BITCOIN_NETWORK } from '@/src/config/bitcoinNetwork'
 import * as bitcoin from 'bitcoinjs-lib' // For network objects
-import { retrieveMnemonic } from '@/src/services/wallet/secureStorageService' // Import new service
+import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService' // Use the same service as the rest of the app
 import {
   getNextReceiveAddressIndex,
   storeNextReceiveAddressIndex,
@@ -29,7 +29,7 @@ export const useAddressGeneration = (): AddressGenerationResult => {
       setIsLoading(true)
       setError(null)
       
-      const mnemonic = await retrieveMnemonic() // Use the new service function
+      const mnemonic = await seedPhraseService.retrieveSeedPhrase() // Use the same service as the rest of the app
       if (!mnemonic) {
         // It's crucial to handle this case in the UI.
         // For example, prompt the user to create or import a wallet.

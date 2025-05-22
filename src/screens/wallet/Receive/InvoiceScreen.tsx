@@ -17,7 +17,7 @@ export default function InvoiceScreen() {
   const params = useLocalSearchParams<{ amount: string; currency: string }>()
   
   // Use our modular hooks
-  const { address, isLoading: isLoadingAddress } = useAddressGeneration()
+  const { address, isLoading: isLoadingAddress, error: addressGenerationError } = useAddressGeneration()
   const { satsAmount, formattedAmount } = useInvoiceAmount(
     params.amount,
     params.currency as CurrencyType
@@ -53,6 +53,7 @@ export default function InvoiceScreen() {
         onShare={handleShare}
         isLoading={isOverallLoading}
         isGeneratingAddress={isLoadingAddress}
+        addressGenerationError={addressGenerationError ? addressGenerationError.message : null}
         receivedAmountSats={monitoredBalance}
         paymentStatusError={balanceError ? balanceError.message : null}
       />
