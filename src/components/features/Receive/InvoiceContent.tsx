@@ -12,7 +12,10 @@ interface InvoiceContentProps {
   onCopy: () => void
   onShare: () => void
   isLoading?: boolean
+  isGeneratingAddress?: boolean
   style?: ViewStyle
+  receivedAmountSats?: number
+  paymentStatusError?: string | null
 }
 
 /**
@@ -22,15 +25,29 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
   // Destructure only the props we need, omitting satsAmount
   const {
     address,
+    satsAmount,
     formattedAmount,
     onCopy,
     onShare,
-    isLoading = false,
-    style
+    isLoading,
+    isGeneratingAddress,
+    style,
+    receivedAmountSats,
+    paymentStatusError,
   } = props
   
   // Use a placeholder value when loading to prevent QR code errors
-  const qrValue = isLoading ? 'loading' : address
+  const qrValue = (() => {
+    if (isGeneratingAddress || !address) {
+      return ''
+    }
+    const amountInSats = parseFloat(satsAmount)
+    if (isNaN(amountInSats) || amountInSats <= 0) {
+      return `bitcoin:${address}`
+    }
+    const amountInBTC = amountInSats / 100000000
+    return `bitcoin:${address}?amount=${amountInBTC.toFixed(8)}`
+  })()
   
   return (
     <View style={[ styles.container, style ]}>
@@ -53,6 +70,9 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
         {/* Amount Display */}
         <InvoiceAmountDisplay
           formattedAmount={formattedAmount}
+          satsAmount={satsAmount}
+          receivedAmountSats={receivedAmountSats}
+          paymentStatusError={paymentStatusError}
         />
       </View>
       
