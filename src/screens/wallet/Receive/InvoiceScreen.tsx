@@ -43,6 +43,9 @@ export default function InvoiceScreen() {
   // Determine overall loading state for InvoiceContent
   const isOverallLoading = isLoadingAddress || isLoadingBalance
   
+  // Buttons should be disabled if address is not ready or there's an error
+  const isActionsDisabled = isLoadingAddress || !address || !!addressGenerationError
+  
   return (
     <InvoiceScreenLayout onBackPress={handleBackPress}>
       <InvoiceContent
@@ -56,6 +59,7 @@ export default function InvoiceScreen() {
         addressGenerationError={addressGenerationError ? addressGenerationError.message : null}
         receivedAmountSats={monitoredBalance}
         paymentStatusError={balanceError ? balanceError.message : null}
+        actionsDisabled={isActionsDisabled}
       />
     </InvoiceScreenLayout>
   )

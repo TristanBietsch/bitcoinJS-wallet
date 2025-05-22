@@ -33,6 +33,7 @@ const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
         style={[ styles.shareButton, { width: shareButtonWidth, opacity: buttonOpacity } ]}
         onPress={onShare}
         disabled={disabled}
+        activeOpacity={disabled ? 1 : 0.7}
       >
         <ThemedText style={styles.shareButtonText}>Share</ThemedText>
       </TouchableOpacity>
@@ -42,6 +43,7 @@ const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
         style={[ styles.copyButton, { opacity: buttonOpacity } ]}
         onPress={onCopy}
         disabled={disabled}
+        activeOpacity={disabled ? 1 : 0.7}
       >
         <Copy size={24} color={disabled ? '#a0a0a0' : '#000'} />
       </TouchableOpacity>

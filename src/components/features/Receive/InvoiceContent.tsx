@@ -18,6 +18,7 @@ interface InvoiceContentProps {
   style?: ViewStyle
   receivedAmountSats?: number
   paymentStatusError?: string | null
+  actionsDisabled?: boolean
 }
 
 /**
@@ -31,12 +32,13 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
     formattedAmount,
     onCopy,
     onShare,
-    isLoading,
+    isLoading: _isLoading,
     isGeneratingAddress,
     addressGenerationError,
     style,
     receivedAmountSats,
     paymentStatusError,
+    actionsDisabled = false,
   } = props
   
   // Use a placeholder value when loading to prevent QR code errors
@@ -51,6 +53,9 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
     const amountInBTC = amountInSats / 100000000
     return `bitcoin:${address}?amount=${amountInBTC.toFixed(8)}`
   })()
+  
+  // Only disable buttons if address generation is in progress or failed, not for balance loading
+  const shouldDisableButtons = actionsDisabled || isGeneratingAddress || !address || !!addressGenerationError
   
   return (
     <View style={[ styles.container, style ]}>
@@ -98,7 +103,7 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
         <InvoiceActionButtons 
           onCopy={onCopy}
           onShare={onShare}
-          disabled={isLoading}
+          disabled={shouldDisableButtons}
         />
       )}
     </View>
