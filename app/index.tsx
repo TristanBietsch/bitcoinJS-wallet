@@ -4,8 +4,8 @@ import { isOnboardingComplete } from '@/src/utils/storage'
 import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator } from 'react-native'
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
-import { Colors } from '@/src/constants/colors'
 import { useWalletStore } from '@/src/store/walletStore'
+import { Colors } from '@/src/constants/colors'
 
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)

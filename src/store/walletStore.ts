@@ -81,7 +81,7 @@ export const useWalletStore = create<WalletState>()(
       balances   : {
         confirmed   : 0,
         unconfirmed : 0,
-        total       : 0
+        total       : 0,
       },
       utxos         : [],
       transactions  : [],
@@ -90,79 +90,82 @@ export const useWalletStore = create<WalletState>()(
       error         : null,
       isInitialized : false,
       
-      // Initialize wallet from storage
       initializeWallet : async () => {
+        const persistedWallet = get().wallet // From Zustand's persisted state (AsyncStorage)
+        let storedSeedPhrase: string | null = null
+
         try {
-          // Set initializing state
-          set({ isSyncing: true, error: null })
-          
-          // Check if we already have wallet data
-          const { wallet, seedPhrase } = get()
-          
-          if (wallet && seedPhrase) {
-            // We're already initialized, just refresh data
-            await get().refreshWalletData(true)
-            set({ isInitialized: true })
-            return
-          }
-          
-          // Try to retrieve seed phrase from storage
-          const storedSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
-          
+          storedSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
+        } catch (e) {
+          console.error("Failed to retrieve seed phrase from secure storage", e)
+        }
+
+        if (persistedWallet && storedSeedPhrase) {
+          console.log("Initializing with persisted wallet and stored seed phrase.")
+          set({
+            wallet        : persistedWallet,
+            seedPhrase    : storedSeedPhrase,
+            isInitialized : true,
+            isSyncing     : false,
+            error         : null,
+          })
+
+          get().refreshWalletData(true).catch(refreshError => {
+            console.warn('Background refresh failed during initialization with persisted data:', refreshError)
+          })
+          return
+        }
+        
+        console.log("Proceeding with full wallet initialization/setup.")
+        set({ isSyncing: true, error: null })
+
+        try {
           if (!storedSeedPhrase) {
-            console.log('No seed phrase found in storage')
+            console.log('No seed phrase found in secure storage. New user or cleared wallet.')
             set({ 
-              isSyncing     : false, 
+              isSyncing     : false,
               isInitialized : true,
               wallet        : null,
               seedPhrase    : null,
               balances      : { confirmed: 0, unconfirmed: 0, total: 0 },
               utxos         : [],
               transactions  : [],
-              lastSyncTime  : 0
+              lastSyncTime  : 0,
             })
             return
           }
-          
-          // Validate seed phrase
+
           if (!validateMnemonic(storedSeedPhrase)) {
-            throw new Error('Invalid seed phrase retrieved from storage')
+            throw new Error('Invalid seed phrase retrieved from secure storage')
           }
           
-          // Create wallet from seed phrase
           const network = getDefaultNetwork()
           const legacyAddresses = deriveAddresses(storedSeedPhrase, network, 'legacy', 0, 3)
           const segwitAddresses = deriveAddresses(storedSeedPhrase, network, 'segwit', 0, 3)
           const nativeSegwitAddresses = deriveAddresses(storedSeedPhrase, network, 'native_segwit', 0, 3)
           
-          // Create wallet object
           const walletData: BitcoinWallet = {
             id        : 'primary_wallet',
             network,
             addresses : {
               legacy       : legacyAddresses.map(addr => addr.address),
               segwit       : segwitAddresses.map(addr => addr.address),
-              nativeSegwit : nativeSegwitAddresses.map(addr => addr.address)
+              nativeSegwit : nativeSegwitAddresses.map(addr => addr.address),
             },
-            balances : {
-              confirmed   : 0,
-              unconfirmed : 0
-            }
+            balances : persistedWallet ? persistedWallet.balances : get().balances,
           }
           
-          // Update state with wallet data
           set({ 
             wallet        : walletData,
             seedPhrase    : storedSeedPhrase,
-            isInitialized : true 
+            isInitialized : true,
           })
           
-          // Fetch initial balances
           await get().refreshWalletData(false)
           
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error initializing wallet'
-          console.error('Error initializing wallet:', errorMessage)
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error during wallet initialization process'
+          console.error('Error during wallet initialization process:', errorMessage, error)
           set({ 
             error         : errorMessage,
             wallet        : null,
@@ -172,7 +175,7 @@ export const useWalletStore = create<WalletState>()(
             transactions  : [],
             lastSyncTime  : 0,
             isSyncing     : false,
-            isInitialized : true
+            isInitialized : true,
           })
         }
       },
@@ -184,10 +187,8 @@ export const useWalletStore = create<WalletState>()(
         const primaryAddress = addressToRefresh || (wallet?.addresses.nativeSegwit[0] || null)
 
         if (!primaryAddress) {
-          if (!silent) {
-            set({ error: 'No wallet address available to refresh data.', isSyncing: false })
-          }
-          console.warn('refreshWalletData: No address available.')
+          console.warn('refreshWalletData: No primary address available. Wallet object:', wallet)
+          set({ error: silent ? get().error : 'No wallet address available to refresh data.', isSyncing: false })
           return
         }
         

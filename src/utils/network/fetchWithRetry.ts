@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig, AxiosError } from 'axios'
 
 const DEFAULT_MAX_RETRIES = 3
 const DEFAULT_INITIAL_DELAY_MS = 1000
-const DEFAULT_TIMEOUT_MS = 15000 
+const DEFAULT_TIMEOUT_MS = 30000 
 
 interface FetchErrorData {
   status?: number;
