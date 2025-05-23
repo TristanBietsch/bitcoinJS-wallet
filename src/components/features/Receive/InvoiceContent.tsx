@@ -80,9 +80,9 @@ const InvoiceContent: React.FC<InvoiceContentProps> = (props) => {
                 horizontalPadding={30}
               />
               
-              {/* Display address directly below QR code */}
+              {/* Display full URI directly below QR code */}
               <AddressDisplay 
-                address={address}
+                address={qrValue || address}
                 showLabel={false}
               />
             </View>

@@ -27,12 +27,20 @@ interface ShareActionsResult {
 export const useShareActions = ({ address, amounts, title = 'Bitcoin Invoice' }: UseShareActionsProps): ShareActionsResult => {
   const { copied, copyToClipboard } = useClipboard()
   
-  // Handle copying address to clipboard
+  // Handle copying full URI to clipboard
   const handleCopy = useCallback(() => {
     if (address) {
-      copyToClipboard(address)
+      const satsAmount = amounts.sats || '0'
+      const amountInBTC = parseFloat(satsAmount) / 100000000
+      
+      // Create the same bitcoin URI that's used in the QR code
+      const bitcoinURI = amountInBTC > 0 
+        ? `bitcoin:${address}?amount=${amountInBTC.toFixed(8)}`
+        : `bitcoin:${address}`
+        
+      copyToClipboard(bitcoinURI)
     }
-  }, [ address, copyToClipboard ])
+  }, [ address, amounts.sats, copyToClipboard ])
   
   // Handle sharing invoice details
   const handleShare = useCallback(async () => {
