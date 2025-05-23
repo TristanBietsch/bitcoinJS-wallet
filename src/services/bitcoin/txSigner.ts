@@ -2,15 +2,16 @@ import * as bitcoin from 'bitcoinjs-lib'
 import * as bip39 from 'bip39'
 import { BIP32Factory } from 'bip32'
 import { ECPairFactory } from 'ecpair'
-import * as ecc from 'tiny-secp256k1' // Use tiny-secp256k1 directly
+import { getEccLib } from './config/eccProvider'
 import type { SignTransactionParams } from '../../types/tx.types'
 
-// Initialize BIP32 factory with tiny-secp256k1
+// Get the React Native compatible ECC implementation
+const ecc = getEccLib()
+
+// Initialize BIP32 factory with the ECC provider
 const bip32 = BIP32Factory(ecc)
 
-// Initialize bitcoinjs-lib with tiny-secp256k1
-// This should ideally be done once at the application's entry point,
-// but for service modularity, we can ensure it here or expect it to be done.
+// Initialize bitcoinjs-lib with the ECC provider
 bitcoin.initEccLib(ecc)
 
 // Create ECPair interface from the factory

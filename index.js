@@ -36,13 +36,10 @@ import React from 'react';
 // Ensure React is in global scope
 global.React = React;
 
-// Disable WASM for tiny-secp256k1
-globalThis.__tinysecp256k1_useWasm = false;
-
 // Initialize React Native
 import 'react-native';
 
-// Import the crypto config
+// Import and initialize the crypto config (React Native compatible ECC provider)
 import { initCryptoConfig } from './src/services/bitcoin/config/cryptoConfig';
 initCryptoConfig();
 
