@@ -59,40 +59,44 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
 
   const backgroundTimerRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const isInitializedRef = useRef(false)
 
-  // Calculate cache age
-  const updateCacheAge = useCallback(() => {
-    if (state.lastUpdated) {
-      setState(prev => ({
-        ...prev,
-        cacheAge : Date.now() - prev.lastUpdated!
-      }))
-    }
-  }, [ state.lastUpdated ])
+  // Validate if we should start fee loading (memoized to prevent changes)
+  const shouldLoadFees = useCallback(() => {
+    // Need valid address and non-zero amount
+    if (!address || !amount) return false
+    
+    const numericAmount = parseFloat(amount)
+    if (isNaN(numericAmount) || numericAmount <= 0) return false
+    
+    return true
+  }, [ address, amount ])
 
-  // Start background refresh timer
-  const startBackgroundRefresh = useCallback(() => {
-    if (backgroundTimerRef.current) {
-      clearInterval(backgroundTimerRef.current)
-    }
-
-    backgroundTimerRef.current = setInterval(() => {
-      updateCacheAge()
-      
-      // Only refresh if data is getting stale and we have amount + address
-      if (state.lastUpdated && 
-          Date.now() - state.lastUpdated > FEE_CACHE_CONFIG.backgroundRefresh &&
-          amount && parseFloat(amount) > 0 && address) {
-        refreshFeesInBackground()
-      }
-    }, 10000) // Check every 10 seconds
-  }, [ state.lastUpdated, amount, address ])
+  // Clear cache - stable function
+  const clearCache = useCallback(() => {
+    setState({
+      isLoading              : false,
+      isBackgroundRefreshing : false,
+      feeRates               : null,
+      feeOptions             : [],
+      error                  : null,
+      lastUpdated            : null,
+      cacheAge               : 0
+    })
+    
+    setFeeRates(undefined)
+    setFeeOptions([])
+    setFeeError(undefined)
+  }, [ setFeeRates, setFeeOptions, setFeeError ])
 
   // Refresh fees in background without loading state
   const refreshFeesInBackground = useCallback(async () => {
-    if (state.isBackgroundRefreshing) return
+    if (!shouldLoadFees()) return
 
-    setState(prev => ({ ...prev, isBackgroundRefreshing: true }))
+    setState(prev => {
+      if (prev.isBackgroundRefreshing) return prev
+      return { ...prev, isBackgroundRefreshing: true }
+    })
 
     try {
       const amountSats = Math.floor(parseFloat(amount || '0') * (amount?.includes('.') ? 100000000 : 1))
@@ -126,43 +130,15 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
       setFeeOptions(feeOptions)
       setFeeError(undefined)
 
-    } catch (error) {
-      // Don't show errors for background refreshes unless cache is very stale
-      const isStale = state.lastUpdated && (Date.now() - state.lastUpdated) > FEE_CACHE_CONFIG.staleAge
-      
-      if (isStale) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to refresh fee estimates'
-        setState(prev => ({ ...prev, error: errorMessage, isBackgroundRefreshing: false }))
-        setFeeError(errorMessage)
-      } else {
-        setState(prev => ({ ...prev, isBackgroundRefreshing: false }))
-      }
+    } catch (_error) {
+      setState(prev => ({ ...prev, isBackgroundRefreshing: false }))
     }
-  }, [ state.isBackgroundRefreshing, state.lastUpdated, amount, setFeeRates, setFeeOptions, setFeeError ])
+  }, [ amount, shouldLoadFees, setFeeRates, setFeeOptions, setFeeError ])
 
   // Main refresh function (with loading state)
   const refreshFees = useCallback(async () => {
-    const amountSats = Math.floor(parseFloat(amount || '0') * (amount?.includes('.') ? 100000000 : 1))
-    
-    if (amountSats <= 0) {
-      setState(prev => ({ ...prev, feeOptions: [], feeRates: null }))
-      setFeeRates(undefined)
-      setFeeOptions([])
-      return
-    }
-
-    // If we have recent cached data, use it immediately and refresh in background
-    const hasRecentCache = state.lastUpdated && 
-      (Date.now() - state.lastUpdated) < FEE_CACHE_CONFIG.maxAge
-
-    if (hasRecentCache && state.feeRates) {
-      // Use cached data immediately
-      setFeeRates(state.feeRates)
-      setFeeOptions(state.feeOptions)
-      setIsLoadingFees(false)
-      
-      // Refresh in background
-      refreshFeesInBackground()
+    if (!shouldLoadFees()) {
+      clearCache()
       return
     }
 
@@ -211,7 +187,7 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
       setIsLoadingFees(false)
       setFeeError(errorMessage)
     }
-  }, [ amount, state.lastUpdated, state.feeRates, state.feeOptions, setFeeRates, setFeeOptions, setIsLoadingFees, setFeeError, refreshFeesInBackground ])
+  }, [ shouldLoadFees, clearCache, setFeeRates, setFeeOptions, setIsLoadingFees, setFeeError ])
 
   // Force refresh (ignores cache)
   const forceRefresh = useCallback(async () => {
@@ -219,26 +195,38 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
     await refreshFees()
   }, [ refreshFees ])
 
-  // Clear cache
-  const clearCache = useCallback(() => {
-    setState({
-      isLoading              : false,
-      isBackgroundRefreshing : false,
-      feeRates               : null,
-      feeOptions             : [],
-      error                  : null,
-      lastUpdated            : null,
-      cacheAge               : 0
-    })
-    
-    setFeeRates(undefined)
-    setFeeOptions([])
-    setFeeError(undefined)
-  }, [ setFeeRates, setFeeOptions, setFeeError ])
+  // Start background refresh timer - stable function that doesn't change
+  const startBackgroundRefresh = useCallback(() => {
+    if (backgroundTimerRef.current) {
+      clearInterval(backgroundTimerRef.current)
+    }
 
-  // Auto-refresh when amount or address changes
+    backgroundTimerRef.current = setInterval(() => {
+      setState(prev => {
+        const now = Date.now()
+        const newCacheAge = prev.lastUpdated ? now - prev.lastUpdated : 0
+        
+        // Only refresh if data is getting stale
+        if (prev.lastUpdated && 
+            newCacheAge > FEE_CACHE_CONFIG.backgroundRefresh &&
+            !prev.isBackgroundRefreshing) {
+          refreshFeesInBackground()
+        }
+        
+        return prev.cacheAge !== newCacheAge ? { ...prev, cacheAge: newCacheAge } : prev
+      })
+    }, 10000) // Check every 10 seconds
+  }, [ refreshFeesInBackground ])
+
+  // Effect to handle address/amount changes - FIXED to prevent infinite loops
   useEffect(() => {
-    if (amount && address) {
+    // Only run after initial mount
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true
+      return
+    }
+
+    if (shouldLoadFees()) {
       refreshFees()
       startBackgroundRefresh()
     } else {
@@ -253,7 +241,15 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
         abortControllerRef.current.abort()
       }
     }
-  }, [ amount, address, refreshFees, startBackgroundRefresh, clearCache ])
+  }, [ address, amount ]) // Only depend on the actual values, not the functions
+
+  // Initial load effect - runs once on mount
+  useEffect(() => {
+    if (shouldLoadFees()) {
+      refreshFees()
+      startBackgroundRefresh()
+    }
+  }, []) // Empty dependency array - runs once on mount
 
   // Cleanup on unmount
   useEffect(() => {

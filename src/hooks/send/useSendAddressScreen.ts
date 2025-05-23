@@ -54,7 +54,7 @@ export const useSendAddressScreen = () => {
     isInputValid
   } = useCustomFee()
 
-  // Initialize progressive fee loading when address is valid
+  // Progressive fee loading with infinite loop fix applied
   const { state: feeState } = useProgressiveFeeLoading()
 
   // Load data from store when screen is focused
@@ -96,15 +96,7 @@ export const useSendAddressScreen = () => {
     setCustomFee
   ])
 
-  // Store address in Zustand store when it changes so progressive fee loading can use it
-  useEffect(() => {
-    if (address && !addressError) {
-      setStoreAddress(address)
-    }
-  }, [ address, addressError, setStoreAddress ])
-
   const handleQRScan = () => {
-    // Navigate to the QR scanner screen
     router.push('/send/camera' as any)
   }
 
@@ -119,6 +111,7 @@ export const useSendAddressScreen = () => {
   const handleNextPress = () => {
     if (!address || addressError) return
     
+    // Only update store when user explicitly moves forward (prevents circular dependencies)
     setStoreAddress(address)
     setStoreSpeed(speed)
     if (speed === 'custom') {
@@ -174,7 +167,7 @@ export const useSendAddressScreen = () => {
     feeError,
     isInputValid,
     
-    // Fee loading state for better UX
+    // Fee loading state for enhanced UX
     feeLoading : feeState.isLoading || feeState.isBackgroundRefreshing,
     
     // Handlers
