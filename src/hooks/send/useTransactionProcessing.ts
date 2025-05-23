@@ -3,15 +3,10 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'expo-router'
-import { mockTransactions } from '@/tests/mockData/transactionData'
 import { useTransactionValidation } from '@/src/hooks/send/useTransactionValidation'
 import { useSendStore } from '@/src/store/sendStore'
-
-// Find an existing "send" transaction to use as reference
-const getExistingSendTransaction = () => {
-  const sendTransaction = mockTransactions.find(tx => tx.type === 'send')
-  return sendTransaction?.id || '2' // ID 2 is a send transaction in mock data
-}
+import { useSendBitcoin } from '@/src/hooks/bitcoin/useSendBitcoin'
+import { convertUIToBitcoinParams, validateTransactionParams } from '@/src/utils/send/transactionParams'
 
 interface TransactionProcessingResult {
   error     : string | null
@@ -20,17 +15,22 @@ interface TransactionProcessingResult {
 
 /**
  * Hook to handle transaction processing and navigation after completion
+ * Now uses real Bitcoin transaction processing via useSendBitcoin
  */
 export const useTransactionProcessing = (): TransactionProcessingResult => {
   const router = useRouter()
   const [ error, setError ] = useState<string | null>(null)
   const [ isLoading, setIsLoading ] = useState(true)
   
-  // Get store with initial error mode
-  const { errorMode, setErrorMode } = useSendStore()
+  // Get store and error mode handling
+  const { errorMode, setErrorMode, reset: resetSendStore } = useSendStore()
   
-  // Store the initial error mode when the component mounts
-  const initialErrorModeRef = useRef(errorMode)
+  // Bitcoin transaction processing hook
+  const { 
+    sendBitcoinAsync, 
+    isLoading: isSendingBitcoin, 
+    error: sendBitcoinError
+  } = useSendBitcoin()
   
   // Get validation result
   const { isValid, error: validationError } = useTransactionValidation()
@@ -38,83 +38,109 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
   // Track processing completion
   const completedRef = useRef(false)
   
-  // Wrap navigateToErrorScreen in useCallback
-  const navigateToErrorScreen = useCallback(() => {
-    // Still set the error state in case component is still mounted
+  // Navigation handlers
+  const navigateToErrorScreen = useCallback((errorMessage?: string) => {
     setIsLoading(false)
-    setError("Error occurred during transaction")
-    
-    // Navigate to the error screen
+    setError(errorMessage || "Transaction failed")
     router.replace('/send/error' as any)
-  }, [ router, setIsLoading, setError ])
+  }, [ router ])
+  
+  const navigateToSuccessScreen = useCallback((txid: string) => {
+    setIsLoading(false)
+    resetSendStore() // Clear send state on success
+    router.replace({
+      pathname : '/send/success',
+      params   : { transactionId: txid }
+    } as any)
+  }, [ router, resetSendStore ])
+  
+  // Map Bitcoin errors to UI error modes
+  const mapErrorToErrorMode = useCallback((bitcoinError: Error): void => {
+    const errorMessage = bitcoinError.message.toLowerCase()
+    
+    if (errorMessage.includes('insufficient funds') || 
+        errorMessage.includes('not enough') || 
+        errorMessage.includes('balance')) {
+      setErrorMode('validation')
+    } else if (errorMessage.includes('network') || 
+               errorMessage.includes('connection') || 
+               errorMessage.includes('timeout') ||
+               errorMessage.includes('broadcast failed')) {
+      setErrorMode('network')
+    } else {
+      setErrorMode('validation') // Default to validation error
+    }
+  }, [ setErrorMode ])
   
   useEffect(() => {
-    // Store the initial error mode when the effect runs
-    initialErrorModeRef.current = errorMode
+    // Prevent multiple processing attempts
+    if (completedRef.current) return
     
-    // Flag to prevent state updates after unmounting
     let isMounted = true
     
     const processTransaction = async () => {
-      // If we've already completed processing, don't do it again
-      if (completedRef.current) {
-        return
-      }
-      
       try {
-        // Skip normal processing if we're testing errors
-        if (initialErrorModeRef.current !== 'none') {
-          // For validation errors, show immediately
-          if (initialErrorModeRef.current === 'validation') {
+        // Handle pre-set error modes for testing
+        if (errorMode !== 'none') {
+          if (errorMode === 'validation') {
             if (isMounted) {
-              // No need to set local error state, we'll navigate to error screen
               completedRef.current = true
-              navigateToErrorScreen()
+              navigateToErrorScreen('Transaction validation failed')
             }
-          } 
-          // For network errors, wait then show
-          else if (initialErrorModeRef.current === 'network') {
+          } else if (errorMode === 'network') {
+            // Simulate network delay for network errors
             await new Promise(resolve => setTimeout(resolve, 1500))
             if (isMounted) {
               completedRef.current = true
-              navigateToErrorScreen()
+              navigateToErrorScreen('Network error occurred')
             }
           }
-          
-          // Keep error mode set until user explicitly resets it
           return
         }
         
-        // First check validation - this code will only run if errorMode is 'none'
+        // Validate transaction data
         if (!isValid) {
           if (isMounted) {
             completedRef.current = true
-            navigateToErrorScreen()
+            navigateToErrorScreen(validationError || 'Transaction validation failed')
           }
           return
         }
         
-        // Simulate processing time (only for normal flow)
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        // Convert UI state to Bitcoin transaction parameters
+        const transactionParams = convertUIToBitcoinParams()
+        validateTransactionParams(transactionParams)
         
-        // If we're still mounted and no error mode was set, navigate to success
-        if (isMounted && initialErrorModeRef.current === 'none') {
-          const transactionId = getExistingSendTransaction()
+        console.log('Starting Bitcoin transaction with params:', {
+          recipientAddress : transactionParams.recipientAddress,
+          amountSat        : transactionParams.amountSat,
+          feeRate          : transactionParams.feeRate,
+          changeAddress    : transactionParams.changeAddress
+        })
+        
+        // Execute real Bitcoin transaction
+        const txid = await sendBitcoinAsync(transactionParams)
+        
+        if (isMounted && txid) {
           completedRef.current = true
-          
-          // Make sure error mode is still 'none' before navigating to success
-          if (initialErrorModeRef.current === 'none') {
-            router.replace({
-              pathname : '/send/success',
-              params   : { transactionId }
-            } as any)
-          }
+          console.log('Bitcoin transaction successful:', txid)
+          navigateToSuccessScreen(txid)
         }
-      } catch (_err) {
-        // If we're still mounted, navigate to error screen
+        
+      } catch (transactionError) {
+        console.error('Bitcoin transaction failed:', transactionError)
+        
         if (isMounted) {
           completedRef.current = true
-          navigateToErrorScreen()
+          
+          // Map error to appropriate error mode
+          if (transactionError instanceof Error) {
+            mapErrorToErrorMode(transactionError)
+            navigateToErrorScreen(transactionError.message)
+          } else {
+            setErrorMode('validation')
+            navigateToErrorScreen('Unknown transaction error')
+          }
         }
       }
     }
@@ -122,11 +148,37 @@ export const useTransactionProcessing = (): TransactionProcessingResult => {
     // Start processing
     processTransaction()
     
-    // Cleanup function
+    // Cleanup
     return () => {
       isMounted = false
     }
-  }, [ router, isValid, validationError, errorMode, setErrorMode, navigateToErrorScreen ])
+  }, [ 
+    errorMode, 
+    isValid, 
+    validationError, 
+    sendBitcoinAsync, 
+    navigateToErrorScreen, 
+    navigateToSuccessScreen,
+    mapErrorToErrorMode,
+    setErrorMode
+  ])
   
-  return { error, isLoading }
+  // Update loading state based on Bitcoin transaction status
+  useEffect(() => {
+    setIsLoading(isSendingBitcoin)
+  }, [ isSendingBitcoin ])
+  
+  // Handle Bitcoin transaction errors
+  useEffect(() => {
+    if (sendBitcoinError && !completedRef.current) {
+      completedRef.current = true
+      mapErrorToErrorMode(sendBitcoinError)
+      navigateToErrorScreen(sendBitcoinError.message)
+    }
+  }, [ sendBitcoinError, mapErrorToErrorMode, navigateToErrorScreen ])
+  
+  return { 
+    error : error || sendBitcoinError?.message || null, 
+    isLoading 
+  }
 } 

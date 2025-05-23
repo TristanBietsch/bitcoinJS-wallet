@@ -6,21 +6,34 @@ import { buildTransaction } from '../../services/bitcoin/txBuilder'
 import { signTransaction } from '../../services/bitcoin/txSigner'
 import { broadcastTx } from '../../services/bitcoin/broadcast'
 import { bitcoinjsNetwork as currentBitcoinNetwork, CURRENT_NETWORK as APP_NETWORK } from '../../config/env' // For network object and type
+import { seedPhraseService } from '../../services/bitcoin/wallet/seedPhraseService'
 import type { NormalizedUTXO, TransactionOutput } from '../../types/tx.types'
 
-// --- Placeholder for Mnemonic Retrieval & Key Derivation Logic ---
-// In a real app, this would come from secure storage and involve BIP39/BIP32.
+// --- Mnemonic Retrieval from Secure Storage ---
+// Uses the existing seedPhraseService to get the mnemonic from secure storage
 async function getMnemonicFromSecureStorage(): Promise<string> {
-  // IMPORTANT: Replace with actual secure retrieval logic
-  // Example: const mnemonic = await ExpoSecureStore.getItemAsync('mnemonic');
-  // For this placeholder, ensure your .env has a MNEMONIC_DEV variable or use a fixed one for testing.
-  // @ts-ignore - Assuming MNEMONIC_DEV might be in @env for dev purposes
-  const { MNEMONIC_DEV } = await import('@env')
-  if (!MNEMONIC_DEV) {
-    console.warn('Development mnemonic not found. Using a default insecure placeholder.')
-    return 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about' // Default placeholder
+  try {
+    // First try to get from secure storage via seedPhraseService
+    const storedMnemonic = await seedPhraseService.retrieveSeedPhrase()
+    
+    if (storedMnemonic) {
+      return storedMnemonic
+    }
+    
+    // If no stored mnemonic, check if we can get it from wallet store
+    const walletState = useWalletStore.getState()
+    if (walletState.seedPhrase) {
+      return walletState.seedPhrase
+    }
+    
+    console.warn('No mnemonic found in secure storage or wallet store. Using development fallback.')
+    return 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about' // Development fallback
+    
+  } catch (error) {
+    console.error('Error retrieving mnemonic from secure storage:', error)
+    console.warn('Using development fallback mnemonic.')
+    return 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about' // Development fallback
   }
-  return MNEMONIC_DEV as string
 }
 
 // Placeholder for address to path mapping (would be part of wallet management)

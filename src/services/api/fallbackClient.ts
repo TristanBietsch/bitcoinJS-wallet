@@ -3,6 +3,7 @@
  * Handles cases where primary APIs are slow or failing
  */
 import { resilientClient, RequestPriority } from './resilientClient'
+import { CURRENT_NETWORK } from '@/src/config/env'
 
 interface APIEndpoint {
   name: string
@@ -20,23 +21,26 @@ interface CacheEntry {
 /**
  * API endpoint configurations for different services
  * Mempool.space is now primary due to better reliability
+ * Network-aware endpoints based on environment configuration
  */
+const getNetworkPath = () => CURRENT_NETWORK === 'mainnet' ? '' : '/testnet'
+
 const BITCOIN_API_ENDPOINTS: APIEndpoint[] = [
   {
     name     : 'mempool-primary',
-    baseUrl  : 'https://mempool.space/testnet/api',
+    baseUrl  : `https://mempool.space${getNetworkPath()}/api`,
     priority : 1,
     timeout  : 30000
   },
   {
     name     : 'blockstream-fallback',
-    baseUrl  : 'https://blockstream.info/testnet/api',
+    baseUrl  : `https://blockstream.info${getNetworkPath()}/api`,
     priority : 2,
     timeout  : 30000
   },
   {
     name     : 'mempool-retry',
-    baseUrl  : 'https://mempool.space/testnet/api',
+    baseUrl  : `https://mempool.space${getNetworkPath()}/api`,
     priority : 3,
     timeout  : 30000
   }

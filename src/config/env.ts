@@ -1,12 +1,22 @@
 import * as bitcoin from 'bitcoinjs-lib'
 import { Platform } from 'react-native'
 
-import { NETWORK } from '@env'
-
 const ESPLORA_API_MAINNET_URL = "https://blockstream.info/api"
 const ESPLORA_API_TESTNET_URL = "https://blockstream.info/testnet/api"
 
 type NetworkType = 'mainnet' | 'testnet';
+
+// Try to get NETWORK from environment, with fallback to testnet
+let NETWORK: string = 'testnet'
+try {
+  // Try to import from @env if available
+  const envModule = require('@env')
+  NETWORK = envModule.NETWORK || 'testnet'
+} catch {
+  // If @env is not available, check process.env or use default
+  NETWORK = process.env.NETWORK || 'testnet'
+  console.log('Using fallback network configuration (no @env available):', NETWORK)
+}
 
 let networkEnv: NetworkType = 'testnet'
  
