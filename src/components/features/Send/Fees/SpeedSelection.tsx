@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react-native'
 import { SpeedOptionButton } from '@/src/components/features/Send/Fees/SpeedOptionButton'
 import { SpeedInfoModal } from '@/src/components/features/Send/Fees/SpeedInfoModal'
 import { CustomFeeModal } from '@/src/components/features/Send/Fees/CustomFeeModal'
-import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
+
 import { SpeedTier, CustomFee, SpeedOption } from '@/src/types/domain/transaction'
 
 interface SpeedSelectionProps {
@@ -68,9 +68,9 @@ export const SpeedSelection: React.FC<SpeedSelectionProps> = ({
             id    : 'custom',
             label : 'Custom Fee',
             fee   : customFee ? {
-              sats : customFee.totalSats,
-              usd  : parseFloat(getFormattedUsdFee(customFee.totalSats))
-            } : undefined
+              sats : customFee.totalSats
+            } : undefined,
+            feeRate : customFee?.feeRate
           }}
           isSelected={selectedSpeed === 'custom'}
           onPress={() => onSpeedChange('custom')}

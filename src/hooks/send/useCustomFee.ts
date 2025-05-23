@@ -1,14 +1,36 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { CustomFee } from '@/src/types/domain/transaction'
-import { transactionFees } from '@/tests/mockData/transactionData'
+
 
 // Set minimum fee to 150 sats
 const MIN_FEE_SATS = 150
 
+// Default transaction size for fee calculations (rough estimate)
+const DEFAULT_TX_SIZE_VBYTES = 200
+
 const DEFAULT_CUSTOM_FEE: CustomFee = {
   totalSats        : 2000,
   confirmationTime : 60,
-  feeRate          : 5
+  feeRate          : 10  // sat/vB
+}
+
+/**
+ * Calculate fee rate from total fee amount
+ */
+const calculateFeeRateFromSats = (totalSats: number): number => {
+  return Math.ceil(totalSats / DEFAULT_TX_SIZE_VBYTES)
+}
+
+/**
+ * Estimate confirmation time from fee rate (simplified model)
+ */
+const estimateConfirmationTime = (feeRate: number): number => {
+  // Simplified estimation: higher fee rate = faster confirmation
+  if (feeRate >= 20) return 10      // ~10 minutes
+  if (feeRate >= 10) return 60      // ~1 hour  
+  if (feeRate >= 5) return 360      // ~6 hours
+  if (feeRate >= 2) return 720      // ~12 hours
+  return 1440                       // ~24 hours
 }
 
 export const useCustomFee = () => {
@@ -67,19 +89,23 @@ export const useCustomFee = () => {
       // Update the fee calculation if we have a valid number
       const totalSats = parseInt(newValue)
       if (!isNaN(totalSats)) {
-        // Set custom fee first so UI updates properly
-        const feeRate = transactionFees.calculateRateFromTime(totalSats)
+        // Calculate fee rate from total sats
+        const feeRate = calculateFeeRateFromSats(totalSats)
+        
+        // Set custom fee with calculated values
         setCustomFee({
           totalSats,
           feeRate,
-          confirmationTime : transactionFees.estimateConfirmationTime(feeRate)
+          confirmationTime : estimateConfirmationTime(feeRate)
         })
 
-        // Then validate and show errors
+        // Validate and show errors
         if (totalSats === 0) {
           setFeeError('Fee cannot be zero')
         } else if (totalSats < MIN_FEE_SATS) {
           setFeeError(`Minimum fee is ${MIN_FEE_SATS} sats`)
+        } else if (feeRate > 1000) {
+          setFeeError('Fee rate is exceptionally high (>1000 sat/vB)')
         } else {
           setFeeError(null)
         }

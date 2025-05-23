@@ -1,6 +1,8 @@
-import { speedOptions } from '@/src/config/transactionFees'
 import { CurrencyType } from '@/src/types/domain/finance'
 import { SATS_PER_BTC } from '@/src/constants/currency'
+
+// Default transaction size for estimates
+const DEFAULT_TX_SIZE_VBYTES = 200
 
 /**
  * Type for transaction fee
@@ -8,6 +10,20 @@ import { SATS_PER_BTC } from '@/src/constants/currency'
 export type TransactionFee = {
   sats: number
   feeRate: number
+}
+
+// Fallback fee rates for immediate calculation
+const FALLBACK_FEE_RATES = {
+  economy  : 1,
+  standard : 10,
+  express  : 25
+}
+
+/**
+ * Calculate transaction fee from fee rate
+ */
+const estimateTransactionFee = (txSizeVBytes: number, feeRatePerVByte: number): number => {
+  return Math.ceil(txSizeVBytes * feeRatePerVByte)
 }
 
 /**
@@ -27,26 +43,25 @@ export const calculateTransactionFee = (
     }
   } 
   
-  const selectedSpeedOption = speedOptions[speed as keyof typeof speedOptions]
-  if (!selectedSpeedOption) {
-    console.warn(`Invalid speed option: ${speed}. Defaulting to a zero fee.`)
-    return { sats: 0, feeRate: 0 }
-  }
-  // Assuming speedOptions provides sats and feeRate, or its usd field will be ignored
+  // Use fallback fee rates for immediate calculation
+  const feeRate = FALLBACK_FEE_RATES[speed as keyof typeof FALLBACK_FEE_RATES] || FALLBACK_FEE_RATES.standard
+  
   return {
-    sats    : selectedSpeedOption.sats,
-    feeRate : selectedSpeedOption.feeRate
+    sats : estimateTransactionFee(DEFAULT_TX_SIZE_VBYTES, feeRate),
+    feeRate
   }
 }
 
 /**
- * Convert fee (in SATS) to the specified currency (BTC or SATS)
- * @param fee Transaction fee object (now only contains sats and feeRate)
- * @param currency Target currency type (BTC or SATS)
- * @returns Fee amount in the specified currency
+ * Convert fee to different currency unit
  */
 export const getFeeInCurrency = (fee: TransactionFee, currency: CurrencyType): number => {
-  if (currency === 'SATS') return fee.sats
-  // If BTC, convert sats to BTC
-  return fee.sats / SATS_PER_BTC
+  switch (currency) {
+    case 'SATS':
+      return fee.sats
+    case 'BTC':
+      return fee.sats / SATS_PER_BTC
+    default:
+      return fee.sats
+  }
 } 

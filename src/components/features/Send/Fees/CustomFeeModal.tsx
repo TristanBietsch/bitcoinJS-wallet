@@ -4,7 +4,6 @@ import { ThemedText } from '@/src/components/ui/Text'
 import { ChevronLeft } from 'lucide-react-native'
 import { CustomFee } from '@/src/types/domain/transaction'
 import { NumberPad } from '@/src/components/features/Send/Amount/NumberPad'
-import { getFormattedUsdFee } from '@/src/utils/send/speedOptions'
 import { Colors } from '@/src/constants/colors'
 
 interface CustomFeeModalProps {
@@ -67,13 +66,6 @@ export const CustomFeeModal: React.FC<CustomFeeModalProps> = ({
                     {displayValue || ''}
                   </ThemedText>
                 </View>
-                <ThemedText style={styles.feeUsdValue}>
-                  ~${getFormattedUsdFee(
-                    displayValue && displayValue !== '' 
-                      ? parseInt(displayValue) 
-                      : customFee.totalSats
-                  )} USD
-                </ThemedText>
                 {feeError && (
                   <Text style={styles.errorText}>{feeError}</Text>
                 )}
@@ -221,11 +213,6 @@ const styles = StyleSheet.create({
     paddingHorizontal : 8,
     backgroundColor   : '#F5F5F5',
     borderRadius      : 8
-  },
-  feeUsdValue : {
-    fontSize  : 14,
-    color     : '#666',
-    marginTop : 4
   },
   divider : {
     height          : 1,

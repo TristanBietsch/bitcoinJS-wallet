@@ -35,12 +35,19 @@ export const SpeedOptionButton: React.FC<SpeedOptionButtonProps> = ({
     >
       <View style={styles.speedLeft}>
         {renderIcon()}
-        <ThemedText style={styles.speedLabel}>{option.label}</ThemedText>
+        <View style={styles.speedLabelContainer}>
+          <ThemedText style={styles.speedLabel}>{option.label}</ThemedText>
+          {option.estimatedTime && (
+            <ThemedText style={styles.estimatedTime}>{option.estimatedTime}</ThemedText>
+          )}
+        </View>
       </View>
       {option.fee && (
         <View style={styles.feeInfo}>
           <ThemedText style={styles.satsAmount}>{option.fee.sats} sats</ThemedText>
-          <ThemedText style={styles.usdAmount}>${option.fee.usd} USD</ThemedText>
+          {option.feeRate && (
+            <ThemedText style={styles.feeRate}>{option.feeRate} sat/vB</ThemedText>
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -49,13 +56,12 @@ export const SpeedOptionButton: React.FC<SpeedOptionButtonProps> = ({
 
 const styles = StyleSheet.create({
   speedButton : {
-    flexDirection   : 'row',
-    justifyContent  : 'space-between',
-    alignItems      : 'center',
-    backgroundColor : '#F5F5F5',
-    borderRadius    : 12,
-    padding         : 16,
-    height          : 72
+    flexDirection  : 'row',
+    justifyContent : 'space-between',
+    alignItems     : 'center',
+    borderRadius   : 12,
+    padding        : 16,
+    height         : 72
   },
   selectedSpeed : {
     backgroundColor : '#E5E5E5'
@@ -65,9 +71,17 @@ const styles = StyleSheet.create({
     alignItems    : 'center',
     gap           : 12
   },
+  speedLabelContainer : {
+    flexDirection : 'column'
+  },
   speedLabel : {
     fontSize   : 16,
     fontWeight : '500'
+  },
+  estimatedTime : {
+    fontSize  : 12,
+    color     : '#666',
+    marginTop : 2
   },
   feeInfo : {
     alignItems : 'flex-end'
@@ -77,8 +91,8 @@ const styles = StyleSheet.create({
     fontWeight : '500',
     color      : '#666'
   },
-  usdAmount : {
-    fontSize  : 14,
+  feeRate : {
+    fontSize  : 12,
     color     : '#999',
     marginTop : 2
   }
