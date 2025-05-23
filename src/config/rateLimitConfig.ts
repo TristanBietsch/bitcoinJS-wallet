@@ -142,7 +142,7 @@ export function extractDomain(url: string): string {
     // For analytics or other services, you might want to add more specific mappings
     return hostname
   } catch (error) {
-    console.warn('Failed to parse URL for rate limiting:', url)
+    console.warn('Failed to parse URL for rate limiting:', url, error)
     return 'default'
   }
 }

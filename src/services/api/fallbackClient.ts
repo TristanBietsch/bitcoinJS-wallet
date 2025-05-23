@@ -19,23 +19,24 @@ interface CacheEntry {
 
 /**
  * API endpoint configurations for different services
+ * Mempool.space is now primary due to better reliability
  */
 const BITCOIN_API_ENDPOINTS: APIEndpoint[] = [
   {
-    name     : 'blockstream-primary',
-    baseUrl  : 'https://blockstream.info/testnet/api',
+    name     : 'mempool-primary',
+    baseUrl  : 'https://mempool.space/testnet/api',
     priority : 1,
     timeout  : 30000
   },
   {
-    name     : 'mempool-fallback',
-    baseUrl  : 'https://mempool.space/testnet/api',
+    name     : 'blockstream-fallback',
+    baseUrl  : 'https://blockstream.info/testnet/api',
     priority : 2,
     timeout  : 30000
   },
   {
-    name     : 'blockstream-retry',
-    baseUrl  : 'https://blockstream.info/testnet/api',
+    name     : 'mempool-retry',
+    baseUrl  : 'https://mempool.space/testnet/api',
     priority : 3,
     timeout  : 30000
   }
