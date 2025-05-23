@@ -6,6 +6,7 @@
  */
 
 import * as ecc from '@bitcoinerlab/secp256k1'
+import logger from '@/src/utils/logger'
 
 /**
  * Get the ECC implementation for Bitcoin operations
@@ -35,7 +36,7 @@ export function getEccLib() {
     }
   }
   
-  console.log('✅ ECC Provider initialized - @bitcoinerlab/secp256k1 (React Native compatible)')
+  logger.crypto('ECC Provider initialized - @bitcoinerlab/secp256k1 (React Native compatible)')
   return ecc
 }
 
@@ -47,7 +48,7 @@ export function initEccProvider(): typeof ecc {
   const eccLib = getEccLib()
   
   // Log successful initialization
-  console.log('🔐 Bitcoin ECC Provider ready for use')
+  logger.crypto('Bitcoin ECC Provider ready for use')
   
   return eccLib
 }

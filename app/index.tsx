@@ -6,6 +6,7 @@ import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { useWalletStore } from '@/src/store/walletStore'
 import { Colors } from '@/src/constants/colors'
+import logger from '@/src/utils/logger'
 
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)
@@ -16,7 +17,12 @@ export default function Home() {
 
   // Log wallet state changes for diagnostics
   useEffect(() => {
-    console.log(`Wallet state changed (effect): isInitialized: ${isInitialized}, isSyncing: ${isSyncing}, wallet: ${JSON.stringify(wallet)}`)
+    const status = isInitialized ? 'initialized' : 'uninitialized'
+    const syncStatus = isSyncing ? 'syncing' : 'idle'
+    logger.state('Home', `${status}, ${syncStatus}`)
+    if (wallet) {
+      logger.wallet('State updated', wallet)
+    }
   }, [ isInitialized, isSyncing, wallet ])
 
   // Only show loading when initializing for the first time
@@ -36,7 +42,7 @@ export default function Home() {
   const checkOnboardingStatus = async () => {
     try {
       const completed = await isOnboardingComplete()
-      console.log('Onboarding status:', completed ? 'completed' : 'not completed')
+      logger.init(`Onboarding status: ${completed ? 'completed' : 'pending'}`)
       
       if (!completed) {
         // Redirect to onboarding route if not completed
@@ -44,7 +50,7 @@ export default function Home() {
       }
       // No else block to reduce unnecessary code execution
     } catch (error) {
-      console.error('Error checking onboarding status:', error)
+      logger.error('Error checking onboarding status', error)
       // If there's an error, we'll assume onboarding needs to be done
       router.push('/onboarding' as any)
     } finally {
@@ -61,19 +67,16 @@ export default function Home() {
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default
       await AsyncStorage.clear()
       
-      console.log('All storage keys cleared - complete app reset')
+      logger.storage('Complete app reset - all data cleared')
       
       // Navigate back to onboarding
       router.push('/onboarding' as any)
     } catch (error) {
-      console.error('Error resetting app:', error)
+      logger.error('Error resetting app', error)
       // Still try to navigate to onboarding even if there was an error
       router.push('/onboarding' as any)
     }
   }
-
-  // Log state right before render decision
-  console.log(`Home component render: isLoading: ${isLoading}, isChecking: ${isChecking}, isInitialized: ${isInitialized}, isSyncing: ${isSyncing}, wallet object: ${JSON.stringify(wallet)}`)
 
   if (isLoading) {
     return (

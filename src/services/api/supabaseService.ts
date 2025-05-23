@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { z } from 'zod'
 import Constants from 'expo-constants'
+import logger, { LogScope } from '@/src/utils/logger'
 
 // Schema for validating email
 export const EmailSchema = z.string().email('Invalid email format')
@@ -32,7 +33,7 @@ class MockSupabaseService {
   private waitlistEmails: Set<string> = new Set()
 
   constructor() {
-    console.log('[MOCK] Initializing Mock Supabase Service for testing')
+    logger.init('Mock Supabase Service initialized for testing')
   }
 
   /**
@@ -49,19 +50,19 @@ class MockSupabaseService {
   async addToWaitlist(email: string): Promise<WaitlistResponse> {
     // Validate email format
     if (!this.isValidEmail(email)) {
-      console.log(`[MOCK] Invalid email format: ${email}`)
+      logger.warn(`[MOCK] Invalid email format: ${email}`)
       return { success: false, error: 'Invalid email format' }
     }
 
     // Check if email already exists
     if (this.waitlistEmails.has(email)) {
-      console.log(`[MOCK] Email already registered: ${email}`)
+      logger.warn(`[MOCK] Email already registered: ${email}`)
       return { success: false, error: 'Email already registered' }
     }
 
     // Add email to waitlist
     this.waitlistEmails.add(email)
-    console.log(`[MOCK] Added email to waitlist: ${email}`)
+    logger.debug(LogScope.STORAGE, `[MOCK] Added email to waitlist: ${email}`)
     return { success: true }
   }
 
@@ -76,7 +77,7 @@ class MockSupabaseService {
 
     // Check if email exists
     const exists = this.waitlistEmails.has(email)
-    console.log(`[MOCK] Checked waitlist for email: ${email} Exists: ${exists}`)
+    logger.debug(LogScope.STORAGE, `[MOCK] Checked waitlist for email: ${email} Exists: ${exists}`)
     return { exists }
   }
 }
@@ -102,12 +103,12 @@ class SupabaseService {
     // Always use the real service for email-testing if we have credentials
     this.useRealService = !!(this.apiUrl && this.apiKey)
     
-    console.log(`Initializing Supabase Service with:`)
-    console.log(`- API URL: ${this.apiUrl ? this.apiUrl.substring(0, 20) + '...' : 'Not set'}`)
-    console.log(`- API Key: ${this.apiKey ? 'Set (hidden)' : 'Not set'}`)
-    console.log(`- Table: ${this.tableName}`)
-    console.log(`- Environment: ${extra.nodeEnv || 'development'}`)
-    console.log(`- Using: ${this.useRealService ? 'Real Supabase API' : 'Mock Service'} with email-testing table`)
+    logger.init('Supabase Service initialized')
+    logger.init(`- API URL: ${this.apiUrl ? 'Set' : 'Not set'}`)
+    logger.init(`- API Key: ${this.apiKey ? 'Set' : 'Not set'}`)
+    logger.init(`- Table: ${this.tableName}`)
+    logger.init(`- Environment: ${extra.nodeEnv || 'development'}`)
+    logger.init(`- Using: ${this.useRealService ? 'Real Supabase API' : 'Mock Service with email-testing table'}`)
   }
 
   /**
@@ -117,7 +118,7 @@ class SupabaseService {
     // Validate email format using a simple regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      console.log(`Invalid email format: ${email}`)
+      logger.warn(`Invalid email format: ${email}`)
       return { success: false, error: 'Invalid email format' }
     }
 
@@ -126,17 +127,17 @@ class SupabaseService {
       return this.mockService.addToWaitlist(email)
     }
 
-    console.log(`Attempting to add email to waitlist: ${email}`)
+    logger.debug(LogScope.API, `Adding email to waitlist: ${email}`)
     try {
       // First check if the email already exists
       const checkResult = await this.checkWaitlist(email)
       if (checkResult.exists) {
-        console.log(`Email already registered: ${email}`)
+        logger.warn(`Email already registered: ${email}`)
         return { success: false, error: 'Email already registered' }
       }
 
       // Add email to waitlist with current timestamp
-      console.log(`Making API call to add email to waitlist: ${email}`)
+      logger.debug(LogScope.API, `API call to add email: ${email}`)
       const _response = await axios.post(
         `${this.apiUrl}/rest/v1/${this.tableName}`,
         { 
@@ -154,14 +155,14 @@ class SupabaseService {
         }
       )
 
-      console.log(`Successfully added email to waitlist: ${email}`)
+      logger.debug(LogScope.API, `Successfully added email to waitlist: ${email}`)
       return { success: true }
     } catch (error: any) {
       // Handle different types of errors
-      console.error(`Error adding email to waitlist: ${error.message}`)
+      logger.error(`Error adding email to waitlist: ${error.message}`)
       
       if (error.response) {
-        console.error(`API Error: ${error.response.status}`, error.response.data)
+        logger.error(`API Error: ${error.response.status}`, error.response.data)
         
         // Handle specific error cases
         if (error.response.status === 409) {
@@ -192,10 +193,10 @@ class SupabaseService {
       return this.mockService.checkWaitlist(email)
     }
 
-    console.log(`Checking if email exists in waitlist: ${email}`)
+    logger.debug(LogScope.API, `Checking if email exists in waitlist: ${email}`)
     try {
       // Query the waitlist table
-      console.log(`Making API call to check waitlist for email: ${email}`)
+      logger.debug(LogScope.API, `API call to check waitlist for email: ${email}`)
       const response = await axios.get(
         `${this.apiUrl}/rest/v1/${this.tableName}`,
         {
@@ -212,13 +213,13 @@ class SupabaseService {
       )
 
       const exists = response.data.length > 0
-      console.log(`Email check result for ${email}: ${exists ? 'Exists' : 'Does not exist'}`)
+      logger.debug(LogScope.API, `Email check result for ${email}: ${exists ? 'Exists' : 'Does not exist'}`)
       return { exists }
     } catch (error: any) {
-      console.error(`Error checking waitlist: ${error.message}`)
+      logger.error(`Error checking waitlist: ${error.message}`)
       
       if (error.response) {
-        console.error(`API Error: ${error.response.status}`, error.response.data)
+        logger.error(`API Error: ${error.response.status}`, error.response.data)
       }
       
       // Don't fall back to mock service - return the actual error

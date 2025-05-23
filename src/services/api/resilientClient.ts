@@ -3,6 +3,7 @@
  * Replaces the rate limiting approach with a more robust solution
  */
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
+import logger, { LogScope } from '@/src/utils/logger'
 
 export enum RequestPriority {
   LOW = 0,      // Analytics, background operations
@@ -87,9 +88,7 @@ class ResilientHttpClient {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
       (config) => {
-        if (__DEV__) {
-          console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
-        }
+        logger.apiRequest(config.method || 'GET', config.url || '')
         return config
       },
       (error) => Promise.reject(error)
@@ -98,15 +97,11 @@ class ResilientHttpClient {
     // Response interceptor
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        if (__DEV__) {
-          console.log(`API Response: ${response.status} ${response.config.url}`)
-        }
+        logger.api(response.config.method || 'GET', response.config.url || '', response.status)
         return response
       },
       (error) => {
-        if (__DEV__) {
-          console.log(`API Error: ${error.response?.status || 'Network'} ${error.config?.url}`)
-        }
+        logger.api(error.config?.method || 'GET', error.config?.url || '', error.response?.status)
         return Promise.reject(error)
       }
     )
@@ -174,7 +169,7 @@ class ResilientHttpClient {
     if (circuit.failures >= 3) {
       circuit.isOpen = true
       circuit.nextAttemptTime = now + (30000) // 30 second timeout
-      console.warn(`Circuit breaker opened for ${domain}`)
+      logger.warn(`Circuit breaker opened for ${domain}`)
     }
   }
 
@@ -187,7 +182,7 @@ class ResilientHttpClient {
       circuit.failures = Math.max(0, circuit.failures - 1)
       if (circuit.failures === 0) {
         circuit.isOpen = false
-        console.log(`Circuit breaker reset for ${domain}`)
+        logger.debug(LogScope.API, `Circuit breaker reset for ${domain}`)
       }
     }
   }
@@ -198,7 +193,7 @@ class ResilientHttpClient {
   private getCachedResponse(key: string, maxAge: number): any | null {
     const cached = this.requestCache.get(key)
     if (cached && Date.now() - cached.timestamp < maxAge) {
-      console.log(`Using cached response for ${key}`)
+      logger.debug(LogScope.API, `Using cached response`)
       return cached.data
     }
     return null
@@ -247,7 +242,7 @@ class ResilientHttpClient {
         config.maxDelay
       )
 
-      console.log(`Retrying request in ${delay}ms (attempt ${attempt + 1}/${config.maxRetries})`)
+      logger.debug(LogScope.API, `Retrying in ${delay}ms (${attempt + 1}/${config.maxRetries})`)
       
       await new Promise(resolve => setTimeout(resolve, delay))
       return this.executeWithRetry(requestFn, config, attempt + 1)
@@ -283,7 +278,7 @@ class ResilientHttpClient {
     // Check for duplicate request
     const existingRequest = this.pendingRequests.get(requestKey)
     if (existingRequest && method === 'GET') {
-      console.log(`Deduplicating request: ${requestKey}`)
+      logger.debug(LogScope.API, 'Deduplicating request')
       return existingRequest.promise
     }
 
@@ -408,7 +403,7 @@ class ResilientHttpClient {
    */
   resetCircuit(domain: string) {
     this.circuitBreakers.delete(domain)
-    console.log(`Circuit breaker reset for ${domain}`)
+    logger.debug(LogScope.API, `Circuit breaker reset for ${domain}`)
   }
 
   /**

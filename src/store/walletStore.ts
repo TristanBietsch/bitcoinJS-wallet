@@ -6,6 +6,7 @@ import { validateMnemonic } from '@/src/services/bitcoin/wallet/keyManagementSer
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import logger from '@/src/utils/logger'
 import {
   EsploraUTXO, 
   ProcessedTransaction 
@@ -49,7 +50,7 @@ const simpleStorage = {
     try {
       return await AsyncStorage.getItem(`wallet_${key}`)
     } catch (error) {
-      console.error('Error retrieving from storage:', error)
+      logger.error('Error retrieving from storage', error)
       return null
     }
   },
@@ -58,7 +59,7 @@ const simpleStorage = {
     try {
       await AsyncStorage.setItem(`wallet_${key}`, value)
     } catch (error) {
-      console.error('Error saving to storage:', error)
+      logger.error('Error saving to storage', error)
     }
   },
   
@@ -66,7 +67,7 @@ const simpleStorage = {
     try {
       await AsyncStorage.removeItem(`wallet_${key}`)
     } catch (error) {
-      console.error('Error removing from storage:', error)
+      logger.error('Error removing from storage', error)
     }
   }
 }
@@ -97,11 +98,11 @@ export const useWalletStore = create<WalletState>()(
         try {
           storedSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
         } catch (e) {
-          console.error("Failed to retrieve seed phrase from secure storage", e)
+          logger.error("Failed to retrieve seed phrase from secure storage", e)
         }
 
         if (persistedWallet && storedSeedPhrase) {
-          console.log("Initializing with persisted wallet and stored seed phrase.")
+          logger.wallet("Initializing with persisted wallet and stored seed phrase", persistedWallet)
           set({
             wallet        : persistedWallet,
             seedPhrase    : storedSeedPhrase,
@@ -111,17 +112,17 @@ export const useWalletStore = create<WalletState>()(
           })
 
           get().refreshWalletData(true).catch(refreshError => {
-            console.warn('Background refresh failed during initialization with persisted data:', refreshError)
+            logger.warn('Background refresh failed during initialization', refreshError)
           })
           return
         }
         
-        console.log("Proceeding with full wallet initialization/setup.")
+        logger.init("Proceeding with full wallet initialization/setup")
         set({ isSyncing: true, error: null })
 
         try {
           if (!storedSeedPhrase) {
-            console.log('No seed phrase found in secure storage. New user or cleared wallet.')
+            logger.init('No seed phrase found in secure storage. New user or cleared wallet')
             set({ 
               isSyncing     : false,
               isInitialized : true,
@@ -165,7 +166,7 @@ export const useWalletStore = create<WalletState>()(
           
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error during wallet initialization process'
-          console.error('Error during wallet initialization process:', errorMessage, error)
+          logger.error('Error during wallet initialization process', { errorMessage, error })
           set({ 
             error         : errorMessage,
             wallet        : null,
@@ -187,7 +188,7 @@ export const useWalletStore = create<WalletState>()(
         const primaryAddress = addressToRefresh || (wallet?.addresses.nativeSegwit[0] || null)
 
         if (!primaryAddress) {
-          console.warn('refreshWalletData: No primary address available. Wallet object:', wallet)
+          logger.warn('No primary address available for refresh')
           set({ error: silent ? get().error : 'No wallet address available to refresh data.', isSyncing: false })
           return
         }
@@ -287,11 +288,11 @@ export const useWalletStore = create<WalletState>()(
             } : null,
           }))
           
-          console.log(`Wallet data refreshed for address: ${primaryAddress}`)
+          logger.walletSync(`Data refreshed for ${primaryAddress.slice(0, 8)}...${primaryAddress.slice(-4)}`)
           
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error refreshing wallet'
-          console.error(`Error refreshing wallet data for address ${primaryAddress}:`, errorMessage, error)
+          logger.error(`Error refreshing wallet data for address ${primaryAddress}`, { errorMessage, error })
           
           if (!silent) {
             set({ error: errorMessage, isSyncing: false })
@@ -349,7 +350,7 @@ export const useWalletStore = create<WalletState>()(
           return true
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error importing wallet'
-          console.error('Error importing wallet:', errorMessage)
+          logger.error('Error importing wallet', { errorMessage })
           set({ 
             error     : errorMessage,
             isSyncing : false
@@ -381,7 +382,7 @@ export const useWalletStore = create<WalletState>()(
             isInitialized : true // We still consider it initialized, just empty
           })
         } catch (error) {
-          console.error('Error clearing wallet:', error)
+          logger.error('Error clearing wallet', error)
           throw error
         }
       }

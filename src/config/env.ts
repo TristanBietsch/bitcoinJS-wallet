@@ -1,5 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib'
 import { Platform } from 'react-native'
+import logger from '@/src/utils/logger'
 
 const ESPLORA_API_MAINNET_URL = "https://blockstream.info/api"
 const ESPLORA_API_TESTNET_URL = "https://blockstream.info/testnet/api"
@@ -15,7 +16,7 @@ try {
 } catch {
   // If @env is not available, check process.env or use default
   NETWORK = process.env.NETWORK || 'testnet'
-  console.log('Using fallback network configuration (no @env available):', NETWORK)
+  logger.init(`Using fallback network configuration: ${NETWORK}`)
 }
 
 let networkEnv: NetworkType = 'testnet'
@@ -25,9 +26,9 @@ if (NETWORK === 'mainnet') {
 } else if (NETWORK === 'testnet') {
   networkEnv = 'testnet'
 } else {
-  const message = `Missing or invalid NETWORK environment variable. Found: "${NETWORK}". Defaulting to 'testnet'. Supported values: 'mainnet', 'testnet'.`
+  const message = `Invalid NETWORK: "${NETWORK}". Defaulting to testnet`
   if (Platform.OS !== 'web' && process.env.NODE_ENV !== 'test') {
-    console.warn(message)
+    logger.warn(message)
   }
 }
 
@@ -38,8 +39,8 @@ export const ESPLORA_API_BASE_URL: string = CURRENT_NETWORK === 'mainnet' ? ESPL
 export const bitcoinjsNetwork: bitcoin.Network = CURRENT_NETWORK === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet
 
 if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-    console.log(`Network layer configured for: ${CURRENT_NETWORK.toUpperCase()}`)
-    console.log(`Esplora API URL: ${ESPLORA_API_BASE_URL}`)
+    logger.init(`Network layer configured for: ${CURRENT_NETWORK.toUpperCase()}`)
+    logger.init(`Esplora API URL: ${ESPLORA_API_BASE_URL}`)
 }
 
 const ENV = {
@@ -52,10 +53,10 @@ const ENV = {
 }
 
 if (__DEV__) {
-  console.log('Environment configuration loaded')
-  console.log(`- Supabase URL: ${ENV.SUPABASE_URL ? 'Set' : 'Not set'}`)
-  console.log(`- Supabase Key: ${ENV.SUPABASE_KEY ? 'Set (hidden)' : 'Not set'}`)
-  console.log(`- Is Dev: ${ENV.IS_DEV}`)
+  logger.init('Environment configuration loaded')
+  logger.init(`- Supabase URL: ${ENV.SUPABASE_URL ? 'Set' : 'Not set'}`)
+  logger.init(`- Supabase Key: ${ENV.SUPABASE_KEY ? 'Set' : 'Not set'}`)
+  logger.init(`- Is Dev: ${ENV.IS_DEV}`)
 }
 
 export default ENV

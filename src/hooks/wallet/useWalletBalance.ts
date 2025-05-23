@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useWalletStore } from '@/src/store/walletStore' // Wallet data
 import { SATS_PER_BTC } from '@/src/constants/currency'
 import { AppState, AppStateStatus } from 'react-native'
+import logger from '@/src/utils/logger'
 
 export interface BalanceData {
   btcAmount: number;
@@ -63,7 +64,7 @@ export const useWalletBalance = () => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       // If app came to foreground from background
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        console.log('App has come to the foreground, refreshing wallet data')
+        logger.wallet('Foreground refresh triggered')
         refreshWalletData(true) // Silent refresh when returning to app
       }
       appStateRef.current = nextAppState
@@ -86,7 +87,7 @@ export const useWalletBalance = () => {
     const startBackgroundRefresh = () => {
       backgroundRefreshActive.current = true
       refreshIntervalRef.current = setInterval(() => {
-        console.log('Background refresh of wallet balance')
+        logger.walletSync('Background refresh triggered')
         refreshWalletData(true) // Silent refresh
       }, 30000) // 30 seconds
     }
