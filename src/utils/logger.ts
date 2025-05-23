@@ -160,26 +160,26 @@ class Logger {
   // Error operations
   error(category: LogScope | string, message: string, data?: any) {
     if (!this.shouldLog(LogLevel.ERROR)) return
-    const cat = typeof category === 'string' ? category : category
+    const cat = typeof category === 'string' ? category : String(category)
     if (typeof category !== 'string') {
       this.ensureSection(category)
     }
     console.error(this.formatMessage(cat, Symbol.ERROR, message))
     if (data && this.isDevelopment) {
-      console.error(`  └─ ${typeof data === 'object' ? JSON.stringify(data) : data}`)
+      console.error(`  └─ ${typeof data === 'object' ? JSON.stringify(data) : String(data)}`)
     }
   }
 
   // Warning operations
   warn(category: LogScope | string, message: string, data?: any) {
     if (!this.shouldLog(LogLevel.WARN)) return
-    const cat = typeof category === 'string' ? category : category
+    const cat = typeof category === 'string' ? category : String(category)
     if (typeof category !== 'string') {
       this.ensureSection(category)
     }
     console.warn(this.formatMessage(cat, Symbol.WARNING, message))
     if (data && this.isDevelopment) {
-      console.warn(`  └─ ${typeof data === 'object' ? JSON.stringify(data) : data}`)
+      console.warn(`  └─ ${typeof data === 'object' ? JSON.stringify(data) : String(data)}`)
     }
   }
 

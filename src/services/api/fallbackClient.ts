@@ -230,9 +230,57 @@ class FallbackAPIClient {
   }
 
   async getFeeEstimates(): Promise<any> {
-    const path = '/mempool/fees'
+    // Try multiple fee endpoints in order of preference
+    const feeEndpoints = [
+      '/v1/fees/recommended',  // Mempool.space recommended fees
+      '/fees',                 // Fallback fees endpoint
+      '/mempool/fees'          // Legacy endpoint
+    ]
+    
     const cacheKey = 'fee-estimates'
-    return this.fetchWithFallback(path, RequestPriority.NORMAL, cacheKey, 30000) // 30 second tolerance
+    
+    // Check cache first
+    const cached = this.getCachedData<any>(cacheKey, 30000) // 30 second tolerance
+    if (cached) {
+      return cached
+    }
+
+    // Try each endpoint
+    for (const path of feeEndpoints) {
+      try {
+        const data = await this.fetchWithFallback(path, RequestPriority.NORMAL, cacheKey, 30000)
+        
+        // Validate the response structure
+        if (data && (typeof data === 'object')) {
+          // Handle different response formats
+          let feeData = data
+          
+          // Convert mempool.space recommended format to esplora format
+          if ('fastestFee' in data && 'halfHourFee' in data && 'hourFee' in data) {
+            const mempoolData = data as any
+            feeData = {
+              '1'   : mempoolData.fastestFee,
+              '3'   : mempoolData.halfHourFee, 
+              '6'   : mempoolData.hourFee,
+              '144' : mempoolData.economyFee || Math.max(1, Math.floor(mempoolData.hourFee * 0.5))
+            }
+          }
+          
+          return feeData
+        }
+      } catch (error) {
+        console.warn(`Fee endpoint ${path} failed:`, error)
+        // Continue to next endpoint
+      }
+    }
+    
+    // If all endpoints fail, return fallback data
+    console.warn('All fee endpoints failed, using fallback rates')
+    return { 
+      '1'   : 25,   // Fast: ~10 minutes 
+      '6'   : 10,   // Normal: ~1 hour
+      '144' : 2   // Slow: ~24 hours
+    }
   }
 
   async getTransactionDetails(txid: string): Promise<any> {

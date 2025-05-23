@@ -88,7 +88,9 @@ class ResilientHttpClient {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
       (config) => {
-        logger.apiRequest(config.method || 'GET', config.url || '')
+        if (config?.method && config?.url) {
+          logger.apiRequest(config.method, config.url)
+        }
         return config
       },
       (error) => Promise.reject(error)
@@ -97,11 +99,23 @@ class ResilientHttpClient {
     // Response interceptor
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        logger.apiSuccess(response.config.method || 'GET', response.config.url || '', response.status)
+        if (response?.config?.method && response?.config?.url) {
+          logger.apiSuccess(response.config.method, response.config.url, response.status)
+        }
         return response
       },
       (error) => {
-        logger.apiError(error.config?.method || 'GET', error.config?.url || '', error.response?.status, error)
+        // Safely handle the error logging
+        try {
+          const method = error?.config?.method || 'GET'
+          const url = error?.config?.url || 'unknown'
+          const status = error?.response?.status
+          
+          logger.apiError(method, url, status, error)
+        } catch {
+          // If logging fails, just log to console
+          console.error('API Error (logging failed):', error)
+        }
         return Promise.reject(error)
       }
     )
