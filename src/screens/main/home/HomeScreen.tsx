@@ -19,7 +19,7 @@ import { SATS_PER_BTC } from '@/src/constants/currency'
 
 const HomeScreen = () => {
   // State for selected currency format
-  const [ currency, setCurrency ] = useState<CurrencyType>('BTC')
+  const [ currency, setCurrency ] = useState<CurrencyType>('SATS')
   
   // Use the combined hook for wallet balance and price data
   const { 
