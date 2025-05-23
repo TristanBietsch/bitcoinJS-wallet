@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import StatusScreenLayout from '@/src/components/layout/StatusScreenLayout'
-import LoadingState from '@/src/components/ui/Feedback/LoadingState'
+import EnhancedLoadingState from '@/src/components/ui/Feedback/EnhancedLoadingState'
 import { useSendTransactionFlow } from '@/src/hooks/send/useSendTransactionFlow'
 
 /**
@@ -27,9 +27,13 @@ export default function SendLoadingScreen() {
   
       return (
       <StatusScreenLayout>
-        <LoadingState 
+        <EnhancedLoadingState
+          progress={state.progress}
+          currentStage={state.currentStage}
           message={state.currentStage || 'Processing transaction...'}
           subText={state.progress > 0 ? `${state.progress}% complete` : 'This may take a few moments'}
+          showProgressBar={true}
+          showStageIndicator={true}
         />
       </StatusScreenLayout>
     )

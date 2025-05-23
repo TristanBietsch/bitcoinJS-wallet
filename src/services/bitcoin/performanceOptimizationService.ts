@@ -292,7 +292,7 @@ class PerformanceOptimizationService {
     return [ ...addresses ].sort(() => Math.random() - 0.5) // Placeholder randomization
   }
 
-  private async refreshStaleUtxos(wallet: BitcoinWallet): Promise<void> {
+  private async refreshStaleUtxos(_wallet: BitcoinWallet): Promise<void> {
     const staleThreshold = Date.now() - (CACHE_CONFIG.utxoCacheTTL / 2)
     
     for (const [ address, cache ] of this.utxoCache.entries()) {

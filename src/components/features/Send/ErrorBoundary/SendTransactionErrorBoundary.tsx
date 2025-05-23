@@ -47,13 +47,13 @@ export class SendTransactionErrorBoundary extends Component<
   componentDidCatch(error: Error, errorInfo: any) {
     // Log the error for debugging
     logger.error('SendTransactionErrorBoundary', 'Unexpected error in send flow', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
+      error          : error.message,
+      stack          : error.stack,
+      componentStack : errorInfo.componentStack
     })
 
     this.setState({
-      hasError: true,
+      hasError : true,
       error,
       errorInfo
     })
@@ -136,18 +136,18 @@ export class SendTransactionErrorBoundary extends Component<
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20
+  container : {
+    flex              : 1,
+    justifyContent    : 'center',
+    alignItems        : 'center',
+    paddingHorizontal : 20
   },
-  debugContainer: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    opacity: 0.8
+  debugContainer : {
+    marginTop       : 20,
+    padding         : 15,
+    backgroundColor : '#f5f5f5',
+    borderRadius    : 8,
+    opacity         : 0.8
   }
 })
 

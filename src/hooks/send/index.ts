@@ -7,4 +7,5 @@ export * from './useSpeedOptions'
 // export * from './useSendForm' // Commented out due to "Cannot find module" error
 export * from './useTransactionParams'
 // export * from './useFeeSelection' // Commented out due to "Cannot find module" error
-export * from './useSendTransactionFlow' 
+export * from './useSendTransactionFlow'
+export * from './useProgressiveFeeLoading' 

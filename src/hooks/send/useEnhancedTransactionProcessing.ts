@@ -27,7 +27,6 @@ import {
   createTransactionError,
   createNetworkError,
   createSecurityError,
-  formatErrorForUser,
   shouldShowRetryButton,
   type SendBTCError
 } from '../../types/errors.types'
@@ -37,7 +36,7 @@ import { selectUtxosEnhanced } from '../../utils/bitcoin/utxo'
 import { buildTransaction } from '../../services/bitcoin/txBuilder'
 import { signTransaction } from '../../services/bitcoin/txSigner'
 import { broadcastTx } from '../../services/bitcoin/broadcast'
-import { performanceOptimizer, enablePerformanceOptimization } from '../../services/bitcoin/performanceOptimizationService'
+import { enablePerformanceOptimization } from '../../services/bitcoin/performanceOptimizationService'
 import { seedPhraseService } from '../../services/bitcoin/wallet/seedPhraseService'
 import { bitcoinjsNetwork } from '../../config/env'
 import type { TransactionOutput } from '../../types/tx.types'
@@ -232,7 +231,7 @@ export function useEnhancedTransactionProcessing(): {
       // Phase 5: Transaction Building
       trackProgress('building_transaction')
       
-      const { psbt, feeDetails } = buildTransaction({
+      const { psbt, feeDetails: _feeDetails } = buildTransaction({
         inputs  : selectionResult.selectedUtxos,
         outputs,
         feeRate : params.feeRate,
@@ -310,7 +309,7 @@ export function useEnhancedTransactionProcessing(): {
     } finally {
       isProcessingRef.current = false
     }
-  }, [ wallet, router, resetSendStore, getStatus ])
+  }, [ wallet, router, resetSendStore ])
 
   const retry = useCallback(async () => {
     if (!lastParamsRef.current) {
