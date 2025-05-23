@@ -50,13 +50,13 @@ class MockSupabaseService {
   async addToWaitlist(email: string): Promise<WaitlistResponse> {
     // Validate email format
     if (!this.isValidEmail(email)) {
-      logger.warn(`[MOCK] Invalid email format: ${email}`)
+      logger.warn(LogScope.STORAGE, `[MOCK] Invalid email format: ${email}`)
       return { success: false, error: 'Invalid email format' }
     }
 
     // Check if email already exists
     if (this.waitlistEmails.has(email)) {
-      logger.warn(`[MOCK] Email already registered: ${email}`)
+      logger.warn(LogScope.STORAGE, `[MOCK] Email already registered: ${email}`)
       return { success: false, error: 'Email already registered' }
     }
 
@@ -118,7 +118,7 @@ class SupabaseService {
     // Validate email format using a simple regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      logger.warn(`Invalid email format: ${email}`)
+      logger.warn(LogScope.API, `Invalid email format: ${email}`)
       return { success: false, error: 'Invalid email format' }
     }
 
@@ -132,7 +132,7 @@ class SupabaseService {
       // First check if the email already exists
       const checkResult = await this.checkWaitlist(email)
       if (checkResult.exists) {
-        logger.warn(`Email already registered: ${email}`)
+        logger.warn(LogScope.API, `Email already registered: ${email}`)
         return { success: false, error: 'Email already registered' }
       }
 
@@ -159,10 +159,10 @@ class SupabaseService {
       return { success: true }
     } catch (error: any) {
       // Handle different types of errors
-      logger.error(`Error adding email to waitlist: ${error.message}`)
+      logger.error(LogScope.API, `Error adding email to waitlist: ${error.message}`)
       
       if (error.response) {
-        logger.error(`API Error: ${error.response.status}`, error.response.data)
+        logger.error(LogScope.API, `API Error: ${error.response.status}`, error.response.data)
         
         // Handle specific error cases
         if (error.response.status === 409) {
@@ -216,10 +216,10 @@ class SupabaseService {
       logger.debug(LogScope.API, `Email check result for ${email}: ${exists ? 'Exists' : 'Does not exist'}`)
       return { exists }
     } catch (error: any) {
-      logger.error(`Error checking waitlist: ${error.message}`)
+      logger.error(LogScope.API, `Error checking waitlist: ${error.message}`)
       
       if (error.response) {
-        logger.error(`API Error: ${error.response.status}`, error.response.data)
+        logger.error(LogScope.API, `API Error: ${error.response.status}`, error.response.data)
       }
       
       // Don't fall back to mock service - return the actual error

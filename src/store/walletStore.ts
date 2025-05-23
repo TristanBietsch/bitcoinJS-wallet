@@ -98,7 +98,7 @@ export const useWalletStore = create<WalletState>()(
         try {
           storedSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
         } catch (e) {
-          logger.error("Failed to retrieve seed phrase from secure storage", e)
+          logger.error(LogScope.WALLET, "Failed to retrieve seed phrase from secure storage", e)
         }
 
         if (persistedWallet && storedSeedPhrase) {
@@ -166,7 +166,7 @@ export const useWalletStore = create<WalletState>()(
           
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error during wallet initialization process'
-          logger.error('Error during wallet initialization process', { errorMessage, error })
+          logger.error(LogScope.WALLET, 'Error during wallet initialization process', error)
           set({ 
             error         : errorMessage,
             wallet        : null,
@@ -350,7 +350,7 @@ export const useWalletStore = create<WalletState>()(
           return true
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error importing wallet'
-          logger.error('Error importing wallet', { errorMessage })
+          logger.error(LogScope.WALLET, 'Error importing wallet', error)
           set({ 
             error     : errorMessage,
             isSyncing : false
