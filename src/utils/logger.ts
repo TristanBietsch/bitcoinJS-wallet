@@ -1,6 +1,6 @@
 /**
- * Clean, structured logging utility for React Native Bitcoin wallet
- * Provides scoped, emoji-enhanced logs with data summarization
+ * Enhanced CLI-style logging utility for React Native Bitcoin wallet
+ * Provides clean, symbol-based logs with visual hierarchy and grouping
  */
 
 // Log levels
@@ -11,30 +11,34 @@ export enum LogLevel {
   ERROR = 3
 }
 
-// Log scopes with emojis
+// Log categories (clean text, no emojis)
 export enum LogScope {
-  INIT = '🚀',
-  WALLET = '💰', 
-  API = '🌐',
-  STATE = '🧠',
-  CRYPTO = '🔐',
-  STORAGE = '💾',
-  ERROR = '❌',
-  DEBUG = '🔧'
+  INIT = 'INIT',
+  WALLET = 'WALLET',
+  API = 'API',
+  STATE = 'STATE',
+  CRYPTO = 'CRYPTO',
+  STORAGE = 'STORAGE',
+  ERROR = 'ERROR',
+  DEBUG = 'DEBUG'
 }
 
-// Status indicators
-export const Status = {
-  SUCCESS : '✅',
-  WARNING : '⚠️',
-  LOADING : '🔄',
-  DATA    : '📦',
-  ACTION  : '🎯'
+// CLI-style symbols
+export const Symbol = {
+  SUCCESS  : '✓',
+  ERROR    : '✗',
+  WARNING  : '⚠',
+  INFO     : '●',
+  PROGRESS : '→',
+  DATA     : '◆'
 } as const
 
 class Logger {
   private isDevelopment: boolean
   private minLevel: LogLevel
+  private groupDepth = 0
+  private currentSection: string | null = null
+  private sectionsPrinted = new Set<string>()
 
   constructor() {
     this.isDevelopment = __DEV__ || process.env.NODE_ENV !== 'production'
@@ -45,11 +49,19 @@ class Logger {
     return this.isDevelopment && level >= this.minLevel
   }
 
-  private formatMessage(scope: LogScope, status: string, message: string): string {
-    const scopeText = Object.keys(LogScope)[Object.values(LogScope).indexOf(scope)]
-    return `${scopeText} ${scope} ${status} ${message}`
+  /**
+   * Format message with consistent CLI-style structure
+   * Format: CATEGORY  SYMBOL  Message
+   */
+  private formatMessage(category: string, symbol: string, message: string): string {
+    const padding = '  '.repeat(this.groupDepth)
+    const categoryPadded = category.padEnd(8)
+    return `${padding}${categoryPadded} ${symbol}  ${message}`
   }
 
+  /**
+   * Summarize wallet data for clean display
+   */
   private summarizeWallet(wallet: any): string {
     if (!wallet) return 'undefined'
     
@@ -67,122 +79,228 @@ class Logger {
     return `${balance} sats, ${totalAddresses} addresses (${shortAddr})`
   }
 
+  /**
+   * Summarize API call for clean display
+   */
   private summarizeApiCall(method: string, url: string, status?: number, data?: any): string {
-    const endpoint = url.split('/api/')[1] || url.split('.info/')[1] || url
-    const shortEndpoint = endpoint.length > 30 ? `${endpoint.slice(0, 30)}...` : endpoint
+    // Extract meaningful part of URL
+    const pathParts = url.split('/')
+    const addressMatch = url.match(/address\/([^\/]+)/)
+    const txMatch = url.match(/tx\/([^\/]+)/)
     
-    let summary = `${method.toUpperCase()} ${shortEndpoint}`
+    let endpoint = ''
+    if (addressMatch) {
+      const addr = addressMatch[1]
+      const shortAddr = addr.length > 10 ? `${addr.slice(0, 8)}...${addr.slice(-4)}` : addr
+      const action = url.includes('/utxo') ? 'UTXOs' : url.includes('/txs') ? 'txs' : 'data'
+      endpoint = `${shortAddr}/${action}`
+    } else if (txMatch) {
+      const txid = txMatch[1]
+      const shortTxid = `${txid.slice(0, 8)}...${txid.slice(-4)}`
+      endpoint = `tx/${shortTxid}`
+    } else {
+      endpoint = pathParts.slice(-2).join('/')
+    }
+    
+    let summary = `${method.toUpperCase()} ${endpoint}`
     if (status) {
       summary += ` → ${status}`
       if (Array.isArray(data)) {
         summary += ` (${data.length} items)`
-      } else if (data && typeof data === 'object') {
-        const keys = Object.keys(data)
-        if (keys.length > 0) {
-          summary += ` (${keys.length} fields)`
-        }
       }
     }
     return summary
   }
 
-  // Main logging methods
-  init(message: string, data?: any) {
+  /**
+   * Print section divider (smart - only when switching sections)
+   */
+  divider(section: string) {
     if (!this.shouldLog(LogLevel.INFO)) return
-    console.log(this.formatMessage(LogScope.INIT, Status.SUCCESS, message))
-    if (data && this.isDevelopment) {
-      console.log('  └─', JSON.stringify(data, null, 2))
+    if (this.currentSection !== section && !this.sectionsPrinted.has(section)) {
+      const dividerLine = '─'.repeat(15)
+      console.log(`${dividerLine} ${section} ${dividerLine}`)
+      this.currentSection = section
+      this.sectionsPrinted.add(section)
     }
   }
 
-  initLoading(message: string) {
-    if (!this.shouldLog(LogLevel.INFO)) return
-    console.log(this.formatMessage(LogScope.INIT, Status.LOADING, message))
+  /**
+   * Ensure section is active before logging
+   */
+  private ensureSection(category: LogScope) {
+    const sectionMap: Record<LogScope, string> = {
+      [LogScope.CRYPTO]  : 'CRYPTO',
+      [LogScope.INIT]    : 'CONFIG', 
+      [LogScope.WALLET]  : 'WALLET',
+      [LogScope.API]     : 'NETWORK',
+      [LogScope.STATE]   : 'RUNTIME',
+      [LogScope.STORAGE] : 'STORAGE',
+      [LogScope.ERROR]   : 'ERROR',
+      [LogScope.DEBUG]   : 'DEBUG'
+    }
+    
+    const section = sectionMap[category]
+    if (section) {
+      this.divider(section)
+    }
   }
 
-  wallet(message: string, walletData?: any) {
+  /**
+   * Enhanced logging methods with CLI symbols
+   */
+  
+  // Success operations
+  success(category: LogScope, message: string) {
     if (!this.shouldLog(LogLevel.INFO)) return
+    this.ensureSection(category)
+    console.log(this.formatMessage(category, Symbol.SUCCESS, message))
+  }
+
+  // Error operations
+  error(category: LogScope | string, message: string, data?: any) {
+    if (!this.shouldLog(LogLevel.ERROR)) return
+    const cat = typeof category === 'string' ? category : category
+    if (typeof category !== 'string') {
+      this.ensureSection(category)
+    }
+    console.error(this.formatMessage(cat, Symbol.ERROR, message))
+    if (data && this.isDevelopment) {
+      console.error(`  └─ ${typeof data === 'object' ? JSON.stringify(data) : data}`)
+    }
+  }
+
+  // Warning operations
+  warn(category: LogScope | string, message: string, data?: any) {
+    if (!this.shouldLog(LogLevel.WARN)) return
+    const cat = typeof category === 'string' ? category : category
+    if (typeof category !== 'string') {
+      this.ensureSection(category)
+    }
+    console.warn(this.formatMessage(cat, Symbol.WARNING, message))
+    if (data && this.isDevelopment) {
+      console.warn(`  └─ ${typeof data === 'object' ? JSON.stringify(data) : data}`)
+    }
+  }
+
+  // Info/Loading operations
+  info(category: LogScope, message: string) {
+    if (!this.shouldLog(LogLevel.INFO)) return
+    this.ensureSection(category)
+    console.log(this.formatMessage(category, Symbol.INFO, message))
+  }
+
+  // Progress operations (API calls, etc.)
+  progress(category: LogScope, message: string) {
+    if (!this.shouldLog(LogLevel.DEBUG)) return
+    this.ensureSection(category)
+    console.log(this.formatMessage(category, Symbol.PROGRESS, message))
+  }
+
+  // Data display
+  data(category: LogScope, message: string) {
+    if (!this.shouldLog(LogLevel.INFO)) return
+    this.ensureSection(category)
+    console.log(this.formatMessage(category, Symbol.DATA, message))
+  }
+
+  // Debug operations
+  debug(category: LogScope, message: string, data?: any) {
+    if (!this.shouldLog(LogLevel.DEBUG)) return
+    console.log(this.formatMessage(category, Symbol.INFO, message))
+    if (data && this.isDevelopment) {
+      console.log(`  └─ ${typeof data === 'object' ? JSON.stringify(data) : data}`)
+    }
+  }
+
+  /**
+   * Specialized methods for common operations
+   */
+  
+  // Initialization
+  init(message: string) {
+    this.success(LogScope.INIT, message)
+  }
+
+  initProgress(message: string) {
+    this.info(LogScope.INIT, message)
+  }
+
+  // Wallet operations  
+  wallet(message: string, walletData?: any) {
     let logMessage = message
-    
     if (walletData) {
       const summary = this.summarizeWallet(walletData)
-      logMessage += `: ${summary}`
+      logMessage = `${message}: ${summary}`
     }
-    
-    console.log(this.formatMessage(LogScope.WALLET, Status.SUCCESS, logMessage))
+    this.data(LogScope.WALLET, logMessage)
   }
 
-  walletSync(message: string) {
-    if (!this.shouldLog(LogLevel.INFO)) return
-    console.log(this.formatMessage(LogScope.WALLET, Status.LOADING, message))
+  walletSuccess(message: string) {
+    this.success(LogScope.WALLET, message)
   }
 
-  api(method: string, url: string, status?: number, data?: any) {
-    if (!this.shouldLog(LogLevel.INFO)) return
-    const summary = this.summarizeApiCall(method, url, status, data)
-    const statusIcon = status && status >= 200 && status < 300 ? Status.SUCCESS : 
-                      status && status >= 400 ? Status.WARNING : Status.DATA
-    
-    console.log(this.formatMessage(LogScope.API, statusIcon, summary))
+  walletProgress(message: string) {
+    this.info(LogScope.WALLET, message)
   }
 
+  // API operations
   apiRequest(method: string, url: string) {
-    if (!this.shouldLog(LogLevel.DEBUG)) return
     const summary = this.summarizeApiCall(method, url)
-    console.log(this.formatMessage(LogScope.API, Status.LOADING, summary))
+    this.progress(LogScope.API, summary)
   }
 
-  state(component: string, change: string) {
-    if (!this.shouldLog(LogLevel.DEBUG)) return
-    console.log(this.formatMessage(LogScope.STATE, Status.DATA, `${component}: ${change}`))
+  apiSuccess(method: string, url: string, status: number, data?: any) {
+    const summary = this.summarizeApiCall(method, url, status, data)
+    this.success(LogScope.API, summary)
   }
 
-  crypto(message: string, data?: any) {
-    if (!this.shouldLog(LogLevel.INFO)) return
-    console.log(this.formatMessage(LogScope.CRYPTO, Status.SUCCESS, message))
-    if (data && this.isDevelopment) {
-      console.log('  └─', data)
-    }
+  apiError(method: string, url: string, status?: number, error?: any) {
+    const summary = this.summarizeApiCall(method, url, status)
+    this.error(LogScope.API, summary, error)
   }
 
+  // Crypto operations
+  crypto(message: string) {
+    this.success(LogScope.CRYPTO, message)
+  }
+
+  // Storage operations
   storage(message: string) {
-    if (!this.shouldLog(LogLevel.INFO)) return
-    console.log(this.formatMessage(LogScope.STORAGE, Status.SUCCESS, message))
+    this.success(LogScope.STORAGE, message)
   }
 
-  warn(message: string, data?: any) {
-    if (!this.shouldLog(LogLevel.WARN)) return
-    console.warn(this.formatMessage(LogScope.ERROR, Status.WARNING, message))
-    if (data) {
-      console.warn('  └─', data)
-    }
+  // State operations
+  state(component: string, change: string) {
+    this.debug(LogScope.STATE, `${component}: ${change}`)
   }
 
-  error(message: string, error?: any) {
-    if (!this.shouldLog(LogLevel.ERROR)) return
-    console.error(this.formatMessage(LogScope.ERROR, Status.WARNING, message))
-    if (error) {
-      console.error('  └─', error)
-    }
-  }
-
-  debug(scope: LogScope, message: string, data?: any) {
+  /**
+   * Grouping operations
+   */
+  group(title: string, category: LogScope = LogScope.DEBUG) {
     if (!this.shouldLog(LogLevel.DEBUG)) return
-    console.log(this.formatMessage(scope, Status.DATA, message))
-    if (data && this.isDevelopment) {
-      console.log('  └─', data)
-    }
-  }
-
-  // Grouped operations
-  group(title: string, scope: LogScope = LogScope.DEBUG) {
-    if (!this.shouldLog(LogLevel.DEBUG)) return
-    console.group?.(this.formatMessage(scope, Status.ACTION, title))
+    console.log(this.formatMessage(category, Symbol.DATA, title))
+    this.groupDepth++
   }
 
   groupEnd() {
-    if (!this.shouldLog(LogLevel.DEBUG)) return
-    console.groupEnd?.()
+    if (this.groupDepth > 0) {
+      this.groupDepth--
+    }
+  }
+
+  /**
+   * Legacy compatibility methods (will be deprecated)
+   */
+  
+  // Keep some old methods for compatibility during transition
+  api(method: string, url: string, status?: number, data?: any) {
+    if (status && status >= 200 && status < 300) {
+      this.apiSuccess(method, url, status, data)
+    } else {
+      this.apiError(method, url, status)
+    }
   }
 
   // Timing utilities

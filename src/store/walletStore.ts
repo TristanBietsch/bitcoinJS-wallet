@@ -112,7 +112,7 @@ export const useWalletStore = create<WalletState>()(
           })
 
           get().refreshWalletData(true).catch(refreshError => {
-            logger.warn('Background refresh failed during initialization', refreshError)
+            logger.warn(LogScope.WALLET, 'Background refresh failed during initialization', refreshError)
           })
           return
         }

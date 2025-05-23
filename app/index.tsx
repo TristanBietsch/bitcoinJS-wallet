@@ -6,7 +6,7 @@ import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { useWalletStore } from '@/src/store/walletStore'
 import { Colors } from '@/src/constants/colors'
-import logger from '@/src/utils/logger'
+import logger, { LogScope } from '@/src/utils/logger'
 
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)
@@ -50,7 +50,7 @@ export default function Home() {
       }
       // No else block to reduce unnecessary code execution
     } catch (error) {
-      logger.error('Error checking onboarding status', error)
+      logger.error(LogScope.INIT, 'Error checking onboarding status', error)
       // If there's an error, we'll assume onboarding needs to be done
       router.push('/onboarding' as any)
     } finally {
@@ -72,7 +72,7 @@ export default function Home() {
       // Navigate back to onboarding
       router.push('/onboarding' as any)
     } catch (error) {
-      logger.error('Error resetting app', error)
+      logger.error(LogScope.STORAGE, 'Error resetting app', error)
       // Still try to navigate to onboarding even if there was an error
       router.push('/onboarding' as any)
     }

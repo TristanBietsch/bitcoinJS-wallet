@@ -15,7 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useWalletStore } from '@/src/store/walletStore'
 // import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils' // Temporarily removed
 import { isOnboardingComplete } from '@/src/utils/storage'
-import logger from '@/src/utils/logger'
+import logger, { LogScope } from '@/src/utils/logger'
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [
@@ -46,10 +46,10 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        logger.init('App resumed from background')
+        logger.success(LogScope.INIT, 'App resumed from background')
         const timeInBackground = Date.now() - lastActiveTime
         if (timeInBackground > LOCK_TIMEOUT && wallet) {
-          logger.init('Auto-lock triggered after background timeout')
+          logger.info(LogScope.INIT, 'Auto-lock triggered after background timeout')
           await clearWallet()
           const onboardingCompleted = await isOnboardingComplete()
           if (onboardingCompleted) {
@@ -59,7 +59,7 @@ export default function RootLayout() {
           }
         }
       } else if (nextAppState.match(/inactive|background/)) {
-        logger.init('App entered background/inactive state')
+        logger.info(LogScope.INIT, 'App entered background/inactive state')
         setLastActiveTime(Date.now())
       }
       appState.current = nextAppState
@@ -78,7 +78,7 @@ export default function RootLayout() {
 
     const initApp = async () => {
       try {
-        logger.initLoading('Starting app initialization')
+        logger.initProgress('Starting app initialization')
         await initializeWallet()
         
         if (!useWalletStore.getState().wallet && !pathname.includes('onboarding')) {
@@ -88,7 +88,7 @@ export default function RootLayout() {
           logger.init('App initialization completed')
         }
       } catch (error) {
-        logger.error('Failed to initialize wallet', error)
+        logger.error(LogScope.INIT, 'Failed to initialize wallet', error)
         if (!pathname.includes('onboarding')) {
           router.replace('/onboarding' as any)
         }

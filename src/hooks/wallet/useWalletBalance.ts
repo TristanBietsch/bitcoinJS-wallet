@@ -64,7 +64,8 @@ export const useWalletBalance = () => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       // If app came to foreground from background
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        logger.wallet('Foreground refresh triggered')
+        logger.divider('RUNTIME')
+        logger.walletProgress('Foreground refresh triggered')
         refreshWalletData(true) // Silent refresh when returning to app
       }
       appStateRef.current = nextAppState
@@ -87,7 +88,7 @@ export const useWalletBalance = () => {
     const startBackgroundRefresh = () => {
       backgroundRefreshActive.current = true
       refreshIntervalRef.current = setInterval(() => {
-        logger.walletSync('Background refresh triggered')
+        logger.walletProgress('Background refresh triggered')
         refreshWalletData(true) // Silent refresh
       }, 30000) // 30 seconds
     }

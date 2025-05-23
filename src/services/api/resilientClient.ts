@@ -97,11 +97,11 @@ class ResilientHttpClient {
     // Response interceptor
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        logger.api(response.config.method || 'GET', response.config.url || '', response.status)
+        logger.apiSuccess(response.config.method || 'GET', response.config.url || '', response.status)
         return response
       },
       (error) => {
-        logger.api(error.config?.method || 'GET', error.config?.url || '', error.response?.status)
+        logger.apiError(error.config?.method || 'GET', error.config?.url || '', error.response?.status, error)
         return Promise.reject(error)
       }
     )
@@ -169,7 +169,7 @@ class ResilientHttpClient {
     if (circuit.failures >= 3) {
       circuit.isOpen = true
       circuit.nextAttemptTime = now + (30000) // 30 second timeout
-      logger.warn(`Circuit breaker opened for ${domain}`)
+      logger.warn(LogScope.API, `Circuit breaker opened for ${domain}`)
     }
   }
 

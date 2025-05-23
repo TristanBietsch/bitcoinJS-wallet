@@ -8,6 +8,9 @@
 import * as ecc from '@bitcoinerlab/secp256k1'
 import logger from '@/src/utils/logger'
 
+// Track if ECC has been initialized to avoid duplicate logs
+let eccInitialized = false
+
 /**
  * Get the ECC implementation for Bitcoin operations
  * Uses @bitcoinerlab/secp256k1 which is React Native compatible
@@ -36,7 +39,11 @@ export function getEccLib() {
     }
   }
   
-  logger.crypto('ECC Provider initialized - @bitcoinerlab/secp256k1 (React Native compatible)')
+  // Only log on first initialization
+  if (!eccInitialized) {
+    logger.crypto('ECC Provider initialized - @bitcoinerlab/secp256k1 (React Native compatible)')
+    eccInitialized = true
+  }
   return ecc
 }
 

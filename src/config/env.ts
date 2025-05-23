@@ -1,6 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib'
 import { Platform } from 'react-native'
-import logger from '@/src/utils/logger'
+import logger, { LogScope } from '@/src/utils/logger'
 
 const ESPLORA_API_MAINNET_URL = "https://blockstream.info/api"
 const ESPLORA_API_TESTNET_URL = "https://blockstream.info/testnet/api"
@@ -28,7 +28,7 @@ if (NETWORK === 'mainnet') {
 } else {
   const message = `Invalid NETWORK: "${NETWORK}". Defaulting to testnet`
   if (Platform.OS !== 'web' && process.env.NODE_ENV !== 'test') {
-    logger.warn(message)
+    logger.warn(LogScope.INIT, message)
   }
 }
 

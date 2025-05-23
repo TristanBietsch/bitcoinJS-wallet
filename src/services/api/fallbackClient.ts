@@ -4,6 +4,7 @@
  */
 import { resilientClient, RequestPriority } from './resilientClient'
 import { CURRENT_NETWORK } from '@/src/config/env'
+import logger, { LogScope } from '@/src/utils/logger'
 
 interface APIEndpoint {
   name: string
@@ -76,7 +77,7 @@ class FallbackAPIClient {
     
     for (const endpoint of sortedEndpoints) {
       try {
-        console.log(`Trying ${endpoint.name} for ${path}`)
+        logger.progress(LogScope.API, `Trying ${endpoint.name} for ${path}`)
         
         const url = `${endpoint.baseUrl}${path}`
         const data = await resilientClient.request<T>(
@@ -92,18 +93,18 @@ class FallbackAPIClient {
           this.setCachedData(cacheKey, data)
         }
         
-        console.log(`Success with ${endpoint.name}`)
+        logger.success(LogScope.API, `Success with ${endpoint.name}`)
         return data
         
       } catch (error) {
-        console.warn(`${endpoint.name} failed for ${path}:`, error instanceof Error ? error.message : error)
+        logger.warn(LogScope.API, `${endpoint.name} failed for ${path}`, error instanceof Error ? error.message : error)
         lastError = error instanceof Error ? error : new Error(String(error))
         
         // If this was the primary endpoint and we have stale cache, return it
         if (endpoint.priority === 1 && cacheKey) {
           const staleData = this.getStaleData<T>(cacheKey)
           if (staleData) {
-            console.log(`Returning stale data for ${path} due to primary endpoint failure`)
+            logger.warn(LogScope.API, `Returning stale data for ${path} due to primary endpoint failure`)
             // Continue trying other endpoints in background
             this.tryOtherEndpointsInBackground(path, cacheKey, priority, sortedEndpoints.slice(1))
             return staleData
@@ -171,10 +172,10 @@ class FallbackAPIClient {
       this.fetchWithFallback(path, RequestPriority.LOW, undefined)
         .then(data => {
           this.setCachedData(cacheKey, data)
-          console.log(`Background refresh completed for ${path}`)
+          logger.debug(LogScope.API, `Background refresh completed for ${path}`)
         })
         .catch(error => {
-          console.warn(`Background refresh failed for ${path}:`, error)
+          logger.warn(LogScope.API, `Background refresh failed for ${path}`, error)
         })
         .finally(() => {
           this.backgroundRefreshInProgress.delete(cacheKey)
@@ -204,11 +205,11 @@ class FallbackAPIClient {
         
         // Update cache with fresh data
         this.setCachedData(cacheKey, data)
-        console.log(`Background update successful with ${endpoint.name}`)
+        logger.debug(LogScope.API, `Background update successful with ${endpoint.name}`)
         return
         
       } catch (error) {
-        console.warn(`Background ${endpoint.name} failed:`, error instanceof Error ? error.message : error)
+        logger.warn(LogScope.API, `Background ${endpoint.name} failed`, error instanceof Error ? error.message : error)
       }
     }
   }
@@ -259,11 +260,11 @@ class FallbackAPIClient {
           RequestPriority.CRITICAL
         )
         
-        console.log(`Transaction broadcast successful with ${endpoint.name}`)
+        logger.debug(LogScope.API, `Transaction broadcast successful with ${endpoint.name}`)
         return txid
         
       } catch (error) {
-        console.warn(`Broadcast failed with ${endpoint.name}:`, error instanceof Error ? error.message : error)
+        logger.warn(LogScope.API, `Broadcast failed with ${endpoint.name}`, error instanceof Error ? error.message : error)
       }
     }
     
