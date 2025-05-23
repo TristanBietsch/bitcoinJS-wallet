@@ -6,7 +6,7 @@ import { validateMnemonic } from '@/src/services/bitcoin/wallet/keyManagementSer
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import logger from '@/src/utils/logger'
+import logger, { LogScope } from '@/src/utils/logger'
 import {
   EsploraUTXO, 
   ProcessedTransaction 
@@ -50,7 +50,7 @@ const simpleStorage = {
     try {
       return await AsyncStorage.getItem(`wallet_${key}`)
     } catch (error) {
-      logger.error('Error retrieving from storage', error)
+      logger.error(LogScope.STORAGE, 'Error retrieving from storage', error)
       return null
     }
   },
@@ -59,7 +59,7 @@ const simpleStorage = {
     try {
       await AsyncStorage.setItem(`wallet_${key}`, value)
     } catch (error) {
-      logger.error('Error saving to storage', error)
+      logger.error(LogScope.STORAGE, 'Error saving to storage', error)
     }
   },
   
@@ -67,7 +67,7 @@ const simpleStorage = {
     try {
       await AsyncStorage.removeItem(`wallet_${key}`)
     } catch (error) {
-      logger.error('Error removing from storage', error)
+      logger.error(LogScope.STORAGE, 'Error removing from storage', error)
     }
   }
 }
@@ -188,7 +188,7 @@ export const useWalletStore = create<WalletState>()(
         const primaryAddress = addressToRefresh || (wallet?.addresses.nativeSegwit[0] || null)
 
         if (!primaryAddress) {
-          logger.warn('No primary address available for refresh')
+          logger.warn(LogScope.WALLET, 'No primary address available for refresh')
           set({ error: silent ? get().error : 'No wallet address available to refresh data.', isSyncing: false })
           return
         }
@@ -288,11 +288,11 @@ export const useWalletStore = create<WalletState>()(
             } : null,
           }))
           
-          logger.walletSync(`Data refreshed for ${primaryAddress.slice(0, 8)}...${primaryAddress.slice(-4)}`)
+          logger.walletSuccess(`Data refreshed for ${primaryAddress.slice(0, 8)}...${primaryAddress.slice(-4)}`)
           
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error refreshing wallet'
-          logger.error(`Error refreshing wallet data for address ${primaryAddress}`, { errorMessage, error })
+          logger.error(LogScope.WALLET, `Error refreshing wallet data for address ${primaryAddress}`, error)
           
           if (!silent) {
             set({ error: errorMessage, isSyncing: false })
@@ -382,7 +382,7 @@ export const useWalletStore = create<WalletState>()(
             isInitialized : true // We still consider it initialized, just empty
           })
         } catch (error) {
-          logger.error('Error clearing wallet', error)
+          logger.error(LogScope.WALLET, 'Error clearing wallet', error)
           throw error
         }
       }
