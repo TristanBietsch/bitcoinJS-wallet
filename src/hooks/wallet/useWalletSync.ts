@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useWalletStore } from '../../store/walletStore'
 import { getUtxos, getTxs } from '../../services/bitcoin/blockchain'
 import type { 
@@ -22,7 +22,6 @@ export function useWalletSync() {
   
   const { refreshWalletData } = useWalletStore.getState()
 
-  const _queryClient = useQueryClient() // Prefixed with underscore as it's not used currently
   const primaryAddress = wallet?.addresses.nativeSegwit[0]
 
   const utxosQuery = useQuery<EsploraUTXO[], Error>({

@@ -172,14 +172,14 @@ class OptimizedAPIClient {
       const data = await fallbackClient.getUtxos(address)
       this.setCachedData(cacheKey, data)
       return data
-         } catch (_error) {
+         } catch (error) {
        // If all endpoints fail, return stale cache if available
        const stale = this.predictiveCache.get(cacheKey)
        if (stale) {
          console.warn(`All endpoints failed for UTXOs, returning stale cache for ${address}`)
          return stale.data
        }
-       throw _error
+       throw error
      }
   }
 
@@ -199,13 +199,13 @@ class OptimizedAPIClient {
       const data = await fallbackClient.getTransactions(address)
       this.setCachedData(cacheKey, data)
       return data
-         } catch (_error) {
+         } catch (error) {
        const stale = this.predictiveCache.get(cacheKey)
        if (stale) {
          console.warn(`All endpoints failed for transactions, returning stale cache for ${address}`)
          return stale.data
        }
-       throw _error
+       throw error
      }
   }
 
@@ -225,7 +225,8 @@ class OptimizedAPIClient {
       const data = await fallbackClient.getFeeEstimates()
       this.setCachedData(cacheKey, data)
       return data
-         } catch (_error) {
+         } catch (error) {
+       console.error('Fee estimation error:', error)
        const stale = this.predictiveCache.get(cacheKey)
        if (stale) {
          console.warn(`All endpoints failed for fees, returning stale cache`)

@@ -1,9 +1,8 @@
 /**
  * Transaction Status Tracking Service
  * Provides real-time progress updates and status monitoring for Bitcoin transactions
+ * React Native compatible - no Node.js dependencies
  */
-
-import { EventEmitter } from 'events'
 
 export type TransactionStage = 
   | 'initializing'
@@ -39,8 +38,10 @@ export interface TransactionStatus {
   currentMessage: string
 }
 
-class TransactionStatusTracker extends EventEmitter {
+class TransactionStatusTracker {
   private currentStatus: TransactionStatus | null = null
+  private subscribers: Array<(status: TransactionStatus) => void> = []
+  
   private readonly stageProgressMap: Record<TransactionStage, number> = {
     initializing         : 5,
     validating_inputs    : 10,
@@ -118,11 +119,8 @@ class TransactionStatusTracker extends EventEmitter {
       this.currentStatus.endTime = Date.now()
     }
 
-    // Emit progress event
-    this.emit('progress', { ...this.currentStatus })
-    
-    // Emit stage-specific events
-    this.emit(`stage:${stage}`, progressUpdate)
+    // Notify subscribers
+    this.notifySubscribers()
 
     console.log(`Transaction Progress: ${stage} (${progress}%) - ${message}`)
   }
@@ -130,7 +128,7 @@ class TransactionStatusTracker extends EventEmitter {
   setTransactionId(txid: string): void {
     if (this.currentStatus) {
       this.currentStatus.txid = txid
-      this.emit('txid', txid)
+      this.notifySubscribers()
     }
   }
 
@@ -146,8 +144,6 @@ class TransactionStatusTracker extends EventEmitter {
     } else {
       this.updateProgress('failed', { error: error.message })
     }
-
-    this.emit('error', error)
   }
 
   getStatus(): TransactionStatus | null {
@@ -163,7 +159,33 @@ class TransactionStatusTracker extends EventEmitter {
 
   reset(): void {
     this.currentStatus = null
-    this.removeAllListeners()
+    this.subscribers = []
+  }
+
+  // Subscribe to status updates
+  subscribe(callback: (status: TransactionStatus) => void): () => void {
+    this.subscribers.push(callback)
+    
+    // Return unsubscribe function
+    return () => {
+      this.subscribers = this.subscribers.filter(sub => sub !== callback)
+    }
+  }
+
+  private notifySubscribers(): void {
+    if (this.currentStatus) {
+      this.subscribers.forEach(callback => {
+        try {
+          callback({ ...this.currentStatus! })
+        } catch (error) {
+          console.error('Error in transaction status subscriber:', error)
+        }
+      })
+    }
+  }
+
+  private generateTransactionId(): string {
+    return `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
   // Progress estimation helpers
@@ -184,10 +206,6 @@ class TransactionStatusTracker extends EventEmitter {
     }
     
     return 100
-  }
-
-  private generateTransactionId(): string {
-    return `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
   // Utility methods for common progress patterns
@@ -225,7 +243,7 @@ class TransactionStatusTracker extends EventEmitter {
 // Singleton instance for global transaction tracking
 export const transactionStatusTracker = new TransactionStatusTracker()
 
-// Hook for monitoring transaction status
+// Hook for monitoring transaction status (React compatible)
 export function useTransactionStatus() {
   return {
     tracker          : transactionStatusTracker,
@@ -236,7 +254,9 @@ export function useTransactionStatus() {
       transactionStatusTracker.setError(error, stage),
     getStatus   : () => transactionStatusTracker.getStatus(),
     getDuration : () => transactionStatusTracker.getDuration(),
-    reset       : () => transactionStatusTracker.reset()
+    reset       : () => transactionStatusTracker.reset(),
+    subscribe   : (callback: (status: TransactionStatus) => void) => 
+      transactionStatusTracker.subscribe(callback)
   }
 }
 

@@ -231,13 +231,15 @@ export function useEnhancedTransactionProcessing(): {
       // Phase 5: Transaction Building
       trackProgress('building_transaction')
       
-      const { psbt, feeDetails: _feeDetails } = buildTransaction({
+      const { psbt, feeDetails } = buildTransaction({
         inputs  : selectionResult.selectedUtxos,
         outputs,
         feeRate : params.feeRate,
         changeAddress,
         network : bitcoinjsNetwork
       })
+
+      console.log('Transaction built with fee details:', feeDetails)
 
       // Phase 6: Transaction Verification
       const verification = verifyTransaction(

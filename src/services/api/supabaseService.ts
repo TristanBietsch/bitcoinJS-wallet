@@ -138,7 +138,7 @@ class SupabaseService {
 
       // Add email to waitlist with current timestamp
       logger.debug(LogScope.API, `API call to add email: ${email}`)
-      const _response = await axios.post(
+      const response = await axios.post(
         `${this.apiUrl}/rest/v1/${this.tableName}`,
         { 
           email,
@@ -155,7 +155,7 @@ class SupabaseService {
         }
       )
 
-      logger.debug(LogScope.API, `Successfully added email to waitlist: ${email}`)
+      logger.debug(LogScope.API, `Successfully added email to waitlist: ${email} (status: ${response.status})`)
       return { success: true }
     } catch (error: any) {
       // Handle different types of errors

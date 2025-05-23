@@ -41,12 +41,12 @@ interface SendState {
   setErrorMode     : (errorMode: ErrorMode) => void
   
   // Enhanced fee actions
-  setFeeRates      : (rates: EnhancedFeeRates) => void
+  setFeeRates      : (rates: EnhancedFeeRates | undefined) => void
   setFeeOptions    : (options: FeeOption[]) => void
-  setSelectedFeeOption : (option: FeeOption) => void
+  setSelectedFeeOption : (option: FeeOption | undefined) => void
   setIsLoadingFees : (loading: boolean) => void
   setFeeError      : (error: string | undefined) => void
-  setEstimatedTxSize : (size: number) => void
+  setEstimatedTxSize : (size: number | undefined) => void
   
   reset            : () => void
 }

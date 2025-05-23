@@ -69,7 +69,8 @@ function parseBIP21URI(uri: string): ParsedQRResult {
     }
     
     return result
-  } catch (_error) {
+  } catch (error) {
+    console.error('Error parsing BIP21 URI:', error)
     // In case of any parsing errors, just return the URI as is
     return {
       address : uri

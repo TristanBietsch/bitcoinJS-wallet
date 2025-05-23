@@ -146,6 +146,7 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
     
     if (amountSats <= 0) {
       setState(prev => ({ ...prev, feeOptions: [], feeRates: null }))
+      setFeeRates(undefined)
       setFeeOptions([])
       return
     }
@@ -230,6 +231,7 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
       cacheAge               : 0
     })
     
+    setFeeRates(undefined)
     setFeeOptions([])
     setFeeError(undefined)
   }, [ setFeeRates, setFeeOptions, setFeeError ])

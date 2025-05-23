@@ -82,7 +82,8 @@ export const useCameraScanner = () => {
         router.replace('/send/send' as any)
       }, 100)
       
-    } catch (_error) {
+    } catch (error) {
+      console.error('QR code parsing error:', error)
       Alert.alert(
         'Error',
         'Failed to parse QR code. Please try again.',

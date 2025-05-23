@@ -292,8 +292,11 @@ class PerformanceOptimizationService {
     return [ ...addresses ].sort(() => Math.random() - 0.5) // Placeholder randomization
   }
 
-  private async refreshStaleUtxos(_wallet: BitcoinWallet): Promise<void> {
+  private async refreshStaleUtxos(wallet: BitcoinWallet): Promise<void> {
     const staleThreshold = Date.now() - (CACHE_CONFIG.utxoCacheTTL / 2)
+    
+    // TODO: Use wallet parameter when implementing actual UTXO fetching
+    console.log(`Background refresh for wallet:`, wallet.id)
     
     for (const [ address, cache ] of this.utxoCache.entries()) {
       if (cache.lastFetch < staleThreshold) {
@@ -363,6 +366,8 @@ class PerformanceOptimizationService {
 
   private calculateCacheHitRate(type: 'addresses' | 'utxos' | 'fees'): number {
     // Placeholder - would track actual hit/miss ratios in practice
+    // TODO: Implement different calculations based on cache type
+    console.log(`Calculating hit rate for cache type: ${type}`)
     return 0.85 // 85% hit rate example
   }
 }

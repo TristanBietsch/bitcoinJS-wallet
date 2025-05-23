@@ -185,7 +185,8 @@ export function validateSeedPhrase(phrase: string): SeedPhraseValidationResult {
       errors  : [],
       normalizedPhrase,
     }
-  } catch (_error) {
+  } catch (error) {
+    console.error('Error validating seed phrase checksum:', error)
     return {
       isValid : false,
       errors  : [
