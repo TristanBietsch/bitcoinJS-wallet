@@ -1,147 +1,199 @@
-import type { EsploraUTXO } from '../../types/blockchain.types' // Adjusted path
 import type { NormalizedUTXO } from '../../types/tx.types' // Adjusted path
+import type { EnhancedUTXO } from '../../types/blockchain.types'
 // import * as bitcoin from 'bitcoinjs-lib'; // If needed for scriptPubKey generation or other utils
 // import { BIP32Interface } from 'bip32'; // If key derivation happens here
 
-/**
- * Placeholder type for a function that maps an address to its derivation path.
- * In a real wallet, this would involve looking up the address in the wallet's known addresses.
- */
-export type AddressToPathMapper = (address: string) => string | undefined;
+
 
 /**
- * Placeholder type for a function that derives a public key from a BIP32 path.
+ * Enhanced coin selection algorithm that considers address types and privacy
+ * Prioritizes native segwit UTXOs for lower fees and prefers larger UTXOs to minimize inputs
  */
-export type PublicKeyDeriver = (path: string) => Buffer;
+export function selectUtxosEnhanced(
+  availableUtxos: Array<EnhancedUTXO & { publicKey: Buffer }>,
+  targetAmount: number,
+  feePerByte: number,
+  options: {
+    preferAddressType?: 'native_segwit' | 'segwit' | 'legacy'
+    includeUnconfirmed?: boolean
+    minimizeInputs?: boolean
+  } = {}
+): { selectedUtxos: NormalizedUTXO[], totalFee: number, totalSelectedValue: number, changeAmount: number } | null {
+  const { 
+    preferAddressType = 'native_segwit', 
+    includeUnconfirmed = false,
+    minimizeInputs = true 
+  } = options
 
-/**
- * Normalizes UTXOs fetched from Esplora by associating them with their derivation paths
- * and public keys, which are necessary for signing.
- *
- * @param utxos - An array of UTXOs as fetched from Esplora.
- * @param _addressToPathMapper - A function that can map a UTXO's address to its BIP32 derivation path.
- * @param _derivePublicKey - A function that can derive a public key Buffer from a BIP32 path.
- * @returns An array of NormalizedUTXO objects, ready for transaction building.
- */
-export function normalizeUtxosForSigning(
-  utxos: EsploraUTXO[],
-  _addressToPathMapper: AddressToPathMapper,
-  _derivePublicKey: PublicKeyDeriver
-): NormalizedUTXO[] {
-  if (!utxos) return []
+  if (!availableUtxos || availableUtxos.length === 0) return null
 
-  return utxos.map((utxo) => {
-    // To get the address from an EsploraUTXO, we need to ensure EsploraUTXO includes
-    // scriptpubkey_address or similar. The current EsploraUTXO definition in
-    // blockchain.types.ts from previous phases was:
-    // export const EsploraUTXOSchema = z.object({
-    //   txid: z.string(),
-    //   vout: z.number().int().nonnegative(),
-    //   status: EsploraStatusSchema,
-    //   value: z.number().int().positive(),
-    // });
-    // This basic schema does NOT contain the address directly.
-    // The address is part of the vout object within a full transaction (EsploraTransactionSchema).
-    // For UTXOs from /address/:address/utxo, the address is implicitly the one queried.
-    // However, for coin selection from a list of *all* wallet UTXOs, each UTXO needs its address info.
+  // Filter UTXOs by confirmation status
+  let filteredUtxos = includeUnconfirmed 
+    ? availableUtxos 
+    : availableUtxos.filter(utxo => utxo.status.confirmed)
 
-    // For this function to work robustly, EsploraUTXO type should ideally include `scriptpubkey_address`.
-    // Assuming for now `utxo.scriptpubkey_address` exists (needs type update for EsploraUTXO).
-    // If not, this function would need the address that owns the UTXO as an additional parameter, 
-    // or the UTXO type needs to be enriched upstream.
+  if (filteredUtxos.length === 0) return null
 
-    // Let's assume `utxo` has an `address` field for demonstration, or that the upstream source provides it.
-    // This part is highly dependent on how your `EsploraUTXO` type is populated or if you fetch further details.
-    // For now, we'll make a placeholder for where the address would come from. 
-    // In a real scenario, you might need to iterate known wallet addresses and match UTXOs.
+  // Sort UTXOs for optimal selection
+  const sortedUtxos = [ ...filteredUtxos ].sort((a, b) => {
+    // Prefer specified address type
+    if (a.addressType === preferAddressType && b.addressType !== preferAddressType) return -1
+    if (b.addressType === preferAddressType && a.addressType !== preferAddressType) return 1
     
-    // const address = utxo.address; // This field is NOT in the current EsploraUTXO type
-    // This function can't work as intended without address info on each UTXO object.
-    // Let's modify the function signature slightly for now or assume EsploraUTXO gets updated.
-    // For the purpose of this plan, we will proceed ASSUMING `utxo` object will have an `address` field.
-    // This would require an update to how UTXOs are fetched or processed before this step.
+    // Then sort by size (largest first if minimizing inputs, smallest first otherwise)
+    return minimizeInputs ? b.value - a.value : a.value - b.value
+  })
 
-    // TODO: Resolve how to get the address for each utxo. 
-    // For now, skipping path/pubkey derivation if address is missing from utxo object model.
-    // const path = address ? addressToPathMapper(address) : undefined;
-    // const publicKey = path ? derivePublicKey(path) : undefined;
+  let selectedUtxos: NormalizedUTXO[] = []
+  let currentTotalValue = 0
 
-    const normalized: NormalizedUTXO = {
-      ...utxo,
-      // path: path, // Uncomment when address resolution is clear
-      // publicKey: publicKey, // Uncomment when address resolution is clear
+  // Base transaction size estimation
+  const getInputSize = (addressType: 'legacy' | 'segwit' | 'native_segwit'): number => {
+    switch (addressType) {
+      case 'legacy': return 148        // P2PKH input
+      case 'segwit': return 91         // P2SH-P2WPKH input  
+      case 'native_segwit': return 68  // P2WPKH input
+      default: return 68
     }
-    return normalized
-  }).filter(utxo => utxo !== null) as NormalizedUTXO[] // Filter out any potential nulls if mapping fails
+  }
+
+  const outputSize = 31 // P2WPKH output size
+  const baseTransactionSize = 10 // Version, locktime, etc.
+
+  for (const utxo of sortedUtxos) {
+    selectedUtxos.push(utxo as NormalizedUTXO)
+    currentTotalValue += utxo.value
+
+    // Calculate current transaction size and fee
+    const currentTxSize = baseTransactionSize + 
+      selectedUtxos.reduce((acc, u) => acc + getInputSize(u.addressType), 0) +
+      outputSize + // recipient output
+      outputSize   // potential change output
+
+    const estimatedFee = Math.ceil(currentTxSize * feePerByte)
+    const changeAmount = currentTotalValue - targetAmount - estimatedFee
+
+    // Check if we have enough to cover target + fee
+    if (currentTotalValue >= targetAmount + estimatedFee) {
+      const DUST_THRESHOLD = 546 // Standard dust threshold
+      
+      if (changeAmount >= DUST_THRESHOLD || changeAmount === 0) {
+        // We have a valid solution
+        return { 
+          selectedUtxos, 
+          totalFee           : estimatedFee, 
+          totalSelectedValue : currentTotalValue,
+          changeAmount       : Math.max(0, changeAmount)
+        }
+      } else if (changeAmount > 0 && changeAmount < DUST_THRESHOLD) {
+        // Change is dust, add it to fee
+        const feeWithDust = estimatedFee + changeAmount
+        return { 
+          selectedUtxos, 
+          totalFee           : feeWithDust, 
+          totalSelectedValue : currentTotalValue,
+          changeAmount       : 0
+        }
+      }
+    }
+  }
+
+  // Insufficient funds
+  return null
 }
 
 /**
- * Example: Selects UTXOs to cover a target amount plus estimated fee.
- * This is a simple greedy algorithm.
- *
- * @param availableUtxos - Array of NormalizedUTXO available to spend.
- * @param targetAmount - The amount to send to the recipient(s).
- * @param feePerByte - The desired fee rate in satoshis/vByte.
- * @param estimatedTxOverheadVBytes - Estimated non-input/output virtual bytes for the transaction (e.g., version, locktime, nInputs, nOutputs count).
- * @param bytesPerInput - Estimated virtual bytes per input.
- * @param bytesPerOutput - Estimated virtual bytes per output (for recipient and change).
- * @returns Object containing selected UTXOs and the total fee, or null if insufficient funds.
+ * Legacy function maintained for backward compatibility
+ * Now delegates to the enhanced version
  */
 export function selectUtxosSimple(
   availableUtxos: NormalizedUTXO[],
   targetAmount: number,
-  feePerByte: number,
-  estimatedTxOverheadVBytes: number = 10, // Base tx vbytes (version, locktime, etc.)
-  bytesPerInput: number = 68, // Approx P2WPKH input vbytes
-  bytesPerOutput: number = 31 // Approx P2WPKH output vbytes
+  feePerByte: number
 ): { selectedUtxos: NormalizedUTXO[], totalFee: number, totalSelectedValue: number } | null {
-  if (!availableUtxos || availableUtxos.length === 0) return null
+  
+  // Convert to enhanced format for processing
+  const enhancedUtxos = availableUtxos.map(utxo => ({
+    ...utxo,
+    // Use existing data if available, otherwise use defaults
+    addressType    : utxo.addressType || 'native_segwit' as const,
+    address        : utxo.address || 'unknown',
+    derivationPath : utxo.derivationPath || 'm/84\'/1\'/0\'/0/0',
+    addressIndex   : utxo.addressIndex || 0
+  }))
 
-  let selectedUtxos: NormalizedUTXO[] = []
-  let currentTotalValue = 0
-  let estimatedFee = 0
-  let estimatedWeight = estimatedTxOverheadVBytes + bytesPerOutput // Base + recipient output
+  const result = selectUtxosEnhanced(enhancedUtxos, targetAmount, feePerByte, {
+    includeUnconfirmed : true,
+    minimizeInputs     : true
+  })
 
-  // Sort UTXOs: smallest first can help make exact change, largest first can minimize inputs
-  // For simplicity, let's use them as they come or sort descending to pick larger UTXOs first.
-  const sortedUtxos = [ ...availableUtxos ].sort((a, b) => b.value - a.value) // largest first
+  if (!result) return null
 
-  for (const utxo of sortedUtxos) {
-    selectedUtxos.push(utxo)
-    currentTotalValue += utxo.value
-    estimatedWeight += bytesPerInput // Add weight for this new input
-    
-    // Estimate fee with current inputs and one change output (worst case for fee)
-    const tempEstimatedWeightWithChange = estimatedWeight + bytesPerOutput
-    estimatedFee = Math.ceil(tempEstimatedWeightWithChange * feePerByte)
-
-    if (currentTotalValue >= targetAmount + estimatedFee) {
-      // Check if we can make change without the change output being dust
-      const changeAmount = currentTotalValue - targetAmount - estimatedFee
-      const DUST_THRESHOLD = 546 // sats, typical dust threshold
-
-      if (changeAmount >= 0) { // If change is positive or zero
-        if (changeAmount < DUST_THRESHOLD && changeAmount > 0) {
-          // Change is dust. We can't create a dust output. 
-          // The fee will effectively increase to consume this dust.
-          // Re-calculate fee without change output for this scenario.
-          const feeWithoutChange = Math.ceil(estimatedWeight * feePerByte)
-          if (currentTotalValue >= targetAmount + feeWithoutChange) {
-            // Selected UTXOs cover amount + fee (where fee consumes dust)
-            return { selectedUtxos, totalFee: feeWithoutChange, totalSelectedValue: currentTotalValue }
-          } else {
-            // Cannot cover even if change is dust, try adding more UTXOs
-            continue
-          }
-        } else {
-          // Change is not dust, or zero. This selection is good.
-          return { selectedUtxos, totalFee: estimatedFee, totalSelectedValue: currentTotalValue }
-        }
-      }
-      // If changeAmount is negative, currentTotalValue isn't enough yet, loop continues
-    }
+  return {
+    selectedUtxos      : result.selectedUtxos,
+    totalFee           : result.totalFee,
+    totalSelectedValue : result.totalSelectedValue
   }
+}
 
-  // If loop finishes and not enough value was gathered
-  return null // Insufficient funds
+/**
+ * Analyzes UTXO set for optimization opportunities
+ */
+export function analyzeUtxoSet(utxos: EnhancedUTXO[]): {
+  totalValue: number
+  confirmedValue: number
+  unconfirmedValue: number
+  addressTypeDistribution: Record<string, { count: number; value: number }>
+  dustUtxos: EnhancedUTXO[]
+  largeUtxos: EnhancedUTXO[]
+  privacyScore: number
+} {
+  let totalValue = 0
+  let confirmedValue = 0
+  let unconfirmedValue = 0
+  const addressTypeDistribution: Record<string, { count: number; value: number }> = {}
+  const dustUtxos: EnhancedUTXO[] = []
+  const largeUtxos: EnhancedUTXO[] = []
+  
+  const DUST_THRESHOLD = 546
+  const LARGE_UTXO_THRESHOLD = 1000000 // 0.01 BTC
+
+  utxos.forEach(utxo => {
+    totalValue += utxo.value
+    
+    if (utxo.status.confirmed) {
+      confirmedValue += utxo.value
+    } else {
+      unconfirmedValue += utxo.value
+    }
+
+    // Address type distribution
+    if (!addressTypeDistribution[utxo.addressType]) {
+      addressTypeDistribution[utxo.addressType] = { count: 0, value: 0 }
+    }
+    addressTypeDistribution[utxo.addressType].count++
+    addressTypeDistribution[utxo.addressType].value += utxo.value
+
+    // Categorize by size
+    if (utxo.value <= DUST_THRESHOLD) {
+      dustUtxos.push(utxo)
+    } else if (utxo.value >= LARGE_UTXO_THRESHOLD) {
+      largeUtxos.push(utxo)
+    }
+  })
+
+  // Simple privacy score based on UTXO count and distribution
+  const utxoCount = utxos.length
+  const addressCount = new Set(utxos.map(u => u.address)).size
+  const privacyScore = Math.min(100, (addressCount / Math.max(1, utxoCount)) * 100)
+
+  return {
+    totalValue,
+    confirmedValue,
+    unconfirmedValue,
+    addressTypeDistribution,
+    dustUtxos,
+    largeUtxos,
+    privacyScore
+  }
 } 

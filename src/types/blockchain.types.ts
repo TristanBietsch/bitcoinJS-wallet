@@ -21,6 +21,14 @@ export const EsploraUTXOSchema = z.object({
 })
 export type EsploraUTXO = z.infer<typeof EsploraUTXOSchema>;
 
+// Enhanced UTXO type with address and derivation information for wallet operations
+export interface EnhancedUTXO extends EsploraUTXO {
+  address: string;           // The address this UTXO belongs to
+  derivationPath: string;    // BIP32 derivation path (e.g., "m/84'/1'/0'/0/0")
+  addressType: 'legacy' | 'segwit' | 'native_segwit'; // Address type for script generation
+  addressIndex: number;      // Index in the derivation path
+}
+
 // Schema for the 'prevout' object within a transaction's 'vin' array.
 // This describes the output that is being spent by this input.
 const EsploraPrevoutSubSchema = z.object({

@@ -1,14 +1,13 @@
 import type { networks as BitcoinJSNetworks } from 'bitcoinjs-lib' // Using 'bitcoinjs-lib' directly
 import type { Psbt } from 'bitcoinjs-lib'
-import type { EsploraUTXO } from './blockchain.types' // Assuming EsploraUTXO is in a sibling file blockchain.types.ts
+import type { EnhancedUTXO } from './blockchain.types' // Using EnhancedUTXO instead of basic EsploraUTXO
 
 /**
  * Represents a UTXO that has been normalized and is ready for use in transaction building.
- * It extends the basic EsploraUTXO with additional properties needed for signing.
+ * It extends the EnhancedUTXO with additional properties needed for signing.
  */
-export interface NormalizedUTXO extends EsploraUTXO {
-  path?: string; // BIP32 derivation path for the UTXO's address (e.g., "m/84'/0'/0'/0/0")
-  publicKey?: Buffer; // Public key Buffer associated with the UTXO's address
+export interface NormalizedUTXO extends EnhancedUTXO {
+  publicKey: Buffer; // Public key Buffer associated with the UTXO's address (required for signing)
   // For SegWit inputs, bitcoinjs-lib primarily needs witnessUtxo
   // witnessUtxo: { script: Buffer; value: number }; // This is often part of what you add to PSBT input
   // For non-SegWit inputs, bitcoinjs-lib needs the full previous transaction hex

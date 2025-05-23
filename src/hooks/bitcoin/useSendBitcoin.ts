@@ -1,13 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useWalletStore } from '../../store/walletStore' // To get current network and invalidate queries
-import { getUtxos } from '../../services/bitcoin/blockchain'
-import { normalizeUtxosForSigning, selectUtxosSimple, AddressToPathMapper, PublicKeyDeriver } from '../../utils/bitcoin/utxo'
+import { 
+  fetchWalletUtxos, 
+  enrichUtxosWithPublicKeys,
+  filterUtxosByConfirmation 
+} from '../../services/bitcoin/wallet/walletUtxoService'
+import { selectUtxosEnhanced } from '../../utils/bitcoin/utxo'
 import { buildTransaction } from '../../services/bitcoin/txBuilder'
 import { signTransaction } from '../../services/bitcoin/txSigner'
 import { broadcastTx } from '../../services/bitcoin/broadcast'
-import { bitcoinjsNetwork as currentBitcoinNetwork, CURRENT_NETWORK as APP_NETWORK } from '../../config/env' // For network object and type
+import { bitcoinjsNetwork as currentBitcoinNetwork } from '../../config/env' // For network object and type
 import { seedPhraseService } from '../../services/bitcoin/wallet/seedPhraseService'
-import type { NormalizedUTXO, TransactionOutput } from '../../types/tx.types'
+import type { TransactionOutput } from '../../types/tx.types'
 
 // --- Mnemonic Retrieval from Secure Storage ---
 // Uses the existing seedPhraseService to get the mnemonic from secure storage
@@ -36,23 +40,7 @@ async function getMnemonicFromSecureStorage(): Promise<string> {
   }
 }
 
-// Placeholder for address to path mapping (would be part of wallet management)
-const placeholderAddressToPathMapper: AddressToPathMapper = (_address: string): string | undefined => {
-  // TODO: Implement actual mapping based on how your wallet stores derived addresses and paths
-  // For example, if UTXO belongs to receive address at index 0 on account 0 for P2WPKH on testnet:
-  // return "m/84'/1'/0'/0/0"; 
-  return "m/84'/" + (APP_NETWORK === 'mainnet' ? "0'" : "1'") + "/0'/0/0" // Generic path, needs to be specific to UTXO
-}
-
-// Placeholder for public key derivation (would use BIP32)
-const placeholderPublicKeyDeriver: PublicKeyDeriver = (_path: string): Buffer => {
-  // TODO: Implement actual public key derivation using BIP32 and the root key.
-  // Example: const root = bip32.fromSeed(seed, network);
-  // const child = root.derivePath(path);
-  // return child.publicKey;
-  return Buffer.from('03' + '00'.repeat(32), 'hex') // Dummy public key
-}
-// --- End Placeholders ---
+// --- Enhanced UTXO Management ---
 
 interface SendBitcoinParams {
   recipientAddress: string;
@@ -84,33 +72,34 @@ export function useSendBitcoin() {
         throw new Error('No primary address found in the wallet to fetch UTXOs.')
       }
 
-      // 1. Fetch UTXOs for the wallet (using primary address for now)
-      // In a real wallet, you'd fetch UTXOs for all relevant addresses or use a UTXO set from walletStore.
-      const availableEsploraUtxos = await getUtxos(primaryFromAddress)
-      if (!availableEsploraUtxos || availableEsploraUtxos.length === 0) {
+      // 1. Fetch UTXOs for all wallet addresses with enhanced information
+      const mnemonic = await getMnemonicFromSecureStorage()
+      if (!mnemonic) throw new Error('Mnemonic not available for UTXO management.')
+
+      const enhancedUtxos = await fetchWalletUtxos(wallet, mnemonic, currentBitcoinNetwork)
+      if (!enhancedUtxos || enhancedUtxos.length === 0) {
         throw new Error('No UTXOs available to make a transaction.')
       }
 
-      // 2. Normalize UTXOs (add path and publicKey - using placeholders for now)
-      // TODO: Replace placeholder mappers with actual wallet key management logic
-      const normalizedUtxos: NormalizedUTXO[] = normalizeUtxosForSigning(
-        availableEsploraUtxos,
-        placeholderAddressToPathMapper,
-        placeholderPublicKeyDeriver
-      )
-      
-      // Add address to normalized UTXOs for scriptPubKey generation if not already present
-      // This is a temporary workaround if EsploraUTXO doesn't have address.
-      // Our current txBuilder expects utxo.publicKey to create scriptPubKey, so address is not strictly needed there if publicKey is present.
-      // However, placeholderAddressToPathMapper might need it.
-      const utxosWithAddressForMapper = normalizedUtxos.map(u => ({...u, address: primaryFromAddress}))
+      // 2. Filter UTXOs by confirmation status (default to confirmed only for sending)
+      const confirmedUtxos = filterUtxosByConfirmation(enhancedUtxos, false)
+      if (confirmedUtxos.length === 0) {
+        throw new Error('No confirmed UTXOs available. Please wait for pending transactions to confirm.')
+      }
 
-      // 3. Select UTXOs for the transaction
-      const selectionResult = selectUtxosSimple(
-        utxosWithAddressForMapper, // Use UTXOs that now have an address for the mapper
+      // 3. Enrich UTXOs with public keys for signing
+      const normalizedUtxos = enrichUtxosWithPublicKeys(confirmedUtxos, mnemonic, currentBitcoinNetwork)
+
+      // 4. Select UTXOs for the transaction using enhanced algorithm
+      const selectionResult = selectUtxosEnhanced(
+        normalizedUtxos,
         amountSat,
-        feeRate
-        // Using default estimates for overhead, input, output vbytes from selectUtxosSimple
+        feeRate,
+        {
+          preferAddressType  : 'native_segwit', // Prefer native segwit for lower fees
+          includeUnconfirmed : false,
+          minimizeInputs     : true
+        }
       )
 
       if (!selectionResult) {
@@ -133,8 +122,7 @@ export function useSendBitcoin() {
       // due to more precise estimation or dust handling in `buildTransaction`. For now, we proceed.
 
       // 5. Sign the transaction
-      const mnemonic = await getMnemonicFromSecureStorage() // Crucial: Securely fetch mnemonic
-      if (!mnemonic) throw new Error('Mnemonic not available for signing.')
+      // Mnemonic already retrieved above for UTXO management
 
       const signedTxHex = await signTransaction({
         psbt,
