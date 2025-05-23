@@ -1,9 +1,8 @@
 import { z } from 'zod'
-import axios from 'axios'
+import { optimizedClient } from '@/src/services/api/optimizedClient'
 import type {
   EsploraUTXO,
   EsploraTransaction,
-  EsploraFeeEstimates,
   FeeRates,
 } from '@/src/types/blockchain.types'
 import {
@@ -11,26 +10,22 @@ import {
   EsploraTransactionSchema,
   EsploraFeeEstimatesSchema
 } from '@/src/types/blockchain.types'
-import { ESPLORA_API_BASE_URL } from '@/src/config/env'
 
 /**
  * Fetches Unspent Transaction Outputs (UTXOs) for a given Bitcoin address.
+ * Uses optimized client with predictive loading and aggressive caching.
+ * Will return stale data if all endpoints fail.
  * @param address - The Bitcoin address to fetch UTXOs for.
  * @returns A promise that resolves to an array of EsploraUTXO objects.
- * @throws AxiosError if the API request fails, or ZodError if parsing fails.
  */
 export async function getUtxos(address: string): Promise<EsploraUTXO[]> {
   if (!address) throw new Error('Address is required to fetch UTXOs')
-  const url = `${ESPLORA_API_BASE_URL}/address/${address}/utxo`
   try {
-    const response = await axios.get<unknown[]>(url) // Esplora returns an array of UTXOs
-    return z.array(EsploraUTXOSchema).parse(response.data)
+    // Use optimized client with 3-minute cache and predictive loading
+    const data = await optimizedClient.getUtxos(address)
+    return z.array(EsploraUTXOSchema).parse(data)
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(`AxiosError in getUtxos for ${address}:`, error.message, error.response?.data)
-    } else {
-      console.error(`Error in getUtxos for ${address}:`, error)
-    }
+    console.error(`Error in getUtxos for ${address}:`, error)
     throw error
   }
 }
@@ -47,9 +42,9 @@ export function calculateWalletBalance(utxos: EsploraUTXO[]): number {
 
 /**
  * Fetches the balance for a given Bitcoin address.
+ * Uses cached UTXO data for instant response.
  * @param address - The Bitcoin address.
  * @returns A promise that resolves to the balance in satoshis.
- * @throws AxiosError or ZodError if fetching UTXOs fails.
  */
 export async function getBalance(address: string): Promise<number> {
   if (!address) throw new Error('Address is required to fetch balance')
@@ -59,36 +54,32 @@ export async function getBalance(address: string): Promise<number> {
 
 /**
  * Fetches the transaction history for a given Bitcoin address.
+ * Uses optimized client with 10-minute cache and stale fallback.
  * @param address - The Bitcoin address.
  * @returns A promise that resolves to an array of EsploraTransaction objects.
- * @throws AxiosError or ZodError.
  */
 export async function getTxs(address: string): Promise<EsploraTransaction[]> {
   if (!address) throw new Error('Address is required to fetch transaction history')
-  const url = `${ESPLORA_API_BASE_URL}/address/${address}/txs`
   try {
-    const response = await axios.get<unknown[]>(url) // Esplora returns an array of Txs
-    return z.array(EsploraTransactionSchema).parse(response.data)
+    // Use optimized client with 10-minute cache
+    const data = await optimizedClient.getTransactions(address)
+    return z.array(EsploraTransactionSchema).parse(data)
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(`AxiosError in getTxs for ${address}:`, error.message, error.response?.data)
-    } else {
-      console.error(`Error in getTxs for ${address}:`, error)
-    }
+    console.error(`Error in getTxs for ${address}:`, error)
     throw error
   }
 }
 
 /**
  * Fetches current Bitcoin fee estimates from the Esplora API.
+ * Uses optimized client with fallback to safe defaults.
  * @returns A promise that resolves to a FeeRates object (slow, normal, fast).
- * @throws AxiosError or ZodError.
  */
 export async function getFeeEstimates(): Promise<FeeRates> {
-  const url = `${ESPLORA_API_BASE_URL}/mempool/fees`
   try {
-    const response = await axios.get<EsploraFeeEstimates>(url)
-    const parsedEsploraFees = EsploraFeeEstimatesSchema.parse(response.data)
+    // Use optimized client with 1-minute cache and safe defaults
+    const data = await optimizedClient.getFeeEstimates()
+    const parsedEsploraFees = EsploraFeeEstimatesSchema.parse(data)
 
     const feeRates: FeeRates = {
       fast   : parsedEsploraFees['1'] || parsedEsploraFees['2'] || parsedEsploraFees['3'] || 20,
@@ -101,11 +92,7 @@ export async function getFeeEstimates(): Promise<FeeRates> {
     }
     return feeRates
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(`AxiosError in getFeeEstimates:`, error.message, error.response?.data)
-    } else {
-      console.error(`Error in getFeeEstimates:`, error)
-    }
+    console.error(`Error in getFeeEstimates:`, error)
     console.warn('Failed to fetch fee estimates, returning default rates.', error)
     return { fast: 20, normal: 10, slow: 2 } // Default fallback
   }
@@ -113,50 +100,93 @@ export async function getFeeEstimates(): Promise<FeeRates> {
 
 /**
  * Broadcasts a raw Bitcoin transaction hex to the network via Esplora.
+ * Tries all available endpoints for maximum reliability.
  * @param txHex - The raw transaction hex string.
  * @returns A promise that resolves to the transaction ID (txid) if successful.
- * @throws AxiosError if the broadcast fails.
  */
 export async function broadcastTx(txHex: string): Promise<string> {
   if (!txHex) throw new Error('Transaction hex is required to broadcast')
-  const url = `${ESPLORA_API_BASE_URL}/tx`
   try {
-    const response = await axios.post<string>(url, txHex, {
-      headers : { 'Content-Type': 'text/plain' },
-    })
-    const txid = response.data
+    // Use optimized client which tries all endpoints
+    const txid = await optimizedClient.broadcastTransaction(txHex)
     if (typeof txid !== 'string' || txid.length !== 64) {
-        throw new Error ('Invalid txid received from Esplora after broadcasting transaction')
+        throw new Error ('Invalid txid received from broadcast')
     }
+    console.log(`Transaction broadcast successful: ${txid}`)
     return txid
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(`AxiosError in broadcastTx:`, error.message, error.response?.data)
-    } else {
-      console.error(`Error in broadcastTx:`, error)
-    }
+    console.error(`Transaction broadcast failed:`, error)
     throw error
   }
 }
 
 /**
  * Fetches detailed information for a specific transaction by its ID.
+ * Uses 1-hour cache since transaction details are immutable.
  * @param txid - The transaction ID.
  * @returns A promise that resolves to an EsploraTransaction object.
- * @throws AxiosError or ZodError.
  */
 export async function getTransactionDetails(txid: string): Promise<EsploraTransaction> {
   if (!txid) throw new Error('Transaction ID is required to fetch details')
-  const url = `${ESPLORA_API_BASE_URL}/tx/${txid}`
   try {
-    const response = await axios.get<unknown>(url)
-    return EsploraTransactionSchema.parse(response.data)
+    // Use optimized client with 1-hour cache
+    const data = await optimizedClient.getTransactionDetails(txid)
+    return EsploraTransactionSchema.parse(data)
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(`AxiosError in getTransactionDetails for ${txid}:`, error.message, error.response?.data)
-    } else {
-      console.error(`Error in getTransactionDetails for ${txid}:`, error)
-    }
+    console.error(`Error in getTransactionDetails for ${txid}:`, error)
     throw error
   }
+}
+
+/**
+ * Warm up cache for wallet addresses
+ * Call this when wallet loads to preload data
+ */
+export async function warmUpWalletCache(addresses: string[]): Promise<void> {
+  try {
+    await optimizedClient.warmUpCache(addresses)
+    console.log(`Warmed up cache for ${addresses.length} addresses`)
+  } catch (error) {
+    console.warn('Failed to warm up wallet cache:', error)
+  }
+}
+
+/**
+ * Check health of all API systems
+ */
+export async function getSystemHealth(): Promise<{
+  endpoints: Record<string, boolean>
+  circuits: Record<string, any>
+  cache: any
+}> {
+  try {
+    return await optimizedClient.getSystemHealth()
+  } catch (error) {
+    console.warn('System health check failed:', error)
+    return {
+      endpoints : {},
+      circuits  : {},
+      cache     : {}
+    }
+  }
+}
+
+/**
+ * Get cache statistics for monitoring
+ */
+export function getCacheStats(): {
+  size: number
+  entries: string[]
+  accessPatterns: number
+  preloadQueue: number
+  hitRate: number
+} {
+  return optimizedClient.getCacheStats()
+}
+
+/**
+ * Clear all cached data (useful for troubleshooting)
+ */
+export function clearCache(): void {
+  optimizedClient.clearCache()
 } 

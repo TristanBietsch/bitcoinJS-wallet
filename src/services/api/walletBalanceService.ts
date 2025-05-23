@@ -1,8 +1,9 @@
 /**
  * Service for getting wallet balance data from external Bitcoin APIs
  * Supports both mainnet and testnet
+ * Now uses resilient client with proper retry logic and caching
  */
-import axios from 'axios'
+import { priorityClient } from './resilientClient'
 
 // API endpoints for different networks
 const MEMPOOL_MAINNET_API = 'https://mempool.space/api'
@@ -14,12 +15,8 @@ interface AddressBalanceResponse {
   unconfirmed: number; // Unconfirmed balance in satoshis
 }
 
-// Cache configuration
-const CACHE_DURATION_MS = 60 * 1000 // 60 seconds
-
-// Rate limiting configuration
-const RATE_LIMIT_DURATION_MS = 10 * 1000 // 10 seconds
-let lastRequestTimestamp = 0
+// Cache configuration - shorter cache since resilient client handles caching better
+const CACHE_DURATION_MS = 30 * 1000 // 30 seconds
 
 // Cache structure
 interface BalanceCache {
@@ -35,25 +32,17 @@ const balanceCache: BalanceCache[] = []
 const walletBalanceServiceImpl = {
   /**
    * Get balance for a Bitcoin address
+   * Now uses resilient client with automatic retries and circuit breaking
    */
   getAddressBalance : async (
     address: string,
     isTestnet = true,
     forceRefresh = false
   ): Promise<AddressBalanceResponse> => {
-    const now = Date.now()
-
     // If no address is provided, return zero balance immediately
     if (!address) {
       console.log('No address provided, returning zero balance.')
       return { confirmed: 0, unconfirmed: 0 }
-    }
-
-    // Check rate limit first
-    if (!forceRefresh && (now - lastRequestTimestamp < RATE_LIMIT_DURATION_MS)) {
-      console.log('Rate limit active, using cached or potentially stale data.')
-      const cached = walletBalanceServiceImpl.getCachedBalance(address, true) 
-      if (cached) return cached
     }
 
     // Check cache first unless force refresh is requested
@@ -66,10 +55,9 @@ const walletBalanceServiceImpl = {
     }
 
     console.log(`Fetching balance for ${isTestnet ? 'testnet' : 'mainnet'} address: ${address}`)
-    lastRequestTimestamp = now
     
     try {
-      // Fetch directly from Mempool API
+      // Fetch from Mempool API with resilient client
       return await walletBalanceServiceImpl.fetchFromMempool(address, isTestnet)
     } catch (error) {
       console.error('Mempool API request failed:', error)
@@ -87,20 +75,24 @@ const walletBalanceServiceImpl = {
   },
   
   /**
-   * Fetch balance from Mempool API
+   * Fetch balance from Mempool API using resilient client
+   * Uses HIGH priority with built-in caching for fast response
    */
   fetchFromMempool : async (
     address: string,
     isTestnet: boolean
   ): Promise<AddressBalanceResponse> => {
     const baseUrl = isTestnet ? MEMPOOL_TESTNET_API : MEMPOOL_MAINNET_API
-    const response = await axios.get(`${baseUrl}/address/${address}`, {
-      timeout : 10000
-    })
+    const url = `${baseUrl}/address/${address}`
     
-    if (response.data && typeof response.data === 'object') {
-      const chainStats = response.data.chain_stats || { funded_txo_sum: 0, spent_txo_sum: 0 }
-      const mempoolStats = response.data.mempool_stats || { funded_txo_sum: 0, spent_txo_sum: 0 }
+    // Use high priority with 20 second cache for balance requests
+    const data = await priorityClient.high.get(url, {
+      timeout : 30000  // Use 30 second timeout as requested
+    }, 20000)
+    
+    if (data && typeof data === 'object') {
+      const chainStats = data.chain_stats || { funded_txo_sum: 0, spent_txo_sum: 0 }
+      const mempoolStats = data.mempool_stats || { funded_txo_sum: 0, spent_txo_sum: 0 }
       
       const balance: AddressBalanceResponse = {
         confirmed   : chainStats.funded_txo_sum - chainStats.spent_txo_sum,
@@ -116,15 +108,14 @@ const walletBalanceServiceImpl = {
   
   /**
    * Get cached balance if available and not expired
-   * @param allowStaleIfRateLimited - If true, returns cached data even if it's slightly past CACHE_DURATION_MS, used when rate limited.
    */
-  getCachedBalance : (address: string, allowStaleIfRateLimited = false): AddressBalanceResponse | null => {
+  getCachedBalance : (address: string): AddressBalanceResponse | null => {
     const now = Date.now()
     const cached = balanceCache.find(entry => entry.address === address)
     
     if (cached) {
       const isCacheValid = now - cached.timestamp < CACHE_DURATION_MS
-      if (isCacheValid || (allowStaleIfRateLimited && now - cached.timestamp < RATE_LIMIT_DURATION_MS + CACHE_DURATION_MS)) {
+      if (isCacheValid) {
         return cached.data
       }
     }

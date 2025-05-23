@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { resilientClient } from './resilientClient'
 
 /**
  * API endpoints for all service calls
@@ -22,46 +22,23 @@ export const API_ENDPOINTS = {
 }
 
 /**
- * Typed API client with standardized error handling
+ * Typed API client with resilient error handling, retries, and circuit breaking
+ * Now uses the resilient client for better reliability
  */
 export const apiClient = {
     get : async <T = any>(url: string): Promise<T> => {
-        try {
-            const response = await axios.get<T>(url)
-            return response.data
-        } catch (error) {
-            console.error(`GET request to ${url} failed:`, error)
-            throw error
-        }
+        return resilientClient.get<T>(url)
     },
     
     post : async <T = any>(url: string, data: any): Promise<T> => {
-        try {
-            const response = await axios.post<T>(url, data)
-            return response.data
-        } catch (error) {
-            console.error(`POST request to ${url} failed:`, error)
-            throw error
-        }
+        return resilientClient.post<T>(url, data)
     },
     
     put : async <T = any>(url: string, data: any): Promise<T> => {
-        try {
-            const response = await axios.put<T>(url, data)
-            return response.data
-        } catch (error) {
-            console.error(`PUT request to ${url} failed:`, error)
-            throw error
-        }
+        return resilientClient.put<T>(url, data)
     },
     
     delete : async <T = any>(url: string): Promise<T> => {
-        try {
-            const response = await axios.delete<T>(url)
-            return response.data
-        } catch (error) {
-            console.error(`DELETE request to ${url} failed:`, error)
-            throw error
-        }
+        return resilientClient.delete<T>(url)
     }
 } 
