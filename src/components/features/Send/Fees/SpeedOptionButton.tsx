@@ -8,21 +8,23 @@ interface SpeedOptionButtonProps {
   option: SpeedOption
   isSelected: boolean
   onPress: () => void
+  disabled?: boolean
 }
 
 export const SpeedOptionButton: React.FC<SpeedOptionButtonProps> = ({
   option,
   isSelected,
-  onPress
+  onPress,
+  disabled = false
 }) => {
   const renderIcon = () => {
     switch (option.id) {
       case 'economy':
-        return <Turtle size={32} color="#000" />
+        return <Turtle size={32} color={disabled ? "#ccc" : "#000"} />
       case 'standard':
-        return <Squirrel size={32} color="#000" />
+        return <Squirrel size={32} color={disabled ? "#ccc" : "#000"} />
       case 'express':
-        return <Rabbit size={32} color="#000" />
+        return <Rabbit size={32} color={disabled ? "#ccc" : "#000"} />
       default:
         return null
     }
@@ -30,8 +32,13 @@ export const SpeedOptionButton: React.FC<SpeedOptionButtonProps> = ({
 
   return (
     <TouchableOpacity
-      style={[ styles.speedButton, isSelected && styles.selectedSpeed ]}
+      style={[ 
+        styles.speedButton, 
+        isSelected && styles.selectedSpeed,
+        disabled && styles.disabledSpeed
+      ]}
       onPress={onPress}
+      disabled={disabled}
     >
       <View style={styles.speedLeft}>
         {renderIcon()}
@@ -65,6 +72,9 @@ const styles = StyleSheet.create({
   },
   selectedSpeed : {
     backgroundColor : '#E5E5E5'
+  },
+  disabledSpeed : {
+    backgroundColor : '#ccc'
   },
   speedLeft : {
     flexDirection : 'row',

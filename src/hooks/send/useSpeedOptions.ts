@@ -6,17 +6,22 @@ export const useSpeedOptions = () => {
   const [ speed, setSpeed ] = useState<SpeedTier>('standard')
   const [ showSpeedInfoModal, setShowSpeedInfoModal ] = useState(false)
   const [ speedOptions, setSpeedOptions ] = useState(fallbackSpeedOptions)
-  const [ isLoadingFees, setIsLoadingFees ] = useState(false)
+  const [ isLoadingFees, setIsLoadingFees ] = useState(true)
+  const [ feeLoadError, setFeeLoadError ] = useState<string | null>(null)
 
   // Load real-time speed options
   const loadSpeedOptions = useCallback(async () => {
     setIsLoadingFees(true)
+    setFeeLoadError(null)
     try {
       const realTimeOptions = await getSpeedOptions()
       setSpeedOptions(realTimeOptions)
+      console.log('Successfully loaded real-time fee options:', realTimeOptions)
     } catch (error) {
       console.error('Failed to load real-time speed options:', error)
+      setFeeLoadError('Failed to load current fee rates')
       // Keep fallback options if loading fails
+      setSpeedOptions(fallbackSpeedOptions)
     } finally {
       setIsLoadingFees(false)
     }
@@ -49,6 +54,7 @@ export const useSpeedOptions = () => {
     showSpeedInfoModal,
     speedOptions,
     isLoadingFees,
+    feeLoadError,
     handleSpeedChange,
     handleSpeedInfoPress,
     handleCloseSpeedInfoModal,

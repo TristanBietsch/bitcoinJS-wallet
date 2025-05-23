@@ -32,10 +32,13 @@ export const useSendAddressScreen = () => {
     speed,
     showSpeedInfoModal,
     speedOptions,
+    isLoadingFees,
+    feeLoadError,
     handleSpeedChange: handleSpeedChangeBase,
     handleSpeedInfoPress,
     handleCloseSpeedInfoModal,
-    resetSpeed
+    resetSpeed,
+    refreshSpeedOptions
   } = useSpeedOptions()
 
   const {
@@ -169,6 +172,8 @@ export const useSendAddressScreen = () => {
     
     // Fee loading state for enhanced UX
     feeLoading : feeState.isLoading || feeState.isBackgroundRefreshing,
+    isLoadingFees,
+    feeLoadError,
     
     // Handlers
     handleAddressChange,
@@ -182,6 +187,7 @@ export const useSendAddressScreen = () => {
     handleCustomFeePress,
     handleNumberPress,
     handleCloseCustomFeeModal,
-    handleConfirmCustomFee : handleCustomFeeConfirm
+    handleConfirmCustomFee : handleCustomFeeConfirm,
+    refreshSpeedOptions
   }
 } 

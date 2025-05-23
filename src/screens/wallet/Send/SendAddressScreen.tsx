@@ -23,6 +23,8 @@ export default function SendAddressScreen() {
     isInputValid,
     pendingInput,
     feeError,
+    isLoadingFees,
+    feeLoadError,
     
     // Handlers
     handleAddressChange,
@@ -35,7 +37,8 @@ export default function SendAddressScreen() {
     handleCustomFeePress,
     handleNumberPress,
     handleCloseCustomFeeModal,
-    handleConfirmCustomFee
+    handleConfirmCustomFee,
+    refreshSpeedOptions
   } = useSendAddressScreen()
 
   // Determine if back button should be disabled - only when there's a fee error in the custom fee modal
@@ -78,6 +81,9 @@ export default function SendAddressScreen() {
           onNumberPress={handleNumberPress}
           pendingInput={pendingInput}
           feeError={feeError}
+          isLoadingFees={isLoadingFees}
+          feeLoadError={feeLoadError}
+          onRefreshFees={refreshSpeedOptions}
         />
       </View>
 

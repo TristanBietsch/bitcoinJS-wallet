@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { CustomFee } from '@/src/types/domain/transaction'
 
-
 // Set minimum fee to 150 sats
 const MIN_FEE_SATS = 150
 
 // Default transaction size for fee calculations (rough estimate)
+// This should ideally be calculated based on actual UTXOs, but for now use a reasonable estimate
 const DEFAULT_TX_SIZE_VBYTES = 200
 
 const DEFAULT_CUSTOM_FEE: CustomFee = {
@@ -21,6 +21,8 @@ const calculateFeeRateFromSats = (totalSats: number): number => {
   return Math.ceil(totalSats / DEFAULT_TX_SIZE_VBYTES)
 }
 
+
+
 /**
  * Estimate confirmation time from fee rate (simplified model)
  */
@@ -31,6 +33,29 @@ const estimateConfirmationTime = (feeRate: number): number => {
   if (feeRate >= 5) return 360      // ~6 hours
   if (feeRate >= 2) return 720      // ~12 hours
   return 1440                       // ~24 hours
+}
+
+/**
+ * Enhanced fee validation
+ */
+const validateFeeAmount = (totalSats: number, feeRate: number): string | null => {
+  if (totalSats === 0) {
+    return 'Fee cannot be zero'
+  }
+  
+  if (totalSats < MIN_FEE_SATS) {
+    return `Minimum fee is ${MIN_FEE_SATS} sats`
+  }
+  
+  if (feeRate > 1000) {
+    return 'Fee rate is exceptionally high (>1000 sat/vB)'
+  }
+  
+  if (feeRate < 1) {
+    return 'Fee rate too low (minimum 1 sat/vB)'
+  }
+  
+  return null
 }
 
 export const useCustomFee = () => {
@@ -100,12 +125,9 @@ export const useCustomFee = () => {
         })
 
         // Validate and show errors
-        if (totalSats === 0) {
-          setFeeError('Fee cannot be zero')
-        } else if (totalSats < MIN_FEE_SATS) {
-          setFeeError(`Minimum fee is ${MIN_FEE_SATS} sats`)
-        } else if (feeRate > 1000) {
-          setFeeError('Fee rate is exceptionally high (>1000 sat/vB)')
+        const validationError = validateFeeAmount(totalSats, feeRate)
+        if (validationError) {
+          setFeeError(validationError)
         } else {
           setFeeError(null)
         }
