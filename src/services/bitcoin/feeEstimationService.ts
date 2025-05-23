@@ -8,7 +8,7 @@ import type { FeeRates } from '../../types/blockchain.types'
 
 export interface EnhancedFeeRates extends FeeRates {
   economy : number    // Very slow, lowest cost
-  source  : 'esplora' | 'fallback' | 'cached'
+  source  : 'mempool' | 'fallback' | 'cached'
   lastUpdated : number
   confirmationTargets : {
     slow   : number // blocks
@@ -51,15 +51,15 @@ export async function getEnhancedFeeEstimates(): Promise<EnhancedFeeRates> {
   }
 
   try {
-    // Primary: Esplora API
-    const esploraRates = await getFeeEstimates()
+    // Primary: Mempool API
+    const mempoolRates = await getFeeEstimates()
     
     const enhancedRates: EnhancedFeeRates = {
-      economy             : Math.max(1, Math.min(esploraRates.slow, 2)), // Cap economy at 2 sats/vB
-      slow                : esploraRates.slow,
-      normal              : esploraRates.normal,
-      fast                : esploraRates.fast,
-      source              : 'esplora',
+      economy             : Math.max(1, Math.min(mempoolRates.slow, 2)), // Cap economy at 2 sats/vB
+      slow                : mempoolRates.slow,
+      normal              : mempoolRates.normal,
+      fast                : mempoolRates.fast,
+      source              : 'mempool',
       lastUpdated         : now,
       confirmationTargets : {
         economy : 144,
@@ -75,7 +75,7 @@ export async function getEnhancedFeeEstimates(): Promise<EnhancedFeeRates> {
       lastFetchTime = now
       return enhancedRates
     } else {
-      console.warn('Esplora fee rates failed validation, using fallback')
+      console.warn('Mempool API fee rates failed validation, using fallback')
       return getFallbackRates()
     }
 

@@ -42,31 +42,31 @@ export interface TransactionStatus {
 class TransactionStatusTracker extends EventEmitter {
   private currentStatus: TransactionStatus | null = null
   private readonly stageProgressMap: Record<TransactionStage, number> = {
-    initializing        : 5,
-    validating_inputs   : 10,
-    fetching_utxos      : 20,
-    selecting_utxos     : 30,
-    estimating_fees     : 40,
-    building_transaction: 60,
-    signing_transaction : 80,
-    broadcasting        : 90,
-    confirming          : 95,
-    completed           : 100,
-    failed              : 0
+    initializing         : 5,
+    validating_inputs    : 10,
+    fetching_utxos       : 20,
+    selecting_utxos      : 30,
+    estimating_fees      : 40,
+    building_transaction : 60,
+    signing_transaction  : 80,
+    broadcasting         : 90,
+    confirming           : 95,
+    completed            : 100,
+    failed               : 0
   }
 
   private readonly stageMessages: Record<TransactionStage, string> = {
-    initializing        : 'Initializing transaction...',
-    validating_inputs   : 'Validating transaction details...',
-    fetching_utxos      : 'Fetching available funds...',
-    selecting_utxos     : 'Selecting optimal inputs...',
-    estimating_fees     : 'Calculating network fees...',
-    building_transaction: 'Building transaction...',
-    signing_transaction : 'Signing transaction...',
-    broadcasting        : 'Broadcasting to network...',
-    confirming          : 'Waiting for confirmation...',
-    completed           : 'Transaction completed successfully!',
-    failed              : 'Transaction failed'
+    initializing         : 'Initializing transaction...',
+    validating_inputs    : 'Validating transaction details...',
+    fetching_utxos       : 'Fetching available funds...',
+    selecting_utxos      : 'Selecting optimal inputs...',
+    estimating_fees      : 'Calculating network fees...',
+    building_transaction : 'Building transaction...',
+    signing_transaction  : 'Signing transaction...',
+    broadcasting         : 'Broadcasting to network...',
+    confirming           : 'Waiting for confirmation...',
+    completed            : 'Transaction completed successfully!',
+    failed               : 'Transaction failed'
   }
 
   startTransaction(): string {
@@ -193,7 +193,7 @@ class TransactionStatusTracker extends EventEmitter {
   // Utility methods for common progress patterns
   updateUtxoFetchProgress(addressIndex: number, totalAddresses: number): void {
     const baseProgress = this.stageProgressMap.fetching_utxos
-    const subProgress = this.addSubProgress(baseProgress, addressIndex + 1, totalAddresses)
+    this.addSubProgress(baseProgress, addressIndex + 1, totalAddresses)
     
     this.updateProgress('fetching_utxos', 
       { addressIndex, totalAddresses },
@@ -203,7 +203,7 @@ class TransactionStatusTracker extends EventEmitter {
 
   updateUtxoSelectionProgress(selectedCount: number, requiredInputs: number): void {
     const baseProgress = this.stageProgressMap.selecting_utxos
-    const subProgress = this.addSubProgress(baseProgress, selectedCount, requiredInputs)
+    this.addSubProgress(baseProgress, selectedCount, requiredInputs)
     
     this.updateProgress('selecting_utxos',
       { selectedCount, requiredInputs },
@@ -213,7 +213,7 @@ class TransactionStatusTracker extends EventEmitter {
 
   updateSigningProgress(signedInputs: number, totalInputs: number): void {
     const baseProgress = this.stageProgressMap.signing_transaction
-    const subProgress = this.addSubProgress(baseProgress, signedInputs, totalInputs)
+    this.addSubProgress(baseProgress, signedInputs, totalInputs)
     
     this.updateProgress('signing_transaction',
       { signedInputs, totalInputs },
@@ -228,15 +228,15 @@ export const transactionStatusTracker = new TransactionStatusTracker()
 // Hook for monitoring transaction status
 export function useTransactionStatus() {
   return {
-    tracker         : transactionStatusTracker,
-    startTransaction: () => transactionStatusTracker.startTransaction(),
-    updateProgress  : (stage: TransactionStage, details?: Record<string, any>, message?: string) => 
+    tracker          : transactionStatusTracker,
+    startTransaction : () => transactionStatusTracker.startTransaction(),
+    updateProgress   : (stage: TransactionStage, details?: Record<string, any>, message?: string) => 
       transactionStatusTracker.updateProgress(stage, details, message),
-    setError        : (error: Error, stage?: TransactionStage) => 
+    setError : (error: Error, stage?: TransactionStage) => 
       transactionStatusTracker.setError(error, stage),
-    getStatus       : () => transactionStatusTracker.getStatus(),
-    getDuration     : () => transactionStatusTracker.getDuration(),
-    reset           : () => transactionStatusTracker.reset()
+    getStatus   : () => transactionStatusTracker.getStatus(),
+    getDuration : () => transactionStatusTracker.getDuration(),
+    reset       : () => transactionStatusTracker.reset()
   }
 }
 

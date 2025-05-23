@@ -87,7 +87,7 @@ class PerformanceOptimizationService {
     wallet: BitcoinWallet,
     extendedRange = false
   ): Promise<void> {
-    const addressTypes: Array<'legacy' | 'segwit' | 'native_segwit'> = ['legacy', 'segwit', 'native_segwit']
+    const addressTypes: Array<'legacy' | 'segwit' | 'native_segwit'> = [ 'legacy', 'segwit', 'native_segwit' ]
     const baseRange = extendedRange ? 20 : 10 // Precompute more addresses if requested
     
     for (const addressType of addressTypes) {
@@ -289,13 +289,13 @@ class PerformanceOptimizationService {
     // - Recent transaction activity
     // - Known UTXO presence
     // - User interaction patterns
-    return [...addresses].sort(() => Math.random() - 0.5) // Placeholder randomization
+    return [ ...addresses ].sort(() => Math.random() - 0.5) // Placeholder randomization
   }
 
   private async refreshStaleUtxos(wallet: BitcoinWallet): Promise<void> {
     const staleThreshold = Date.now() - (CACHE_CONFIG.utxoCacheTTL / 2)
     
-    for (const [address, cache] of this.utxoCache.entries()) {
+    for (const [ address, cache ] of this.utxoCache.entries()) {
       if (cache.lastFetch < staleThreshold) {
         try {
           // This would call the actual UTXO fetching service
@@ -324,14 +324,14 @@ class PerformanceOptimizationService {
     const now = Date.now()
     
     // Clean expired address cache entries
-    for (const [address, cache] of this.addressCache.entries()) {
+    for (const [ address, cache ] of this.addressCache.entries()) {
       if (now - cache.createdAt > CACHE_CONFIG.addressCacheTTL) {
         this.addressCache.delete(address)
       }
     }
     
     // Clean expired UTXO cache entries
-    for (const [address, cache] of this.utxoCache.entries()) {
+    for (const [ address, cache ] of this.utxoCache.entries()) {
       if (now > cache.expiresAt) {
         this.utxoCache.delete(address)
       }
@@ -345,7 +345,7 @@ class PerformanceOptimizationService {
 
   private evictOldestAddresses(count: number): void {
     const sortedEntries = Array.from(this.addressCache.entries())
-      .sort(([, a], [, b]) => a.createdAt - b.createdAt)
+      .sort(([ , a ], [ , b ]) => a.createdAt - b.createdAt)
     
     for (let i = 0; i < count && i < sortedEntries.length; i++) {
       this.addressCache.delete(sortedEntries[i][0])
@@ -354,7 +354,7 @@ class PerformanceOptimizationService {
 
   private evictOldestUtxos(count: number): void {
     const sortedEntries = Array.from(this.utxoCache.entries())
-      .sort(([, a], [, b]) => a.lastFetch - b.lastFetch)
+      .sort(([ , a ], [ , b ]) => a.lastFetch - b.lastFetch)
     
     for (let i = 0; i < count && i < sortedEntries.length; i++) {
       this.utxoCache.delete(sortedEntries[i][0])

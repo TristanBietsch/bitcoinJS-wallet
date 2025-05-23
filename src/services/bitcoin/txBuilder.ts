@@ -56,17 +56,17 @@ export function buildTransaction(
         value  : utxo.value,
       },
     }
-    if (utxo.path && utxo.publicKey) { // publicKey check is somewhat redundant here but good for clarity
+    if (utxo.derivationPath && utxo.publicKey) { // publicKey check is somewhat redundant here but good for clarity
       inputToAdd.bip32Derivation = [
         {
           masterFingerprint : PLACEHOLDER_MASTER_FINGERPRINT,
-          path              : utxo.path,
+          path              : utxo.derivationPath,
           pubkey            : utxo.publicKey,
         },
       ]
     } else {
-      // This case should ideally be caught by the !utxo.publicKey check above if path also implies publicKey
-      console.warn(`UTXO ${utxo.txid}:${utxo.vout} is missing path or publicKey for BIP32 derivation info.`)
+      // This case should ideally be caught by the !utxo.publicKey check above if derivationPath also implies publicKey
+      console.warn(`UTXO ${utxo.txid}:${utxo.vout} is missing derivationPath or publicKey for BIP32 derivation info.`)
     }
     psbt.addInput(inputToAdd)
   })

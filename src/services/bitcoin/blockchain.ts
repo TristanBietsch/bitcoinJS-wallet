@@ -71,7 +71,7 @@ export async function getTxs(address: string): Promise<EsploraTransaction[]> {
 }
 
 /**
- * Fetches current Bitcoin fee estimates from the Esplora API.
+ * Fetches current Bitcoin fee estimates from the Mempool API.
  * Uses optimized client with fallback to safe defaults.
  * @returns A promise that resolves to a FeeRates object (slow, normal, fast).
  */
@@ -87,7 +87,7 @@ export async function getFeeEstimates(): Promise<FeeRates> {
       slow   : parsedEsploraFees['144'] || parsedEsploraFees['72'] || parsedEsploraFees['200'] || parsedEsploraFees['24'] || 2,
     }
     if (feeRates.fast <= 0 || feeRates.normal <= 0 || feeRates.slow <= 0) {
-        console.warn("Invalid fee rates from Esplora, using defaults", feeRates, parsedEsploraFees)
+        console.warn("Invalid fee rates from Mempool API, using defaults", feeRates, parsedEsploraFees)
         return { fast: 20, normal: 10, slow: 2 }
     }
     return feeRates

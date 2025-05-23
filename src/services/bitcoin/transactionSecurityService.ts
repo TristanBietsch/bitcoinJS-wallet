@@ -3,7 +3,6 @@
  * Provides security validations, transaction verification, and risk assessment
  */
 
-import * as bitcoin from 'bitcoinjs-lib'
 import { Psbt } from 'bitcoinjs-lib'
 import { validateAddressForCurrentNetwork, isOwnAddress } from './addressValidationService'
 import type { NormalizedUTXO, TransactionOutput } from '../../types/tx.types'
@@ -39,13 +38,13 @@ export interface TransactionVerification {
 
 // Security thresholds (configurable)
 const SECURITY_THRESHOLDS = {
-  maxTransactionAmount: 100000000, // 1 BTC in sats
-  maxFeeRate: 1000,                // 1000 sat/vB
-  maxFeePercentage: 50,             // 50% of transaction amount
-  dustThreshold: 546,               // Standard dust limit
-  maxInputCount: 100,               // Reasonable UTXO limit
-  maxOutputCount: 100,              // Reasonable output limit
-  warningAmountThreshold: 10000000  // 0.1 BTC warning threshold
+  maxTransactionAmount   : 100000000, // 1 BTC in sats
+  maxFeeRate             : 1000,                // 1000 sat/vB
+  maxFeePercentage       : 50,             // 50% of transaction amount
+  dustThreshold          : 546,               // Standard dust limit
+  maxInputCount          : 100,               // Reasonable UTXO limit
+  maxOutputCount         : 100,              // Reasonable output limit
+  warningAmountThreshold : 10000000  // 0.1 BTC warning threshold
 }
 
 /**
@@ -163,14 +162,14 @@ export function verifyTransaction(
   } catch (error) {
     console.error('Transaction verification failed:', error)
     return {
-      inputsValid: false,
-      outputsValid: false,
-      amountsValid: false,
-      feeReasonable: false,
-      totalInputValue: 0,
-      totalOutputValue: 0,
-      calculatedFee: 0,
-      effectiveFeeRate: 0
+      inputsValid      : false,
+      outputsValid     : false,
+      amountsValid     : false,
+      feeReasonable    : false,
+      totalInputValue  : 0,
+      totalOutputValue : 0,
+      calculatedFee    : 0,
+      effectiveFeeRate : 0
     }
   }
 }
@@ -211,7 +210,7 @@ export function requiresAdditionalConfirmation(
   })
 
   return {
-    required: reasons.length > 0,
+    required : reasons.length > 0,
     reasons
   }
 }
@@ -222,25 +221,25 @@ function validateInputs(inputs: NormalizedUTXO[]): SecurityCheck[] {
   
   // Check input count
   checks.push({
-    type: 'input_count',
-    passed: inputs.length <= SECURITY_THRESHOLDS.maxInputCount,
-    severity: inputs.length > SECURITY_THRESHOLDS.maxInputCount ? 'warning' : 'info',
-    message: inputs.length > SECURITY_THRESHOLDS.maxInputCount 
+    type     : 'input_count',
+    passed   : inputs.length <= SECURITY_THRESHOLDS.maxInputCount,
+    severity : inputs.length > SECURITY_THRESHOLDS.maxInputCount ? 'warning' : 'info',
+    message  : inputs.length > SECURITY_THRESHOLDS.maxInputCount 
       ? `High input count (${inputs.length}) may result in high fees`
       : `Input count acceptable (${inputs.length})`,
-    details: { inputCount: inputs.length }
+    details : { inputCount: inputs.length }
   })
   
   // Check for dust inputs
   const dustInputs = inputs.filter(input => input.value <= SECURITY_THRESHOLDS.dustThreshold)
   checks.push({
-    type: 'dust_inputs',
-    passed: dustInputs.length === 0,
-    severity: dustInputs.length > 0 ? 'warning' : 'info',
-    message: dustInputs.length > 0 
+    type     : 'dust_inputs',
+    passed   : dustInputs.length === 0,
+    severity : dustInputs.length > 0 ? 'warning' : 'info',
+    message  : dustInputs.length > 0 
       ? `${dustInputs.length} dust inputs detected (may increase fees)`
       : 'No dust inputs detected',
-    details: { dustInputCount: dustInputs.length }
+    details : { dustInputCount: dustInputs.length }
   })
   
   return checks
@@ -251,37 +250,37 @@ function validateOutputs(outputs: TransactionOutput[], wallet: BitcoinWallet): S
   
   // Check output count
   checks.push({
-    type: 'output_count',
-    passed: outputs.length <= SECURITY_THRESHOLDS.maxOutputCount,
-    severity: outputs.length > SECURITY_THRESHOLDS.maxOutputCount ? 'error' : 'info',
-    message: outputs.length > SECURITY_THRESHOLDS.maxOutputCount
+    type     : 'output_count',
+    passed   : outputs.length <= SECURITY_THRESHOLDS.maxOutputCount,
+    severity : outputs.length > SECURITY_THRESHOLDS.maxOutputCount ? 'error' : 'info',
+    message  : outputs.length > SECURITY_THRESHOLDS.maxOutputCount
       ? `Too many outputs (${outputs.length})`
       : `Output count acceptable (${outputs.length})`,
-    details: { outputCount: outputs.length }
+    details : { outputCount: outputs.length }
   })
   
   // Validate each output address
   outputs.forEach((output, index) => {
     const validation = validateAddressForCurrentNetwork(output.address)
     checks.push({
-      type: `output_${index}_address`,
-      passed: validation.isValid,
-      severity: validation.isValid ? 'info' : 'error',
-      message: validation.isValid 
+      type     : `output_${index}_address`,
+      passed   : validation.isValid,
+      severity : validation.isValid ? 'info' : 'error',
+      message  : validation.isValid 
         ? `Output ${index + 1} address valid (${validation.addressType})`
         : `Output ${index + 1} address invalid: ${validation.error}`,
-      details: { outputIndex: index, address: output.address, validation }
+      details : { outputIndex: index, address: output.address, validation }
     })
     
     // Check for dust outputs
     checks.push({
-      type: `output_${index}_dust`,
-      passed: output.value > SECURITY_THRESHOLDS.dustThreshold,
-      severity: output.value <= SECURITY_THRESHOLDS.dustThreshold ? 'error' : 'info',
-      message: output.value <= SECURITY_THRESHOLDS.dustThreshold
+      type     : `output_${index}_dust`,
+      passed   : output.value > SECURITY_THRESHOLDS.dustThreshold,
+      severity : output.value <= SECURITY_THRESHOLDS.dustThreshold ? 'error' : 'info',
+      message  : output.value <= SECURITY_THRESHOLDS.dustThreshold
         ? `Output ${index + 1} is dust (${output.value} sats)`
         : `Output ${index + 1} amount acceptable (${output.value} sats)`,
-      details: { outputIndex: index, amount: output.value }
+      details : { outputIndex: index, amount: output.value }
     })
   })
   
@@ -302,25 +301,25 @@ function validateAmountsAndFees(
   
   // Check fee reasonableness
   checks.push({
-    type: 'fee_rate',
-    passed: effectiveFeeRate <= SECURITY_THRESHOLDS.maxFeeRate,
-    severity: effectiveFeeRate > SECURITY_THRESHOLDS.maxFeeRate ? 'warning' : 'info',
-    message: effectiveFeeRate > SECURITY_THRESHOLDS.maxFeeRate
+    type     : 'fee_rate',
+    passed   : effectiveFeeRate <= SECURITY_THRESHOLDS.maxFeeRate,
+    severity : effectiveFeeRate > SECURITY_THRESHOLDS.maxFeeRate ? 'warning' : 'info',
+    message  : effectiveFeeRate > SECURITY_THRESHOLDS.maxFeeRate
       ? `Very high fee rate: ${effectiveFeeRate.toFixed(1)} sat/vB`
       : `Fee rate acceptable: ${effectiveFeeRate.toFixed(1)} sat/vB`,
-    details: { feeRate: effectiveFeeRate, fee: calculatedFee }
+    details : { feeRate: effectiveFeeRate, fee: calculatedFee }
   })
   
   // Check fee as percentage of transaction
   const feePercentage = (calculatedFee / totalOutputValue) * 100
   checks.push({
-    type: 'fee_percentage',
-    passed: feePercentage <= SECURITY_THRESHOLDS.maxFeePercentage,
-    severity: feePercentage > SECURITY_THRESHOLDS.maxFeePercentage ? 'warning' : 'info',
-    message: feePercentage > SECURITY_THRESHOLDS.maxFeePercentage
+    type     : 'fee_percentage',
+    passed   : feePercentage <= SECURITY_THRESHOLDS.maxFeePercentage,
+    severity : feePercentage > SECURITY_THRESHOLDS.maxFeePercentage ? 'warning' : 'info',
+    message  : feePercentage > SECURITY_THRESHOLDS.maxFeePercentage
       ? `High fee relative to amount: ${feePercentage.toFixed(1)}%`
       : `Fee percentage acceptable: ${feePercentage.toFixed(1)}%`,
-    details: { feePercentage, fee: calculatedFee, amount: totalOutputValue }
+    details : { feePercentage, fee: calculatedFee, amount: totalOutputValue }
   })
   
   return checks
@@ -336,13 +335,13 @@ function performPrivacyChecks(
   // Check address reuse
   const addressTypes = new Set(inputs.map(input => input.addressType))
   checks.push({
-    type: 'address_type_mixing',
-    passed: addressTypes.size === 1,
-    severity: addressTypes.size > 1 ? 'info' : 'info',
-    message: addressTypes.size > 1
+    type     : 'address_type_mixing',
+    passed   : addressTypes.size === 1,
+    severity : addressTypes.size > 1 ? 'info' : 'info',
+    message  : addressTypes.size > 1
       ? `Mixed address types detected (may reduce privacy)`
       : 'Consistent address types used',
-    details: { addressTypes: Array.from(addressTypes) }
+    details : { addressTypes: Array.from(addressTypes) }
   })
   
   return checks
@@ -359,13 +358,13 @@ function assessTransactionRisks(
   
   // Large transaction warning
   checks.push({
-    type: 'large_transaction',
-    passed: totalAmount <= SECURITY_THRESHOLDS.maxTransactionAmount,
-    severity: totalAmount > SECURITY_THRESHOLDS.maxTransactionAmount ? 'warning' : 'info',
-    message: totalAmount > SECURITY_THRESHOLDS.maxTransactionAmount
+    type     : 'large_transaction',
+    passed   : totalAmount <= SECURITY_THRESHOLDS.maxTransactionAmount,
+    severity : totalAmount > SECURITY_THRESHOLDS.maxTransactionAmount ? 'warning' : 'info',
+    message  : totalAmount > SECURITY_THRESHOLDS.maxTransactionAmount
       ? `Large transaction amount: ${totalAmount.toLocaleString()} sats`
       : `Transaction amount acceptable: ${totalAmount.toLocaleString()} sats`,
-    details: { amount: totalAmount }
+    details : { amount: totalAmount }
   })
   
   return checks
