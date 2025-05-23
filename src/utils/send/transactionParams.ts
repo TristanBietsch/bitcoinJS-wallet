@@ -6,7 +6,6 @@
 import { CurrencyType } from '@/src/types/domain/finance'
 import { useSendStore } from '@/src/store/sendStore'
 import { useWalletStore } from '@/src/store/walletStore'
-import { calculateTransactionFee } from '@/src/utils/send/feeCalculations'
 
 /**
  * Parameters required for Bitcoin transaction processing
@@ -20,6 +19,7 @@ export interface BitcoinTransactionParams {
 
 /**
  * Convert UI state to Bitcoin transaction parameters
+ * Updated to work with enhanced fee estimation system
  */
 export function convertUIToBitcoinParams(): BitcoinTransactionParams {
   const sendState = useSendStore.getState()
@@ -37,9 +37,8 @@ export function convertUIToBitcoinParams(): BitcoinTransactionParams {
     throw new Error('Amount must be greater than 0')
   }
   
-  // Calculate fee rate
-  const feeCalculated = calculateTransactionFee(sendState.speed, sendState.customFee)
-  const feeRate = feeCalculated.feeRate
+  // Calculate fee rate using enhanced fee system
+  const feeRate = calculateFeeRateFromStore(sendState)
   if (feeRate <= 0) {
     throw new Error('Fee rate must be greater than 0')
   }
@@ -56,6 +55,39 @@ export function convertUIToBitcoinParams(): BitcoinTransactionParams {
     feeRate,
     changeAddress
   }
+}
+
+/**
+ * Calculate fee rate from enhanced store state
+ */
+function calculateFeeRateFromStore(sendState: any): number {
+  // First priority: custom fee if speed is 'custom'
+  if (sendState.speed === 'custom' && sendState.customFee) {
+    return sendState.customFee.feeRate || 0
+  }
+  
+  // Second priority: selected fee option from enhanced system
+  if (sendState.selectedFeeOption) {
+    return sendState.selectedFeeOption.satPerVbyte || 0
+  }
+  
+  // Third priority: fee rates based on speed
+  if (sendState.feeRates && sendState.speed) {
+    switch (sendState.speed) {
+      case 'economy':
+        return sendState.feeRates.economy || 0
+      case 'standard':
+        return sendState.feeRates.standard || 0
+      case 'priority':
+        return sendState.feeRates.priority || 0
+      default:
+        return sendState.feeRates.standard || 0
+    }
+  }
+  
+  // Fallback: reasonable default fee rate
+  console.warn('No fee rate found, using fallback of 10 sat/vbyte')
+  return 10
 }
 
 /**

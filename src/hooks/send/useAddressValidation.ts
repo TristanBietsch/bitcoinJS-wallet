@@ -14,7 +14,17 @@ export const useAddressValidation = () => {
     setAddress(text)
     if (text) {
       const result = validateAddress(text)
-      setAddressError(result.error)
+      
+      // In dev mode, provide additional context about network support
+      if (!result.isValid && result.error && __DEV__) {
+        if (result.error.includes('but app is configured for')) {
+          setAddressError(`${result.error} (Dev mode: both mainnet and testnet addresses are supported)`)
+        } else {
+          setAddressError(result.error)
+        }
+      } else {
+        setAddressError(result.error)
+      }
     } else {
       setAddressError(null)
     }

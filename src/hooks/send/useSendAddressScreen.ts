@@ -4,6 +4,7 @@ import { useSendStore } from '@/src/store/sendStore'
 import { useAddressValidation } from '@/src/hooks/send/useAddressValidation'
 import { useSpeedOptions } from '@/src/hooks/send/useSpeedOptions'
 import { useCustomFee } from '@/src/hooks/send/useCustomFee'
+import { useProgressiveFeeLoading } from '@/src/hooks/send/useProgressiveFeeLoading'
 import { SpeedTier } from '@/src/types/domain/transaction'
 import { validateAddress } from '@/src/utils/validation'
 
@@ -53,6 +54,9 @@ export const useSendAddressScreen = () => {
     isInputValid
   } = useCustomFee()
 
+  // Initialize progressive fee loading when address is valid
+  const { state: feeState } = useProgressiveFeeLoading()
+
   // Load data from store when screen is focused
   useEffect(() => {
     // First check if we have data in the store
@@ -91,6 +95,13 @@ export const useSendAddressScreen = () => {
     resetStore,
     setCustomFee
   ])
+
+  // Store address in Zustand store when it changes so progressive fee loading can use it
+  useEffect(() => {
+    if (address && !addressError) {
+      setStoreAddress(address)
+    }
+  }, [ address, addressError, setStoreAddress ])
 
   const handleQRScan = () => {
     // Navigate to the QR scanner screen
@@ -162,6 +173,9 @@ export const useSendAddressScreen = () => {
     pendingInput,
     feeError,
     isInputValid,
+    
+    // Fee loading state for better UX
+    feeLoading : feeState.isLoading || feeState.isBackgroundRefreshing,
     
     // Handlers
     handleAddressChange,

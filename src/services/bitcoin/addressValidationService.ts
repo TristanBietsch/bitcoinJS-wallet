@@ -122,6 +122,7 @@ export function validateBitcoinAddress(address: string): AddressValidationResult
 
 /**
  * Validates address is compatible with current network
+ * In dev mode, allows both mainnet and testnet addresses for testing
  */
 export function validateAddressForCurrentNetwork(address: string): AddressValidationResult {
   const validation = validateBitcoinAddress(address)
@@ -130,7 +131,21 @@ export function validateAddressForCurrentNetwork(address: string): AddressValida
     return validation
   }
 
-  // Check network compatibility
+  // In dev mode, allow both mainnet and testnet addresses
+  if (__DEV__) {
+    // Allow mainnet and testnet addresses in dev mode
+    if (validation.network === 'mainnet' || validation.network === 'testnet') {
+      return validation
+    }
+    
+    return {
+      ...validation,
+      isValid : false,
+      error   : `Address format not supported in dev mode. Use mainnet or testnet addresses.`
+    }
+  }
+
+  // In production, strict network validation
   const expectedNetwork = CURRENT_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
   
   if (validation.network !== expectedNetwork) {

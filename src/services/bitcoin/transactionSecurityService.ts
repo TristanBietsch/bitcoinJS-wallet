@@ -246,6 +246,7 @@ function validateInputs(inputs: NormalizedUTXO[]): SecurityCheck[] {
 }
 
 function validateOutputs(outputs: TransactionOutput[], wallet: BitcoinWallet): SecurityCheck[] {
+  console.log('Validating outputs for wallet:', wallet.id)
   const checks: SecurityCheck[] = []
   
   // Check output count
@@ -299,6 +300,8 @@ function validateAmountsAndFees(
   const totalOutputValue = getTotalOutputValue(outputs)
   const effectiveFeeRate = calculatedFee / estimatedSize
   
+  console.log('Transaction validation:', { totalInputValue, totalOutputValue, effectiveFeeRate })
+  
   // Check fee reasonableness
   checks.push({
     type     : 'fee_rate',
@@ -330,6 +333,7 @@ function performPrivacyChecks(
   outputs: TransactionOutput[],
   wallet: BitcoinWallet
 ): SecurityCheck[] {
+  console.log('Performing privacy checks for wallet:', wallet.id, 'with outputs:', outputs.length)
   const checks: SecurityCheck[] = []
   
   // Check address reuse
@@ -352,6 +356,7 @@ function assessTransactionRisks(
   outputs: TransactionOutput[],
   calculatedFee: number
 ): SecurityCheck[] {
+  console.log('Assessing transaction risks with fee:', calculatedFee)
   const checks: SecurityCheck[] = []
   
   const totalAmount = getTotalOutputValue(outputs)
