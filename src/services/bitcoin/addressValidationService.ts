@@ -50,8 +50,8 @@ export function validateBitcoinAddress(address: string): AddressValidationResult
       try {
         // Try P2PKH (Legacy)
         const p2pkh = bitcoin.payments.p2pkh({ 
-          address: trimmedAddress, 
-          network: networkConfig 
+          address : trimmedAddress, 
+          network : networkConfig 
         })
         if (p2pkh.address === trimmedAddress) {
           return {
@@ -68,8 +68,8 @@ export function validateBitcoinAddress(address: string): AddressValidationResult
       try {
         // Try P2SH (SegWit wrapped)
         const p2sh = bitcoin.payments.p2sh({ 
-          address: trimmedAddress, 
-          network: networkConfig 
+          address : trimmedAddress, 
+          network : networkConfig 
         })
         if (p2sh.address === trimmedAddress) {
           return {
@@ -86,8 +86,8 @@ export function validateBitcoinAddress(address: string): AddressValidationResult
       try {
         // Try P2WPKH (Native SegWit)
         const p2wpkh = bitcoin.payments.p2wpkh({ 
-          address: trimmedAddress, 
-          network: networkConfig 
+          address : trimmedAddress, 
+          network : networkConfig 
         })
         if (p2wpkh.address === trimmedAddress) {
           return {
@@ -167,7 +167,7 @@ export function normalizeAndValidateAddress(address: string): {
   const validation = validateAddressForCurrentNetwork(trimmedAddress)
 
   return {
-    address    : validation.isValid ? trimmedAddress : null,
+    address : validation.isValid ? trimmedAddress : null,
     validation
   }
 }
@@ -210,7 +210,7 @@ export function validateMultipleAddresses(addresses: string[]): {
     } else {
       invalid.push({
         address,
-        error: validation.error || 'Invalid address'
+        error : validation.error || 'Invalid address'
       })
     }
   })
@@ -243,7 +243,7 @@ export function parseBIP21URI(uri: string): {
     }
 
     const uriWithoutProtocol = uri.slice(8) // Remove 'bitcoin:'
-    const [addressPart, queryPart] = uriWithoutProtocol.split('?')
+    const [ addressPart, queryPart ] = uriWithoutProtocol.split('?')
     
     if (!addressPart) {
       return {
@@ -261,7 +261,7 @@ export function parseBIP21URI(uri: string): {
     const validation = validateAddressForCurrentNetwork(addressPart)
     
     const result: any = {
-      address: validation.isValid ? addressPart : null,
+      address : validation.isValid ? addressPart : null,
       validation
     }
 

@@ -25,12 +25,12 @@ const CACHE_DURATION = 60000 // 1 minute cache
 
 // Fallback fee rates (conservative estimates)
 const FALLBACK_RATES: EnhancedFeeRates = {
-  economy     : 1,
-  slow        : 3,
-  normal      : 10,
-  fast        : 25,
-  source      : 'fallback',
-  lastUpdated : Date.now(),
+  economy             : 1,
+  slow                : 3,
+  normal              : 10,
+  fast                : 25,
+  source              : 'fallback',
+  lastUpdated         : Date.now(),
   confirmationTargets : {
     economy : 144,  // ~24 hours
     slow    : 72,   // ~12 hours
@@ -55,12 +55,12 @@ export async function getEnhancedFeeEstimates(): Promise<EnhancedFeeRates> {
     const esploraRates = await getFeeEstimates()
     
     const enhancedRates: EnhancedFeeRates = {
-      economy     : Math.max(1, Math.min(esploraRates.slow, 2)), // Cap economy at 2 sats/vB
-      slow        : esploraRates.slow,
-      normal      : esploraRates.normal,
-      fast        : esploraRates.fast,
-      source      : 'esplora',
-      lastUpdated : now,
+      economy             : Math.max(1, Math.min(esploraRates.slow, 2)), // Cap economy at 2 sats/vB
+      slow                : esploraRates.slow,
+      normal              : esploraRates.normal,
+      fast                : esploraRates.fast,
+      source              : 'esplora',
+      lastUpdated         : now,
       confirmationTargets : {
         economy : 144,
         slow    : 72,

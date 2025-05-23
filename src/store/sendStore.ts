@@ -55,19 +55,19 @@ export const useSendStore = create<SendState>()(
   persist(
     (set) => ({
       // Transaction details
-      address      : '',
-      speed        : 'economy',
-      customFee    : undefined,
-      amount       : '0',
-      currency     : 'SATS',
-      errorMode    : 'none',
+      address   : '',
+      speed     : 'economy',
+      customFee : undefined,
+      amount    : '0',
+      currency  : 'SATS',
+      errorMode : 'none',
       
       // Enhanced fee estimation
-      feeRates     : undefined,
-      feeOptions   : undefined,
+      feeRates          : undefined,
+      feeOptions        : undefined,
       selectedFeeOption : undefined,
-      isLoadingFees : false,
-      feeError     : undefined,
+      isLoadingFees     : false,
+      feeError          : undefined,
       
       // Transaction preview
       estimatedTxSize : undefined,
@@ -81,26 +81,26 @@ export const useSendStore = create<SendState>()(
       setErrorMode : (errorMode) => set({ errorMode }),
       
       // Enhanced fee actions
-      setFeeRates  : (feeRates) => set({ feeRates }),
-      setFeeOptions : (feeOptions) => set({ feeOptions }),
+      setFeeRates          : (feeRates) => set({ feeRates }),
+      setFeeOptions        : (feeOptions) => set({ feeOptions }),
       setSelectedFeeOption : (selectedFeeOption) => set({ selectedFeeOption }),
-      setIsLoadingFees : (isLoadingFees) => set({ isLoadingFees }),
-      setFeeError  : (feeError) => set({ feeError }),
-      setEstimatedTxSize : (estimatedTxSize) => set({ estimatedTxSize }),
+      setIsLoadingFees     : (isLoadingFees) => set({ isLoadingFees }),
+      setFeeError          : (feeError) => set({ feeError }),
+      setEstimatedTxSize   : (estimatedTxSize) => set({ estimatedTxSize }),
       
-      reset        : () => set({ 
-        address   : '', 
-        speed     : 'economy', 
-        customFee : undefined,
-        amount    : '0',
-        currency  : 'SATS',
-        errorMode : 'none',
-        feeRates  : undefined,
-        feeOptions : undefined,
+      reset : () => set({ 
+        address           : '', 
+        speed             : 'economy', 
+        customFee         : undefined,
+        amount            : '0',
+        currency          : 'SATS',
+        errorMode         : 'none',
+        feeRates          : undefined,
+        feeOptions        : undefined,
         selectedFeeOption : undefined,
-        isLoadingFees : false,
-        feeError  : undefined,
-        estimatedTxSize : undefined
+        isLoadingFees     : false,
+        feeError          : undefined,
+        estimatedTxSize   : undefined
       })
     }),
     {

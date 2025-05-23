@@ -46,7 +46,7 @@ export function useEnhancedFeeEstimation() {
     setEstimatedTxSize
   } = useSendStore()
 
-  const [lastEstimationParams, setLastEstimationParams] = useState<{
+  const [ lastEstimationParams, setLastEstimationParams ] = useState<{
     amount: string
     feeRatesTimestamp?: number
   }>({ amount: '' })
@@ -69,7 +69,7 @@ export function useEnhancedFeeEstimation() {
     } finally {
       setIsLoadingFees(false)
     }
-  }, [setFeeRates, setIsLoadingFees, setFeeError])
+  }, [ setFeeRates, setIsLoadingFees, setFeeError ])
 
   // Estimate transaction size and UTXO selection
   const estimateTransaction = useCallback(async (
@@ -94,9 +94,9 @@ export function useEnhancedFeeEstimation() {
         amountSats,
         feeRatePerVByte,
         {
-          preferAddressType: 'native_segwit',
-          includeUnconfirmed: false,
-          minimizeInputs: true
+          preferAddressType  : 'native_segwit',
+          includeUnconfirmed : false,
+          minimizeInputs     : true
         }
       )
 
@@ -112,17 +112,17 @@ export function useEnhancedFeeEstimation() {
       )
 
       return {
-        selectedUtxos: selectionResult.selectedUtxos,
+        selectedUtxos   : selectionResult.selectedUtxos,
         estimatedSize,
-        totalInputValue: selectionResult.totalSelectedValue,
-        changeAmount: selectionResult.changeAmount
+        totalInputValue : selectionResult.totalSelectedValue,
+        changeAmount    : selectionResult.changeAmount
       }
 
     } catch (error) {
       console.error('Error estimating transaction:', error)
       return null
     }
-  }, [wallet])
+  }, [ wallet ])
 
   // Calculate fee options based on estimated transaction size
   const calculateFeeOptionsForAmount = useCallback(async (amountSats: number) => {
@@ -153,12 +153,12 @@ export function useEnhancedFeeEstimation() {
       setFeeError(errorMessage)
       console.error('Error calculating fee options:', error)
     }
-  }, [feeRates, estimateTransaction, setFeeOptions, setEstimatedTxSize, setFeeError, selectedFeeOption, setSelectedFeeOption])
+  }, [ feeRates, estimateTransaction, setFeeOptions, setEstimatedTxSize, setFeeError, selectedFeeOption, setSelectedFeeOption ])
 
   // Auto-load fee rates on mount
   useEffect(() => {
     loadFeeRates()
-  }, [loadFeeRates])
+  }, [ loadFeeRates ])
 
   // Auto-calculate fee options when amount or fee rates change
   useEffect(() => {
@@ -177,7 +177,7 @@ export function useEnhancedFeeEstimation() {
       calculateFeeOptionsForAmount(amountSats)
       setLastEstimationParams({ amount, feeRatesTimestamp: ratesTimestamp })
     }
-  }, [amount, feeRates, calculateFeeOptionsForAmount, lastEstimationParams])
+  }, [ amount, feeRates, calculateFeeOptionsForAmount, lastEstimationParams ])
 
   // Validate custom fee rate
   const validateCustomFee = useCallback((customFeeRate: number) => {
@@ -185,12 +185,12 @@ export function useEnhancedFeeEstimation() {
       return { isValid: false, message: 'Fee rates not loaded' }
     }
     return validateCustomFeeRate(customFeeRate, feeRates)
-  }, [feeRates])
+  }, [ feeRates ])
 
   // Manual refresh function
   const refreshFeeRates = useCallback(() => {
     return loadFeeRates()
-  }, [loadFeeRates])
+  }, [ loadFeeRates ])
 
   // Get fee estimate for specific amount and rate
   const getFeeEstimate = useCallback(async (amountSats: number, feeRate: number) => {
@@ -198,11 +198,11 @@ export function useEnhancedFeeEstimation() {
     if (!estimation) return null
 
     return {
-      estimatedFee: Math.ceil(estimation.estimatedSize * feeRate),
-      estimatedSize: estimation.estimatedSize,
-      totalRequired: amountSats + Math.ceil(estimation.estimatedSize * feeRate)
+      estimatedFee  : Math.ceil(estimation.estimatedSize * feeRate),
+      estimatedSize : estimation.estimatedSize,
+      totalRequired : amountSats + Math.ceil(estimation.estimatedSize * feeRate)
     }
-  }, [estimateTransaction])
+  }, [ estimateTransaction ])
 
   return {
     // State
@@ -222,7 +222,7 @@ export function useEnhancedFeeEstimation() {
     getFeeEstimate,
 
     // Computed
-    hasValidFeeData: !!(feeRates && feeOptions && feeOptions.length > 0),
-    isReady: !!(feeRates && !isLoadingFees)
+    hasValidFeeData : !!(feeRates && feeOptions && feeOptions.length > 0),
+    isReady         : !!(feeRates && !isLoadingFees)
   }
 } 
