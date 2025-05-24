@@ -6,6 +6,7 @@ import type {
   TransactionOutput,
 } from '../../types/tx.types'
 import { DUST_THRESHOLD, estimateTxVirtualBytes } from '../../utils/bitcoin/utils'
+import { validateAndSanitizeAddress } from '../../utils/validation/validateAddress'
 
 // Placeholder for master fingerprint - in a real app, this comes from your HD root key
 const PLACEHOLDER_MASTER_FINGERPRINT = Buffer.from('00000000', 'hex')
@@ -14,30 +15,34 @@ const PLACEHOLDER_MASTER_FINGERPRINT = Buffer.from('00000000', 'hex')
  * Validates and creates a proper script for an address
  */
 function validateAddressAndCreateScript(address: string, network: bitcoin.Network): Buffer {
+  console.log(`Creating script for address: "${address}" on network: ${network.bech32}`)
+  
   try {
-    // Try to decode the address first to validate it
-    const decoded = bitcoin.address.toOutputScript(address, network)
+    // First sanitize the address
+    const addressValidation = validateAndSanitizeAddress(address, network)
+    if (!addressValidation.isValid) {
+      throw new Error(`Address validation failed: ${addressValidation.error}`)
+    }
+    
+    const sanitizedAddress = addressValidation.sanitizedAddress
+    console.log(`Address sanitized: "${address}" -> "${sanitizedAddress}" (${addressValidation.addressType})`)
+    
+    // Try to decode the sanitized address
+    const decoded = bitcoin.address.toOutputScript(sanitizedAddress, network)
+    console.log(`Successfully created script for ${sanitizedAddress}, script length: ${decoded.length}`)
     return decoded
+    
   } catch (error) {
     console.error(`Failed to create script for address ${address}:`, error)
     
-    // Try to provide more specific error information
-    if (address.startsWith('tb1') || address.startsWith('bc1')) {
-      // Bech32 address
-      try {
-        const { version, data } = bitcoin.address.fromBech32(address)
-        console.log(`Bech32 address decoded: version=${version}, data length=${data.length}`)
-        
-        // Try to create script manually for bech32
-        if (version === 0 && data.length === 20) {
-          // P2WPKH
-          return bitcoin.payments.p2wpkh({ hash: data, network }).output!
-        } else if (version === 0 && data.length === 32) {
-          // P2WSH
-          return bitcoin.payments.p2wsh({ hash: data, network }).output!
-        }
-      } catch (bech32Error) {
-        console.error('Bech32 decoding failed:', bech32Error)
+    // Provide more detailed error information
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid character')) {
+        throw new Error(`Address contains invalid characters: ${address}`)
+      } else if (error.message.includes('Invalid checksum')) {
+        throw new Error(`Address has invalid checksum: ${address}`)
+      } else if (error.message.includes('Invalid prefix')) {
+        throw new Error(`Address has invalid network prefix for ${network.bech32}: ${address}`)
       }
     }
     
@@ -57,7 +62,13 @@ export function buildTransaction(
 ): { psbt: bitcoin.Psbt; feeDetails: TransactionFeeDetails } {
   const { inputs, outputs, feeRate, changeAddress, network } = params
 
-  console.log('Building transaction with network:', network.bech32, 'outputs:', outputs.length)
+  console.log('Building transaction with:', {
+    network : network.bech32,
+    inputs  : inputs.length,
+    outputs : outputs.length,
+    feeRate,
+    changeAddress
+  })
 
   if (!inputs || inputs.length === 0) {
     throw new Error('Transaction must have at least one input.')
@@ -72,7 +83,8 @@ export function buildTransaction(
   const psbt = new bitcoin.Psbt({ network })
 
   let totalInputValue = 0
-  inputs.forEach((utxo: NormalizedUTXO) => {
+  inputs.forEach((utxo: NormalizedUTXO, index) => {
+    console.log(`Processing input ${index}: ${utxo.txid}:${utxo.vout} = ${utxo.value} sats`)
     totalInputValue += utxo.value
 
     if (!utxo.publicKey) {
@@ -143,6 +155,14 @@ export function buildTransaction(
   )
   const initialCalculatedFee = Math.ceil(initialEstimatedWeight * feeRate)
 
+  console.log('Fee calculation:', {
+    totalInputValue,
+    totalOutputValue,
+    initialEstimatedWeight,
+    initialCalculatedFee,
+    feeRate
+  })
+
   if (totalInputValue < totalOutputValue + initialCalculatedFee) {
     throw new Error(
       `Insufficient funds. Needed: ${totalOutputValue + initialCalculatedFee} (outputs + initial fee), Available: ${totalInputValue}. Fee: ${initialCalculatedFee}`
@@ -198,5 +218,7 @@ export function buildTransaction(
   }
 
   console.log('Successfully built PSBT with', psbt.inputCount, 'inputs and', psbt.data.outputs.length, 'outputs')
+  console.log('Final fee details:', finalFeeDetails)
+  
   return { psbt, feeDetails: finalFeeDetails }
 } 

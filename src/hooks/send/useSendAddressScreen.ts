@@ -6,7 +6,8 @@ import { useSpeedOptions } from '@/src/hooks/send/useSpeedOptions'
 import { useCustomFee } from '@/src/hooks/send/useCustomFee'
 import { useProgressiveFeeLoading } from '@/src/hooks/send/useProgressiveFeeLoading'
 import { SpeedTier } from '@/src/types/domain/transaction'
-import { validateAddress } from '@/src/utils/validation'
+import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddress'
+import { bitcoinjsNetwork } from '@/src/config/env'
 
 export const useSendAddressScreen = () => {
   const router = useRouter()
@@ -17,6 +18,7 @@ export const useSendAddressScreen = () => {
     setAddress: setStoreAddress, 
     setSpeed: setStoreSpeed, 
     setCustomFee: setStoreCustomFee,
+    setSelectedFeeOption: setStoreSelectedFeeOption,
     reset: resetStore
   } = useSendStore()
   
@@ -65,7 +67,7 @@ export const useSendAddressScreen = () => {
     // First check if we have data in the store
     if (storedAddress) {
       // Validate the address from the store
-      const validationResult = validateAddress(storedAddress)
+      const validationResult = validateAndSanitizeAddress(storedAddress, bitcoinjsNetwork)
       
       if (validationResult.isValid) {
         // If we have a valid address in the store, use it and don't check clipboard
@@ -85,18 +87,37 @@ export const useSendAddressScreen = () => {
     if (storedCustomFee) {
       setCustomFee(storedCustomFee)
       handleSpeedChangeBase('custom')
+      setStoreSelectedFeeOption(undefined) // Clear selectedFeeOption for custom
     } else if (storedSpeed) {
       handleSpeedChangeBase(storedSpeed as SpeedTier)
+      
+      // Also set the selectedFeeOption for standard speeds
+      if (storedSpeed !== 'custom') {
+        const selectedSpeedOption = speedOptions.find(option => option.id === storedSpeed)
+        if (selectedSpeedOption && selectedSpeedOption.fee && selectedSpeedOption.feeRate) {
+          const feeOption = {
+            name            : selectedSpeedOption.label,
+            feeRate         : selectedSpeedOption.feeRate,
+            totalFee        : selectedSpeedOption.fee.sats,
+            estimatedBlocks : selectedSpeedOption.estimatedBlocks || 6,
+            estimatedTime   : selectedSpeedOption.estimatedTime || '~1 hour'
+          }
+          setStoreSelectedFeeOption(feeOption)
+          console.log('Restored selectedFeeOption for stored speed:', storedSpeed, feeOption)
+        }
+      }
     }
   }, [ 
     storedAddress, 
     storedSpeed, 
     storedCustomFee,
+    speedOptions,
     checkClipboard,
     handleAddressChange,
     handleSpeedChangeBase,
     resetStore,
-    setCustomFee
+    setCustomFee,
+    setStoreSelectedFeeOption
   ])
 
   const handleQRScan = () => {
@@ -119,6 +140,20 @@ export const useSendAddressScreen = () => {
     setStoreSpeed(speed)
     if (speed === 'custom') {
       setStoreCustomFee(customFee)
+      setStoreSelectedFeeOption(undefined) // Clear selectedFeeOption for custom
+    } else {
+      // For standard speeds, ensure selectedFeeOption is set
+      const selectedSpeedOption = speedOptions.find(option => option.id === speed)
+      if (selectedSpeedOption && selectedSpeedOption.fee && selectedSpeedOption.feeRate) {
+        const feeOption = {
+          name            : selectedSpeedOption.label,
+          feeRate         : selectedSpeedOption.feeRate,
+          totalFee        : selectedSpeedOption.fee.sats,
+          estimatedBlocks : selectedSpeedOption.estimatedBlocks || 6,
+          estimatedTime   : selectedSpeedOption.estimatedTime || '~1 hour'
+        }
+        setStoreSelectedFeeOption(feeOption)
+      }
     }
     
     router.push({
@@ -132,11 +167,33 @@ export const useSendAddressScreen = () => {
 
   const handleSpeedChange = (newSpeed: SpeedTier) => {
     if (newSpeed === 'custom') {
+      // Clear selectedFeeOption when switching to custom
+      setStoreSelectedFeeOption(undefined)
       setShowCustomFeeModal(true)
       return
     }
+    
     // Clear custom fee when switching to a standard speed tier
     setStoreCustomFee(undefined)
+    
+    // Find the corresponding speed option and set it as selectedFeeOption
+    const selectedSpeedOption = speedOptions.find(option => option.id === newSpeed)
+    if (selectedSpeedOption && selectedSpeedOption.fee && selectedSpeedOption.feeRate) {
+      // Convert SpeedOption to FeeOption format for the store
+      const feeOption = {
+        name            : selectedSpeedOption.label,
+        feeRate         : selectedSpeedOption.feeRate,
+        totalFee        : selectedSpeedOption.fee.sats,
+        estimatedBlocks : selectedSpeedOption.estimatedBlocks || 6,
+        estimatedTime   : selectedSpeedOption.estimatedTime || '~1 hour'
+      }
+      setStoreSelectedFeeOption(feeOption)
+      console.log('Set selectedFeeOption for speed:', newSpeed, feeOption)
+    } else {
+      console.warn('Could not find speed option for:', newSpeed)
+      setStoreSelectedFeeOption(undefined)
+    }
+    
     handleSpeedChangeBase(newSpeed)
   }
 

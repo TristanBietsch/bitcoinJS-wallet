@@ -21,6 +21,19 @@ import {
   detectWordlistLanguage
 } from './wordlistValidation'
 
+// Import the new address validation functions
+import { validateAndSanitizeAddress } from './validateAddress'
+import { bitcoinjsNetwork } from '@/src/config/env'
+
+// Create a backward-compatible validateAddress function
+export const validateAddress = (address: string) => {
+  const result = validateAndSanitizeAddress(address, bitcoinjsNetwork)
+  return {
+    isValid : result.isValid,
+    error   : result.error
+  }
+}
+
 // Import and re-export from other files
 export * from './clipboardValidation'
 export * from './receiveValidation'

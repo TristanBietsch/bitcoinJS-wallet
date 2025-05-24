@@ -3,7 +3,8 @@ import { Alert, BackHandler } from 'react-native'
 import { parseQRCode } from '@/src/utils/send/qrCodeParser'
 import { useSendStore } from '@/src/store/sendStore'
 import { useRouter } from 'expo-router'
-import { validateAddress } from '@/src/utils/validation'
+import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddress'
+import { bitcoinjsNetwork } from '@/src/config/env'
 
 export interface CameraScannerResult {
   address : string
@@ -55,7 +56,7 @@ export const useCameraScanner = () => {
       const { address, amount } = parseQRCode(data)
       
       // Validate the address
-      const validationResult = validateAddress(address)
+      const validationResult = validateAndSanitizeAddress(address, bitcoinjsNetwork)
       
       if (!validationResult.isValid) {
         Alert.alert(

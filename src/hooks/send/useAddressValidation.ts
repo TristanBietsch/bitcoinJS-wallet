@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
-import { validateAddress } from '@/src/utils/validation/validateAddress'
+import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddress'
 import { checkClipboardForAddress, showPasteAddressAlert } from '@/src/utils/validation/clipboardValidation'
+import { bitcoinjsNetwork } from '@/src/config/env'
 
 export const useAddressValidation = () => {
   const [ address, setAddress ] = useState('')
@@ -13,7 +14,7 @@ export const useAddressValidation = () => {
   const handleAddressChange = useCallback((text: string) => {
     setAddress(text)
     if (text) {
-      const result = validateAddress(text)
+      const result = validateAndSanitizeAddress(text, bitcoinjsNetwork)
       
       // In dev mode, provide additional context about network support
       if (!result.isValid && result.error && __DEV__) {
@@ -23,7 +24,7 @@ export const useAddressValidation = () => {
           setAddressError(result.error)
         }
       } else {
-        setAddressError(result.error)
+        setAddressError(result.error || null)
       }
     } else {
       setAddressError(null)

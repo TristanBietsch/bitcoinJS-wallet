@@ -10,7 +10,8 @@ import { transactionStyles } from '@/src/constants/transactionStyles'
 import { useWalletStore } from '@/src/store/walletStore'
 import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
 import { ThemedText } from '@/src/components/ui/Text'
-import { isValidBitcoinAddress } from '@/src/utils/validation/validateAddress'
+import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddress'
+import { bitcoinjsNetwork } from '@/src/config/env'
 
 /**
  * Screen for confirming transaction details before sending
@@ -35,19 +36,25 @@ export default function SendConfirmScreen() {
     const { wallet, balances } = useWalletStore.getState()
     
     if (!address || !amount || !wallet) {
-      return { isValid: false, error: 'Missing required transaction data' }
+      return { isValid: false, error: 'Missing required transaction data', sanitizedAddress: address || '' }
     }
 
-    if (!isValidBitcoinAddress(address)) {
-      return { isValid: false, error: 'Invalid recipient address format' }
+    // Validate and sanitize the address
+    const addressValidation = validateAndSanitizeAddress(address, bitcoinjsNetwork)
+    if (!addressValidation.isValid) {
+      return { 
+        isValid          : false, 
+        error            : `Invalid recipient address: ${addressValidation.error}`,
+        sanitizedAddress : addressValidation.sanitizedAddress
+      }
     }
 
     if (amount <= 0) {
-      return { isValid: false, error: 'Amount must be greater than 0' }
+      return { isValid: false, error: 'Amount must be greater than 0', sanitizedAddress: addressValidation.sanitizedAddress }
     }
 
     if (feeSats <= 0) {
-      return { isValid: false, error: 'Invalid fee calculation' }
+      return { isValid: false, error: 'Invalid fee calculation', sanitizedAddress: addressValidation.sanitizedAddress }
     }
 
     const totalNeededSats = currency === 'SATS' 
@@ -56,12 +63,24 @@ export default function SendConfirmScreen() {
       
     if (totalNeededSats > balances.confirmed) {
       return { 
-        isValid : false, 
-        error   : `Insufficient balance. Need ${totalNeededSats} sats, have ${balances.confirmed} sats` 
+        isValid          : false, 
+        error            : `Insufficient balance. Need ${totalNeededSats} sats, have ${balances.confirmed} sats`,
+        sanitizedAddress : addressValidation.sanitizedAddress
       }
     }
 
-    return { isValid: true, error: null }
+    console.log('Address validation successful:', {
+      original  : address,
+      sanitized : addressValidation.sanitizedAddress,
+      type      : addressValidation.addressType
+    })
+
+    return { 
+      isValid          : true, 
+      error            : null,
+      sanitizedAddress : addressValidation.sanitizedAddress,
+      addressType      : addressValidation.addressType
+    }
   }, [ address, amount, currency, totalAmount, feeSats ])
 
   const handleSendPress = useCallback(async () => {
@@ -84,7 +103,9 @@ export default function SendConfirmScreen() {
       const { balances } = useWalletStore.getState()
       
       console.log('Proceeding to send transaction:', {
-        address,
+        originalAddress  : address,
+        sanitizedAddress : validationResult.sanitizedAddress,
+        addressType      : validationResult.addressType,
         amount,
         currency,
         feeSats,
@@ -143,6 +164,11 @@ export default function SendConfirmScreen() {
           <ThemedText style={{ color: '#d32f2f', fontSize: 14, textAlign: 'center' }}>
             ⚠️ {validationResult.error}
           </ThemedText>
+          {validationResult.sanitizedAddress && validationResult.sanitizedAddress !== address && (
+            <ThemedText style={{ color: '#d32f2f', fontSize: 12, textAlign: 'center', marginTop: 5 }}>
+              Cleaned address: {validationResult.sanitizedAddress}
+            </ThemedText>
+          )}
         </View>
       )}
       
@@ -163,7 +189,7 @@ export default function SendConfirmScreen() {
       
       <TransactionSummaryFooter
         amount={amount}
-        address={address}
+        address={validationResult.sanitizedAddress || address}
         feeSats={feeSats}
         feeRate={feeRate}
         currency={currency}

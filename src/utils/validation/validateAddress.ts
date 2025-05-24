@@ -65,7 +65,7 @@ export function validateAndSanitizeAddress(address: string, network?: bitcoin.Ne
     const targetNetwork = network || bitcoin.networks.testnet
     
     // Try to decode and determine address type
-    const script = bitcoin.address.toOutputScript(sanitized, targetNetwork)
+    bitcoin.address.toOutputScript(sanitized, targetNetwork)
     
     let addressType = 'unknown'
     if (sanitized.startsWith('tb1') || sanitized.startsWith('bc1')) {
