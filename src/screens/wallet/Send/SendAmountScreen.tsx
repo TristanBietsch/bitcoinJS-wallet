@@ -19,18 +19,12 @@ export default function SendAmountScreen() {
     
     // Bitcoin state
     walletBalance,
-    feeCalculation,
-    estimatedFee,
-    totalRequired,
     
-    // Loading and error states
+    // Loading states only
     isLoadingBalance,
-    isCalculatingFee,
-    balanceError,
-    validationError,
     
     // Validation
-    canProceed,
+    canProceedToNext,
     
     // Handlers
     handleCurrencyChange,
@@ -73,48 +67,19 @@ export default function SendAmountScreen() {
               <ActivityIndicator size="small" color="#666" />
               <ThemedText style={styles.loadingText}>Loading balance...</ThemedText>
             </View>
-          ) : balanceError ? (
-            <ThemedText style={styles.errorText}>{balanceError}</ThemedText>
           ) : (
-            <ThemedText style={styles.balanceAmount}>
-              {formatSats(walletBalance.confirmed)}
-            </ThemedText>
-          )}
-        </View>
-
-        {/* Fee Information */}
-        {estimatedFee > 0 && (
-          <View style={styles.feeContainer}>
-            <View style={styles.feeRow}>
-              <ThemedText style={styles.feeLabel}>Network Fee</ThemedText>
-              {isCalculatingFee ? (
-                <ActivityIndicator size="small" color="#666" />
-              ) : (
-                <ThemedText style={styles.feeAmount}>
-                  {formatSats(estimatedFee)}
+            <View style={styles.balanceInfo}>
+              <ThemedText style={styles.balanceAmount}>
+                {formatSats(walletBalance.confirmed)}
+              </ThemedText>
+              {walletBalance.unconfirmed > 0 && (
+                <ThemedText style={styles.unconfirmedBalance}>
+                  +{formatSats(walletBalance.unconfirmed)} pending
                 </ThemedText>
               )}
             </View>
-            
-            {feeCalculation && (
-              <View style={styles.feeDetails}>
-                <ThemedText style={styles.feeDetailText}>
-                  Transaction size: ~{feeCalculation.estimatedSize} vBytes
-                </ThemedText>
-                <ThemedText style={styles.feeDetailText}>
-                  Total required: {formatSats(totalRequired)}
-                </ThemedText>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Validation Error */}
-        {validationError && (
-          <View style={styles.errorContainer}>
-            <ThemedText style={styles.validationError}>{validationError}</ThemedText>
-          </View>
-        )}
+          )}
+        </View>
       </View>
       
       {/* Footer with Continue Button and Number Pad */}
@@ -123,11 +88,11 @@ export default function SendAmountScreen() {
         <ActionButton
           title="Continue"
           onPress={handleContinue}
-          disabled={!canProceed}
+          disabled={!canProceedToNext}
           style={{ 
             marginBottom : 40,
             borderRadius : 30,
-            opacity      : !canProceed ? 0.5 : 1
+            opacity      : !canProceedToNext ? 0.5 : 1
           }}
         />
         
@@ -158,10 +123,20 @@ const styles = StyleSheet.create({
     color        : '#666',
     marginBottom : 4,
   },
+  balanceInfo : {
+    flexDirection : 'row',
+    alignItems    : 'baseline',
+  },
   balanceAmount : {
     fontSize   : 18,
     fontWeight : '600',
     color      : '#000',
+  },
+  unconfirmedBalance : {
+    fontSize   : 14,
+    color      : '#ffa726',
+    marginLeft : 8,
+    fontStyle  : 'italic',
   },
   loadingContainer : {
     flexDirection : 'row',
@@ -171,54 +146,5 @@ const styles = StyleSheet.create({
     fontSize   : 16,
     color      : '#666',
     marginLeft : 8,
-  },
-  errorText : {
-    fontSize : 16,
-    color    : '#ff6b6b',
-  },
-  feeContainer : {
-    backgroundColor : '#fff8f0',
-    borderRadius    : 12,
-    padding         : 16,
-    marginBottom    : 12,
-    borderLeftWidth : 3,
-    borderLeftColor : '#ffa726',
-  },
-  feeRow : {
-    flexDirection  : 'row',
-    justifyContent : 'space-between',
-    alignItems     : 'center',
-    marginBottom   : 8,
-  },
-  feeLabel : {
-    fontSize : 14,
-    color    : '#e65100',
-  },
-  feeAmount : {
-    fontSize   : 16,
-    fontWeight : '600',
-    color      : '#e65100',
-  },
-  feeDetails : {
-    marginTop      : 8,
-    paddingTop     : 8,
-    borderTopWidth : 1,
-    borderTopColor : '#ffe0b3',
-  },
-  feeDetailText : {
-    fontSize     : 12,
-    color        : '#bf360c',
-    marginBottom : 2,
-  },
-  errorContainer : {
-    backgroundColor : '#fff5f5',
-    borderRadius    : 12,
-    padding         : 16,
-    borderLeftWidth : 3,
-    borderLeftColor : '#ff6b6b',
-  },
-  validationError : {
-    fontSize : 14,
-    color    : '#d32f2f',
   },
 }) 
