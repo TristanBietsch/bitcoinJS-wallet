@@ -16,6 +16,7 @@ import { useWalletStore } from '@/src/store/walletStore'
 // import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils' // Temporarily removed
 import { isOnboardingComplete } from '@/src/utils/storage'
 import logger, { LogScope } from '@/src/utils/logger'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [
@@ -31,6 +32,16 @@ const HIDDEN_NAV_ROUTES = [
 ]
 
 const LOCK_TIMEOUT = 5 * 60 * 1000 // 5 minutes in milliseconds
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions : {
+    queries : {
+      staleTime : 1000 * 60 * 5, // 5 minutes
+      retry     : 2,
+    },
+  },
+})
 
 export default function RootLayout() {
   const pathname = usePathname()
@@ -127,13 +138,15 @@ export default function RootLayout() {
     <>
       <SafeAreaProvider>
         <GestureHandlerRootView style={styles.container}>
-          <AppProvider>
-            <View style={styles.content}>
-              <Slot />
-            </View>
-            {!shouldHideNav && <TabBottomNavigation />}
-            <StatusBar style="auto" />
-          </AppProvider>
+          <QueryClientProvider client={queryClient}>
+            <AppProvider>
+              <View style={styles.content}>
+                <Slot />
+              </View>
+              {!shouldHideNav && <TabBottomNavigation />}
+              <StatusBar style="auto" />
+            </AppProvider>
+          </QueryClientProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </>

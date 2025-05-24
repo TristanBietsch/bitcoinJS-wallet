@@ -166,7 +166,7 @@ export const useWalletBalance = () => {
     
     // Rate limit manual refreshes
     if (now - lastManualRefreshRef.current < MIN_TIME_BETWEEN_REFRESHES) {
-      logger.warn('Manual refresh rate limited - please wait a moment')
+      logger.warn(LogScope.WALLET, 'Manual refresh rate limited - please wait a moment')
       return Promise.resolve()
     }
     
@@ -184,15 +184,15 @@ export const useWalletBalance = () => {
 
   return {
     ...balanceData,
-    isLoading : isSyncing,
-    error     : walletError,
+    isLoading    : isSyncing,
+    error        : walletError,
     refreshBalances,
     lastSyncTime,
     // Add some debugging info
-    refreshStats: {
-      consecutiveFailures: consecutiveFailuresRef.current,
-      isBackgroundActive: backgroundRefreshActive.current,
-      canAutoRefresh: consecutiveFailuresRef.current < MAX_FAILED_REFRESHES_BEFORE_BACKOFF
+    refreshStats : {
+      consecutiveFailures : consecutiveFailuresRef.current,
+      isBackgroundActive  : backgroundRefreshActive.current,
+      canAutoRefresh      : consecutiveFailuresRef.current < MAX_FAILED_REFRESHES_BEFORE_BACKOFF
     }
   }
 } 

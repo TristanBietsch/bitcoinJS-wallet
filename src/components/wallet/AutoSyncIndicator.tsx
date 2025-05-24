@@ -19,7 +19,7 @@ export const AutoSyncIndicator: React.FC<AutoSyncIndicatorProps> = ({
   // Notify parent of status changes
   React.useEffect(() => {
     onSyncStatusChange?.(syncStatus)
-  }, [syncStatus, onSyncStatusChange])
+  }, [ syncStatus, onSyncStatusChange ])
 
   const handleManualSync = async () => {
     try {
@@ -55,7 +55,7 @@ export const AutoSyncIndicator: React.FC<AutoSyncIndicatorProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.statusRow}>
-        <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
+        <View style={[ styles.statusDot, { backgroundColor: getStatusColor() } ]} />
         <Text style={styles.statusText}>{getStatusText()}</Text>
       </View>
       
@@ -88,51 +88,51 @@ export const AutoSyncIndicator: React.FC<AutoSyncIndicatorProps> = ({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container : {
     padding         : 12,
     backgroundColor : '#f5f5f5',
     borderRadius    : 8,
     margin          : 8,
   },
-  statusRow: {
+  statusRow : {
     flexDirection : 'row',
     alignItems    : 'center',
     marginBottom  : 8,
   },
-  statusDot: {
+  statusDot : {
     width        : 8,
     height       : 8,
     borderRadius : 4,
     marginRight  : 8,
   },
-  statusText: {
+  statusText : {
     fontSize : 14,
     color    : '#333',
   },
-  failureText: {
+  failureText : {
     fontSize     : 12,
     color        : '#ff4444',
     marginBottom : 8,
   },
-  syncButton: {
-    backgroundColor : '#007AFF',
-    paddingVertical : 8,
+  syncButton : {
+    backgroundColor   : '#007AFF',
+    paddingVertical   : 8,
     paddingHorizontal : 16,
-    borderRadius    : 6,
-    alignItems      : 'center',
-    marginBottom    : 8,
+    borderRadius      : 6,
+    alignItems        : 'center',
+    marginBottom      : 8,
   },
-  syncButtonDisabled: {
+  syncButtonDisabled : {
     backgroundColor : '#ccc',
   },
-  syncButtonText: {
+  syncButtonText : {
     color      : 'white',
     fontSize   : 14,
     fontWeight : '600',
   },
-  lastSyncText: {
-    fontSize : 12,
-    color    : '#666',
+  lastSyncText : {
+    fontSize  : 12,
+    color     : '#666',
     textAlign : 'center',
   },
 }) 

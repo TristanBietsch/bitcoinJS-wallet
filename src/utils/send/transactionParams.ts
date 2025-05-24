@@ -77,17 +77,30 @@ function calculateFeeRateFromStore(sendState: any): number {
       case 'economy':
         return sendState.feeRates.economy || 0
       case 'standard':
-        return sendState.feeRates.standard || 0
+      case 'normal':
+        return sendState.feeRates.standard || sendState.feeRates.normal || 0
       case 'priority':
-        return sendState.feeRates.priority || 0
+      case 'fast':
+        return sendState.feeRates.priority || sendState.feeRates.fast || 0
       default:
-        return sendState.feeRates.standard || 0
+        return sendState.feeRates.standard || sendState.feeRates.normal || 0
     }
   }
   
-  // Fallback: reasonable default fee rate
-  console.warn('No fee rate found, using fallback of 10 sat/vbyte')
-  return 10
+  // Fallback based on speed setting
+  switch (sendState.speed) {
+    case 'economy':
+      return 3 // Conservative economy rate
+    case 'standard':
+    case 'normal':
+      return 10 // Standard rate
+    case 'priority':
+    case 'fast':
+      return 20 // Fast rate
+    default:
+      console.warn('No fee rate found, using fallback of 10 sat/vbyte')
+      return 10
+  }
 }
 
 /**
