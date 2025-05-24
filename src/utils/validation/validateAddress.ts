@@ -55,9 +55,9 @@ export function validateAndSanitizeAddress(address: string, network?: bitcoin.Ne
     
     if (!sanitized) {
       return {
-        isValid: false,
-        sanitizedAddress: '',
-        error: 'Address is empty or contains only invalid characters'
+        isValid          : false,
+        sanitizedAddress : '',
+        error            : 'Address is empty or contains only invalid characters'
       }
     }
     
@@ -79,8 +79,8 @@ export function validateAndSanitizeAddress(address: string, network?: bitcoin.Ne
     console.log(`Address validation success: ${sanitized} (${addressType})`)
     
     return {
-      isValid: true,
-      sanitizedAddress: sanitized,
+      isValid          : true,
+      sanitizedAddress : sanitized,
       addressType
     }
     
@@ -99,9 +99,9 @@ export function validateAndSanitizeAddress(address: string, network?: bitcoin.Ne
     }
     
     return {
-      isValid: false,
-      sanitizedAddress: sanitizeAddress(address),
-      error: errorMessage
+      isValid          : false,
+      sanitizedAddress : sanitizeAddress(address),
+      error            : errorMessage
     }
   }
 }
