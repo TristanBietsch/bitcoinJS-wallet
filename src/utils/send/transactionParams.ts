@@ -156,9 +156,5 @@ export function validateTransactionParams(params: BitcoinTransactionParams): voi
     throw new Error('Change address is required')
   }
   
-  // Check for dust amount (546 sats minimum)
-  const DUST_THRESHOLD = 546
-  if (params.amountSat < DUST_THRESHOLD) {
-    throw new Error(`Amount too small. Minimum amount is ${DUST_THRESHOLD} sats`)
-  }
+  // Removed dust threshold check - allow any amount
 } 

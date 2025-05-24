@@ -23,10 +23,7 @@ interface TransactionState {
 export default function SendLoadingScreen() {
   const router = useRouter()
   const { sendBitcoinAsync, isLoading, error, reset } = useSendBitcoin()
-  const { address, amount, errorMode, reset: resetSendStore } = useSendStore()
-  const { wallet } = useWalletStore()
   
-  // Consolidate all state into a single object to prevent cascading updates
   const [ state, setState ] = useState<TransactionState>({
     stage        : 'Initializing transaction...',
     progress     : 0,
@@ -34,70 +31,80 @@ export default function SendLoadingScreen() {
     hasCompleted : false
   })
   
-  // Use ref to prevent effect dependencies from causing loops
   const navigationRef = useRef<{ hasNavigated: boolean }>({ hasNavigated: false })
+  const executionRef = useRef<{ hasExecuted: boolean }>({ hasExecuted: false })
+  const transactionParams = useRef<any>(null)
   
-  // Single effect to handle the entire transaction flow
   useEffect(() => {
-    // Prevent multiple executions or navigation loops
-    if (state.hasStarted || navigationRef.current.hasNavigated) {
+    if (executionRef.current.hasExecuted || navigationRef.current.hasNavigated) {
       return
     }
     
     const executeTransaction = async () => {
       try {
-        // Mark as started to prevent re-execution
+        executionRef.current.hasExecuted = true
         setState(prev => ({ ...prev, hasStarted: true, stage: 'Starting transaction...', progress: 10 }))
         
-        // Handle test error modes
+        // Get data from stores directly to avoid reactive updates
+        const sendState = useSendStore.getState()
+        const walletState = useWalletStore.getState()
+        
+        const { address, amount, errorMode } = sendState
+        const { wallet } = walletState
+        
         if (errorMode === 'validation') {
           setState(prev => ({ ...prev, stage: 'Validation failed', progress: 0 }))
           await new Promise(resolve => setTimeout(resolve, 1500))
-          navigationRef.current.hasNavigated = true
-          router.replace('/send/error' as any)
+          if (!navigationRef.current.hasNavigated) {
+            navigationRef.current.hasNavigated = true
+            router.replace('/send/error' as any)
+          }
           return
         }
         
         if (errorMode === 'network') {
           setState(prev => ({ ...prev, stage: 'Network error occurred', progress: 50 }))
           await new Promise(resolve => setTimeout(resolve, 1500))
-          navigationRef.current.hasNavigated = true
-          router.replace('/send/error' as any)
+          if (!navigationRef.current.hasNavigated) {
+            navigationRef.current.hasNavigated = true
+            router.replace('/send/error' as any)
+          }
           return
         }
         
-        // Validate required data
         if (!address || !amount || !wallet) {
           throw new Error('Missing required transaction data')
         }
         
-        // Phase 1: Validation
         setState(prev => ({ ...prev, stage: 'Validating transaction...', progress: 20 }))
         await new Promise(resolve => setTimeout(resolve, 300))
         
-        const transactionParams = convertUIToBitcoinParams()
-        validateTransactionParams(transactionParams)
+        if (!transactionParams.current) {
+          transactionParams.current = convertUIToBitcoinParams()
+          validateTransactionParams(transactionParams.current)
+        }
         
-        // Phase 2: Processing
         setState(prev => ({ ...prev, stage: 'Processing transaction...', progress: 40 }))
         
-        // Execute the transaction
+        console.log('Executing transaction with params:', transactionParams.current)
+        
         const txid = await sendBitcoinAsync({
-          recipientAddress : transactionParams.recipientAddress,
-          amountSat        : transactionParams.amountSat,
-          feeRate          : transactionParams.feeRate,
-          changeAddress    : transactionParams.changeAddress
+          recipientAddress : transactionParams.current.recipientAddress,
+          amountSat        : transactionParams.current.amountSat,
+          feeRate          : transactionParams.current.feeRate,
+          changeAddress    : transactionParams.current.changeAddress
         })
         
-        // Success
         setState(prev => ({ ...prev, stage: 'Transaction sent successfully!', progress: 100, hasCompleted: true }))
         
-        // Wait then navigate
         await new Promise(resolve => setTimeout(resolve, 1000))
         
         if (!navigationRef.current.hasNavigated) {
           navigationRef.current.hasNavigated = true
-          resetSendStore()
+          
+          // Reset store before navigation
+          useSendStore.getState().reset()
+          
           router.replace({
             pathname : '/send/success',
             params   : { transactionId: txid }
@@ -118,17 +125,15 @@ export default function SendLoadingScreen() {
       }
     }
     
-    // Start transaction after a small delay
     const timer = setTimeout(executeTransaction, 500)
     
     return () => {
       clearTimeout(timer)
     }
-  }, []) // Empty dependency array to run only once
-  
-  // Separate effect for handling external errors (from useSendBitcoin hook)
+  }, [])
+
   useEffect(() => {
-    if (error && !navigationRef.current.hasNavigated && !state.hasCompleted) {
+    if (error && !navigationRef.current.hasNavigated && !state.hasCompleted && !isLoading) {
       console.error('External error:', error.message)
       
       setState(prev => ({ ...prev, stage: 'Transaction failed', progress: 0 }))
@@ -142,20 +147,17 @@ export default function SendLoadingScreen() {
       
       return () => clearTimeout(timer)
     }
-  }, [ error, state.hasCompleted, router ])
+  }, [ error, state.hasCompleted, isLoading, router ])
   
-  // Cleanup effect
   useEffect(() => {
     return () => {
-      // Reset the mutation if component unmounts during processing
       if (isLoading && !state.hasCompleted) {
         reset()
       }
     }
   }, [ isLoading, state.hasCompleted, reset ])
 
-  // Show error state if there's an immediate error
-  if (error && !isLoading && !state.hasStarted) {
+  if (error && !isLoading && !executionRef.current.hasExecuted) {
     return (
       <StatusScreenLayout>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>

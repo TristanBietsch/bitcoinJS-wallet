@@ -52,45 +52,49 @@ interface SendBitcoinParams {
 
 export function useSendBitcoin() {
   const queryClient = useQueryClient()
-  const { wallet } = useWalletStore(state => ({ wallet: state.wallet }))
 
   const sendBitcoinMutation = useMutation<
     string, // Type of data returned on success (txid)
     Error,  // Type of error
     SendBitcoinParams // Type of variables passed to the mutation function
   >({
-    mutationFn : async (params: SendBitcoinParams) => {
+    mutationKey : [ 'sendBitcoin' ],
+    mutationFn  : async (params: SendBitcoinParams) => {
       const { recipientAddress, amountSat, feeRate, changeAddress } = params
 
+      console.log('Starting Bitcoin transaction:', { recipientAddress, amountSat, feeRate, changeAddress })
+
+      // Get wallet from store state directly to avoid selector issues
+      const wallet = useWalletStore.getState().wallet
       if (!wallet) {
         throw new Error('Wallet not loaded. Cannot determine addresses to fetch UTXOs from.')
       }
-      // For simplicity, using the first native segwit address as the primary one for fetching UTXOs.
-      // A real implementation would scan multiple addresses or use a dedicated UTXO provider service for the wallet.
+
       const primaryFromAddress = wallet.addresses.nativeSegwit[0]
       if (!primaryFromAddress) {
         throw new Error('No primary address found in the wallet to fetch UTXOs.')
       }
 
-      // 1. Fetch UTXOs for all wallet addresses with enhanced information
+      console.log('Fetching mnemonic from secure storage...')
       const mnemonic = await getMnemonicFromSecureStorage()
       if (!mnemonic) throw new Error('Mnemonic not available for UTXO management.')
 
+      console.log('Fetching wallet UTXOs...')
       const enhancedUtxos = await fetchWalletUtxos(wallet, mnemonic, currentBitcoinNetwork)
       if (!enhancedUtxos || enhancedUtxos.length === 0) {
         throw new Error('No UTXOs available to make a transaction.')
       }
 
-      // 2. Filter UTXOs by confirmation status (default to confirmed only for sending)
+      console.log('Filtering confirmed UTXOs...')
       const confirmedUtxos = filterUtxosByConfirmation(enhancedUtxos, false)
       if (confirmedUtxos.length === 0) {
         throw new Error('No confirmed UTXOs available. Please wait for pending transactions to confirm.')
       }
 
-      // 3. Enrich UTXOs with public keys for signing
+      console.log('Enriching UTXOs with public keys...')
       const normalizedUtxos = enrichUtxosWithPublicKeys(confirmedUtxos, mnemonic, currentBitcoinNetwork)
 
-      // 4. Select UTXOs for the transaction using enhanced algorithm
+      console.log('Selecting UTXOs for transaction...')
       const selectionResult = selectUtxosEnhanced(
         normalizedUtxos,
         amountSat,
@@ -107,7 +111,7 @@ export function useSendBitcoin() {
       }
       const { selectedUtxos, totalFee } = selectionResult
 
-      // 4. Build the transaction (PSBT)
+      console.log('Building transaction...')
       const recipientOutput: TransactionOutput = { address: recipientAddress, value: amountSat }
       const buildParams = {
         inputs  : selectedUtxos, // These are NormalizedUTXO from selectionResult
@@ -121,32 +125,37 @@ export function useSendBitcoin() {
       // Note: feeDetails.calculatedFee from buildTransaction might differ slightly from `totalFee` from `selectUtxosSimple`
       // due to more precise estimation or dust handling in `buildTransaction`. For now, we proceed.
 
-      // 5. Sign the transaction
-      // Mnemonic already retrieved above for UTXO management
-
+      console.log('Signing transaction...')
       const signedTxHex = await signTransaction({
         psbt,
         mnemonic,
         network : currentBitcoinNetwork,
       })
 
-      // 6. Broadcast the transaction
+      console.log('Broadcasting transaction...')
       const txid = await broadcastTx(signedTxHex)
+      console.log('Transaction broadcast successful! TXID:', txid)
+      
       return txid
     },
     onSuccess : (txid) => {
-      console.log('Transaction broadcasted successfully! TXID:', txid)
-      // Invalidate queries to refresh wallet balance, UTXOs, and transaction history
-      queryClient.invalidateQueries({ queryKey: [ 'utxos', wallet?.addresses.nativeSegwit[0] ] })
-      queryClient.invalidateQueries({ queryKey: [ 'transactions', wallet?.addresses.nativeSegwit[0] ] })
-      // Optionally trigger a toast notification for success
-      // toast.show("Transaction sent!", { type: 'success' });
-      useWalletStore.getState().refreshWalletData(false, wallet?.addresses.nativeSegwit[0]) // Trigger store refresh
+      console.log('Transaction completed successfully! TXID:', txid)
+      
+      setTimeout(() => {
+        const wallet = useWalletStore.getState().wallet
+        if (wallet?.addresses.nativeSegwit[0]) {
+          queryClient.invalidateQueries({ queryKey: [ 'utxos', wallet.addresses.nativeSegwit[0] ] })
+          queryClient.invalidateQueries({ queryKey: [ 'transactions', wallet.addresses.nativeSegwit[0] ] })
+        }
+        
+        const refreshWalletData = useWalletStore.getState().refreshWalletData
+        if (refreshWalletData && wallet?.addresses.nativeSegwit[0]) {
+          refreshWalletData(false, wallet.addresses.nativeSegwit[0])
+        }
+      }, 0)
     },
     onError : (error: Error) => {
       console.error('Failed to send Bitcoin:', error.message)
-      // Optionally trigger a toast notification for error
-      // toast.show(`Error: ${error.message}`, { type: 'danger' });
     },
   })
 

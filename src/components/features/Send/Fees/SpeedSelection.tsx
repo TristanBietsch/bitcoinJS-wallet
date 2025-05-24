@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ChevronRight, AlertCircle, RefreshCw } from 'lucide-react-native'
 import { SpeedOptionButton } from '@/src/components/features/Send/Fees/SpeedOptionButton'
 import { SpeedInfoModal } from '@/src/components/features/Send/Fees/SpeedInfoModal'
 import { CustomFeeModal } from '@/src/components/features/Send/Fees/CustomFeeModal'
+import { getSpeedOptions } from '@/src/utils/send/speedOptions'
 
 import { SpeedTier, CustomFee, SpeedOption } from '@/src/types/domain/transaction'
 
@@ -30,14 +31,14 @@ interface SpeedSelectionProps {
 }
 
 export const SpeedSelection: React.FC<SpeedSelectionProps> = ({
-  speedOptions,
+  speedOptions: propSpeedOptions,
   selectedSpeed,
   customFee,
   showSpeedInfoModal,
   showCustomFeeModal,
   isInputValid,
-  isLoadingFees = false,
-  feeLoadError,
+  isLoadingFees: propIsLoadingFees = false,
+  feeLoadError: propFeeLoadError,
   onSpeedChange,
   onSpeedInfoPress,
   onCloseSpeedInfoModal,
@@ -49,6 +50,49 @@ export const SpeedSelection: React.FC<SpeedSelectionProps> = ({
   pendingInput,
   feeError
 }) => {
+  // Local state for fee loading
+  const [ localSpeedOptions, setLocalSpeedOptions ] = useState<SpeedOption[]>([])
+  const [ isLoadingLocalFees, setIsLoadingLocalFees ] = useState(false)
+  const [ localFeeLoadError, setLocalFeeLoadError ] = useState<string | null>(null)
+
+  // Use prop values if available, otherwise use local values
+  const speedOptions = propSpeedOptions.length > 0 ? propSpeedOptions : localSpeedOptions
+  const isLoadingFees = propIsLoadingFees || isLoadingLocalFees
+  const feeLoadError = propFeeLoadError || localFeeLoadError
+
+  // Load fees on component mount
+  const loadFees = useCallback(async () => {
+    // Only load if no prop speed options are provided
+    if (propSpeedOptions.length === 0) {
+      setIsLoadingLocalFees(true)
+      setLocalFeeLoadError(null)
+      try {
+        const options = await getSpeedOptions()
+        setLocalSpeedOptions(options)
+        console.log('SpeedSelection: Loaded fee options', options)
+      } catch (error) {
+        console.error('SpeedSelection: Failed to load fees', error)
+        setLocalFeeLoadError('Failed to load current fee rates')
+      } finally {
+        setIsLoadingLocalFees(false)
+      }
+    }
+  }, [ propSpeedOptions ])
+
+  // Load fees on mount and when prop speed options change
+  useEffect(() => {
+    loadFees()
+  }, [ loadFees ])
+
+  // Refresh handler that uses prop handler if available, otherwise local handler
+  const handleRefreshFees = useCallback(() => {
+    if (onRefreshFees) {
+      onRefreshFees()
+    } else {
+      loadFees()
+    }
+  }, [ onRefreshFees, loadFees ])
+
   return (
     <View style={styles.section}>
       <View style={styles.speedHeader}>
@@ -69,11 +113,9 @@ export const SpeedSelection: React.FC<SpeedSelectionProps> = ({
             <AlertCircle size={16} color="#ff6b6b" />
             <ThemedText style={styles.errorText}>{feeLoadError}</ThemedText>
           </View>
-          {onRefreshFees && (
-            <TouchableOpacity onPress={onRefreshFees} style={styles.refreshButton}>
-              <RefreshCw size={16} color="#666" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={handleRefreshFees} style={styles.refreshButton}>
+            <RefreshCw size={16} color="#666" />
+          </TouchableOpacity>
         </View>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { View, Alert } from 'react-native'
 import { Stack } from 'expo-router'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
@@ -7,11 +7,9 @@ import TransactionSummaryFooter from '@/src/components/features/Send/Confirmatio
 import { useSendNavigation } from '@/src/components/ui/Navigation/sendNavigation'
 import { useTransactionParams } from '@/src/hooks/send/useTransactionParams'
 import { transactionStyles } from '@/src/constants/transactionStyles'
-import { useSendStore } from '@/src/store/sendStore'
 import { useWalletStore } from '@/src/store/walletStore'
 import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
 import { ThemedText } from '@/src/components/ui/Text'
-import { convertUIToBitcoinParams, validateTransactionParams } from '@/src/utils/send/transactionParams'
 import { isValidBitcoinAddress } from '@/src/utils/validation/validateAddress'
 
 /**
@@ -19,12 +17,8 @@ import { isValidBitcoinAddress } from '@/src/utils/validation/validateAddress'
  */
 export default function SendConfirmScreen() {
   const { navigateBack, navigateToSendLoading } = useSendNavigation()
-  const { setErrorMode } = useSendStore()
-  const { wallet, balances } = useWalletStore()
-  const [ validationError, setValidationError ] = useState<string | null>(null)
   const [ isValidating, setIsValidating ] = useState(false)
   
-  // Enable auto-sync to ensure wallet is up-to-date
   useAutoWalletSync()
   
   const { 
@@ -35,105 +29,87 @@ export default function SendConfirmScreen() {
     currency, 
     totalAmount,
   } = useTransactionParams()
-  
-  // Reset error mode when mounting this screen
-  useEffect(() => {
-    setErrorMode('none')
-    setValidationError(null)
-  }, [ setErrorMode ])
 
-  // Validate transaction parameters when they change
-  useEffect(() => {
-    const validateTransaction = async () => {
-      setIsValidating(true)
-      setValidationError(null)
+  const validationResult = useMemo(() => {
+    // Get wallet and balances directly to avoid reactive updates
+    const { wallet, balances } = useWalletStore.getState()
+    
+    if (!address || !amount || !wallet) {
+      return { isValid: false, error: 'Missing required transaction data' }
+    }
+
+    if (!isValidBitcoinAddress(address)) {
+      return { isValid: false, error: 'Invalid recipient address format' }
+    }
+
+    if (amount <= 0) {
+      return { isValid: false, error: 'Amount must be greater than 0' }
+    }
+
+    if (feeSats <= 0) {
+      return { isValid: false, error: 'Invalid fee calculation' }
+    }
+
+    const totalNeededSats = currency === 'SATS' 
+      ? Math.floor(totalAmount)
+      : Math.floor(totalAmount * 100_000_000)
       
-      try {
-        // Basic validation
-        if (!address) {
-          throw new Error('Recipient address is required')
-        }
-        
-        if (!isValidBitcoinAddress(address)) {
-          throw new Error('Invalid recipient address format')
-        }
-        
-        if (!wallet) {
-          throw new Error('Wallet not loaded')
-        }
-        
-        if (amount <= 0) {
-          throw new Error('Amount must be greater than 0')
-        }
-        
-        if (feeSats <= 0) {
-          throw new Error('Invalid fee calculation')
-        }
-        
-        // Check if user has sufficient balance
-        const totalNeededSats = currency === 'SATS' 
-          ? Math.floor(totalAmount)
-          : Math.floor(totalAmount * 100_000_000) // Convert BTC to sats
-          
-        if (totalNeededSats > balances.confirmed) {
-          throw new Error(`Insufficient balance. Need ${totalNeededSats} sats, have ${balances.confirmed} sats`)
-        }
-        
-        // Test parameter conversion
-        const bitcoinParams = convertUIToBitcoinParams()
-        validateTransactionParams(bitcoinParams)
-        
-        console.log('Transaction validation passed:', {
-          address,
-          amount,
-          currency,
-          feeSats,
-          feeRate,
-          totalAmount,
-          availableBalance : balances.confirmed,
-          bitcoinParams
-        })
-        
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown validation error'
-        setValidationError(errorMessage)
-        console.error('Transaction validation failed:', errorMessage)
-      } finally {
-        setIsValidating(false)
+    if (totalNeededSats > balances.confirmed) {
+      return { 
+        isValid : false, 
+        error   : `Insufficient balance. Need ${totalNeededSats} sats, have ${balances.confirmed} sats` 
       }
     }
-    
-    // Only validate if we have the required data
-    if (address && amount && wallet) {
-      validateTransaction()
-    }
-  }, [ address, amount, currency, feeSats, feeRate, totalAmount, wallet, balances.confirmed ])
 
-  const handleSendPress = async () => {
-    // Final validation before proceeding
-    if (validationError) {
+    return { isValid: true, error: null }
+  }, [ address, amount, currency, totalAmount, feeSats ])
+
+  const handleSendPress = useCallback(async () => {
+    if (!validationResult.isValid) {
       Alert.alert(
         'Transaction Error',
-        validationError,
+        validationResult.error || 'Unknown validation error',
         [ { text: 'OK' } ]
       )
       return
     }
     
     if (isValidating) {
-      Alert.alert(
-        'Please Wait',
-        'Transaction is being validated. Please wait a moment.',
-        [ { text: 'OK' } ]
-      )
       return
     }
-    
-    // Proceed to loading screen
-    navigateToSendLoading()
-  }
 
-  // Show loading state while wallet is loading
+    setIsValidating(true)
+    
+    try {
+      const { balances } = useWalletStore.getState()
+      
+      console.log('Proceeding to send transaction:', {
+        address,
+        amount,
+        currency,
+        feeSats,
+        feeRate,
+        totalAmount,
+        availableBalance : balances.confirmed
+      })
+      
+      navigateToSendLoading()
+      
+    } catch (error) {
+      console.error('Error preparing transaction:', error)
+      Alert.alert(
+        'Transaction Error',
+        'Failed to prepare transaction. Please try again.',
+        [ { text: 'OK' } ]
+      )
+    } finally {
+      setIsValidating(false)
+    }
+  }, [ validationResult, isValidating, navigateToSendLoading, address, amount, currency, feeSats, feeRate, totalAmount ])
+
+  // Get wallet state directly to avoid reactive updates
+  const wallet = useWalletStore.getState().wallet
+
   if (!wallet) {
     return (
       <SafeAreaContainer style={transactionStyles.container}>
@@ -153,11 +129,9 @@ export default function SendConfirmScreen() {
     <SafeAreaContainer style={transactionStyles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      {/* Back Button */}
       <BackButton onPress={navigateBack} />
       
-      {/* Validation Error Display */}
-      {validationError && (
+      {!validationResult.isValid && (
         <View style={{ 
           margin          : 20, 
           padding         : 15, 
@@ -167,12 +141,11 @@ export default function SendConfirmScreen() {
           borderColor     : '#f44336'
         }}>
           <ThemedText style={{ color: '#d32f2f', fontSize: 14, textAlign: 'center' }}>
-            ⚠️ {validationError}
+            ⚠️ {validationResult.error}
           </ThemedText>
         </View>
       )}
       
-      {/* Validation Status */}
       {isValidating && (
         <View style={{ 
           margin          : 20, 
@@ -183,14 +156,11 @@ export default function SendConfirmScreen() {
           borderColor     : '#ff9800'
         }}>
           <ThemedText style={{ color: '#f57c00', fontSize: 14, textAlign: 'center' }}>
-            🔄 Validating transaction...
+            🔄 Preparing transaction...
           </ThemedText>
         </View>
       )}
       
-
-      
-      {/* Transaction Summary with Send Button */}
       <TransactionSummaryFooter
         amount={amount}
         address={address}

@@ -11,6 +11,41 @@ import { DUST_THRESHOLD, estimateTxVirtualBytes } from '../../utils/bitcoin/util
 const PLACEHOLDER_MASTER_FINGERPRINT = Buffer.from('00000000', 'hex')
 
 /**
+ * Validates and creates a proper script for an address
+ */
+function validateAddressAndCreateScript(address: string, network: bitcoin.Network): Buffer {
+  try {
+    // Try to decode the address first to validate it
+    const decoded = bitcoin.address.toOutputScript(address, network)
+    return decoded
+  } catch (error) {
+    console.error(`Failed to create script for address ${address}:`, error)
+    
+    // Try to provide more specific error information
+    if (address.startsWith('tb1') || address.startsWith('bc1')) {
+      // Bech32 address
+      try {
+        const { version, data } = bitcoin.address.fromBech32(address)
+        console.log(`Bech32 address decoded: version=${version}, data length=${data.length}`)
+        
+        // Try to create script manually for bech32
+        if (version === 0 && data.length === 20) {
+          // P2WPKH
+          return bitcoin.payments.p2wpkh({ hash: data, network }).output!
+        } else if (version === 0 && data.length === 32) {
+          // P2WSH
+          return bitcoin.payments.p2wsh({ hash: data, network }).output!
+        }
+      } catch (bech32Error) {
+        console.error('Bech32 decoding failed:', bech32Error)
+      }
+    }
+    
+    throw new Error(`Invalid address ${address} for network ${network.bech32}. Original error: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+/**
  * Builds a PSBT (Partially Signed Bitcoin Transaction).
  *
  * Note: This function assumes that NormalizedUTXO inputs will have their `path` and `publicKey`
@@ -21,6 +56,8 @@ export function buildTransaction(
   params: BuildTransactionParams
 ): { psbt: bitcoin.Psbt; feeDetails: TransactionFeeDetails } {
   const { inputs, outputs, feeRate, changeAddress, network } = params
+
+  console.log('Building transaction with network:', network.bech32, 'outputs:', outputs.length)
 
   if (!inputs || inputs.length === 0) {
     throw new Error('Transaction must have at least one input.')
@@ -72,15 +109,29 @@ export function buildTransaction(
   })
 
   let totalOutputValue = 0
-  outputs.forEach((output: TransactionOutput) => {
+  outputs.forEach((output: TransactionOutput, index: number) => {
+    console.log(`Processing output ${index}: ${output.address} = ${output.value} sats`)
+    
     if (output.value <= 0 || output.value <= DUST_THRESHOLD) {
         throw new Error(`Output value for address ${output.address} must be greater than dust threshold (${DUST_THRESHOLD} sats). Value: ${output.value}`)
     }
-    psbt.addOutput({
-      address : output.address,
-      value   : output.value,
-    })
-    totalOutputValue += output.value
+    
+    try {
+      // Validate the address and create the script before adding to PSBT
+      const outputScript = validateAddressAndCreateScript(output.address, network)
+      console.log(`Created script for ${output.address}, script length: ${outputScript.length}`)
+      
+      // Add output using the script directly instead of address
+      psbt.addOutput({
+        script : outputScript,
+        value  : output.value,
+      })
+      
+      totalOutputValue += output.value
+    } catch (error) {
+      console.error(`Failed to add output for address ${output.address}:`, error)
+      throw error
+    }
   })
 
   // Initial fee & weight estimation assuming a change output might be needed
@@ -102,10 +153,21 @@ export function buildTransaction(
   let finalFeeDetails: TransactionFeeDetails
 
   if (changeValue > DUST_THRESHOLD) {
-    psbt.addOutput({
-      address : changeAddress,
-      value   : changeValue,
-    })
+    console.log(`Adding change output: ${changeAddress} = ${changeValue} sats`)
+    
+    try {
+      // Validate change address and create script
+      const changeScript = validateAddressAndCreateScript(changeAddress, network)
+      
+      psbt.addOutput({
+        script : changeScript,
+        value  : changeValue,
+      })
+    } catch (error) {
+      console.error(`Failed to add change output for address ${changeAddress}:`, error)
+      throw error
+    }
+    
     finalFeeDetails = {
       feeRate,
       estimatedWeight : initialEstimatedWeight, // Weight estimate included change
@@ -135,5 +197,6 @@ export function buildTransaction(
     }
   }
 
+  console.log('Successfully built PSBT with', psbt.inputCount, 'inputs and', psbt.data.outputs.length, 'outputs')
   return { psbt, feeDetails: finalFeeDetails }
 } 

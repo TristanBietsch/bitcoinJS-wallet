@@ -61,17 +61,6 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
   const abortControllerRef = useRef<AbortController | null>(null)
   const isInitializedRef = useRef(false)
 
-  // Validate if we should start fee loading (memoized to prevent changes)
-  const shouldLoadFees = useCallback(() => {
-    // Need valid address and non-zero amount
-    if (!address || !amount) return false
-    
-    const numericAmount = parseFloat(amount)
-    if (isNaN(numericAmount) || numericAmount <= 0) return false
-    
-    return true
-  }, [ address, amount ])
-
   // Clear cache - stable function
   const clearCache = useCallback(() => {
     setState({
@@ -89,62 +78,29 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
     setFeeError(undefined)
   }, [ setFeeRates, setFeeOptions, setFeeError ])
 
-  // Refresh fees in background without loading state
-  const refreshFeesInBackground = useCallback(async () => {
-    if (!shouldLoadFees()) return
-
-    setState(prev => {
-      if (prev.isBackgroundRefreshing) return prev
-      return { ...prev, isBackgroundRefreshing: true }
-    })
-
-    try {
-      const amountSats = Math.floor(parseFloat(amount || '0') * (amount?.includes('.') ? 100000000 : 1))
-      
-      if (amountSats <= 0) return
-
-      // Cancel any existing request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-      abortControllerRef.current = new AbortController()
-
-      const feeRates = await getEnhancedFeeEstimates()
-      
-      // Estimate transaction size (simplified for now)
-      const estimatedTxSize = 200 // rough estimate for 1-2 inputs, 2 outputs
-      const feeOptions = await calculateFeeOptions(estimatedTxSize)
-
-      setState(prev => ({
-        ...prev,
-        feeRates,
-        feeOptions,
-        lastUpdated            : Date.now(),
-        error                  : null,
-        isBackgroundRefreshing : false,
-        cacheAge               : 0
-      }))
-
-      // Update store with fresh data
-      setFeeRates(feeRates)
-      setFeeOptions(feeOptions)
-      setFeeError(undefined)
-
-    } catch (_error) {
-      setState(prev => ({ ...prev, isBackgroundRefreshing: false }))
-    }
-  }, [ amount, shouldLoadFees, setFeeRates, setFeeOptions, setFeeError ])
-
-  // Main refresh function (with loading state)
-  const refreshFees = useCallback(async () => {
-    if (!shouldLoadFees()) {
+  // Core fee loading logic - stable function
+  const loadFees = useCallback(async (showLoading: boolean = false) => {
+    // Validate inputs
+    if (!address || !amount) {
       clearCache()
       return
     }
 
-    // No recent cache, show loading state
-    setState(prev => ({ ...prev, isLoading: true, error: null }))
-    setIsLoadingFees(true)
+    const numericAmount = parseFloat(amount)
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      clearCache()
+      return
+    }
+
+    if (showLoading) {
+      setState(prev => ({ ...prev, isLoading: true, error: null }))
+      setIsLoadingFees(true)
+    } else {
+      setState(prev => {
+        if (prev.isBackgroundRefreshing) return prev
+        return { ...prev, isBackgroundRefreshing: true }
+      })
+    }
 
     try {
       // Cancel any existing request
@@ -161,15 +117,16 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
 
       setState(prev => ({
         ...prev,
-        isLoading   : false,
+        isLoading              : false,
+        isBackgroundRefreshing : false,
         feeRates,
         feeOptions,
-        lastUpdated : Date.now(),
-        error       : null,
-        cacheAge    : 0
+        lastUpdated            : Date.now(),
+        error                  : null,
+        cacheAge               : 0
       }))
 
-      // Update store
+      // Update store with fresh data
       setFeeRates(feeRates)
       setFeeOptions(feeOptions)
       setIsLoadingFees(false)
@@ -180,20 +137,31 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
       
       setState(prev => ({
         ...prev,
-        isLoading : false,
-        error     : errorMessage
+        isLoading              : false,
+        isBackgroundRefreshing : false,
+        error                  : errorMessage
       }))
 
       setIsLoadingFees(false)
       setFeeError(errorMessage)
     }
-  }, [ shouldLoadFees, clearCache, setFeeRates, setFeeOptions, setIsLoadingFees, setFeeError ])
+  }, [ address, amount, clearCache, setFeeRates, setFeeOptions, setIsLoadingFees, setFeeError ])
+
+  // Main refresh function (with loading state)
+  const refreshFees = useCallback(async () => {
+    await loadFees(true)
+  }, [ loadFees ])
 
   // Force refresh (ignores cache)
   const forceRefresh = useCallback(async () => {
     setState(prev => ({ ...prev, lastUpdated: null }))
-    await refreshFees()
-  }, [ refreshFees ])
+    await loadFees(true)
+  }, [ loadFees ])
+
+  // Background refresh without loading state
+  const refreshFeesInBackground = useCallback(async () => {
+    await loadFees(false)
+  }, [ loadFees ])
 
   // Start background refresh timer - stable function that doesn't change
   const startBackgroundRefresh = useCallback(() => {
@@ -218,7 +186,7 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
     }, 10000) // Check every 10 seconds
   }, [ refreshFeesInBackground ])
 
-  // Effect to handle address/amount changes - FIXED to prevent infinite loops
+  // Effect to handle address/amount changes
   useEffect(() => {
     // Only run after initial mount
     if (!isInitializedRef.current) {
@@ -226,9 +194,14 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
       return
     }
 
-    if (shouldLoadFees()) {
-      refreshFees()
-      startBackgroundRefresh()
+    if (address && amount) {
+      const numericAmount = parseFloat(amount)
+      if (!isNaN(numericAmount) && numericAmount > 0) {
+        loadFees(true)
+        startBackgroundRefresh()
+      } else {
+        clearCache()
+      }
     } else {
       clearCache()
     }
@@ -241,15 +214,18 @@ export function useProgressiveFeeLoading(): UseProgressiveFeeLoadingReturn {
         abortControllerRef.current.abort()
       }
     }
-  }, [ address, amount ]) // Only depend on the actual values, not the functions
+  }, [ address, amount, loadFees, startBackgroundRefresh, clearCache ])
 
   // Initial load effect - runs once on mount
   useEffect(() => {
-    if (shouldLoadFees()) {
-      refreshFees()
-      startBackgroundRefresh()
+    if (address && amount) {
+      const numericAmount = parseFloat(amount)
+      if (!isNaN(numericAmount) && numericAmount > 0) {
+        loadFees(true)
+        startBackgroundRefresh()
+      }
     }
-  }, []) // Empty dependency array - runs once on mount
+  }, [ address, amount, loadFees, startBackgroundRefresh ])
 
   // Cleanup on unmount
   useEffect(() => {

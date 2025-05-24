@@ -77,33 +77,26 @@ export const useSendAmount = () => {
   const getCurrentFeeRate = useCallback((): number => {
     try {
       if (speed === 'custom' && customFee) {
-        console.log('Using custom fee rate:', customFee.feeRate)
         return customFee.feeRate
       }
       
       if (selectedFeeOption) {
-        console.log('Using selected fee option rate:', selectedFeeOption.feeRate)
         return selectedFeeOption.feeRate
       }
       
       if (feeRates) {
         switch (speed) {
           case 'economy': 
-            console.log('Using economy rate:', feeRates.economy)
             return feeRates.economy
           case 'standard': 
-            console.log('Using standard rate:', feeRates.normal)
             return feeRates.normal  
           case 'express': 
-            console.log('Using express rate:', feeRates.fast)
             return feeRates.fast
           default: 
-            console.log('Using default rate:', feeRates.normal)
             return feeRates.normal
         }
       }
       
-      console.warn('No fee rate available, using fallback rate: 10')
       return 10 // Fallback fee rate
     } catch (error) {
       console.error('Error getting fee rate:', error)
@@ -240,13 +233,6 @@ export const useSendAmount = () => {
       return false
     }
 
-    // Dust limit check
-    const DUST_THRESHOLD = 546
-    if (amountSats < DUST_THRESHOLD) {
-      console.error(`Amount too small. Minimum is ${DUST_THRESHOLD} sats, got ${amountSats}`)
-      return false
-    }
-
     // Maximum single transaction limit (prevent accidentally large sends)
     const MAX_SINGLE_TX = 100000000 // 1 BTC limit for safety
     if (amountSats > MAX_SINGLE_TX) {
@@ -307,7 +293,7 @@ export const useSendAmount = () => {
                           validateTransaction()
 
   // Enhanced continue handler with comprehensive validation
-  const handleContinue = () => {
+  const handleContinue = useCallback(() => {
     // Validate transaction
     if (!validateTransaction()) {
       console.error('Transaction validation failed, cannot proceed')
@@ -326,28 +312,27 @@ export const useSendAmount = () => {
       return
     }
 
-    // Save current state
+    // Save current state to store ONLY when proceeding
     setAmount(rawAmount)
     setCurrency(currency)
     
     console.log('Proceeding to confirmation with:', {
       destinationAddress,
-      amount  : getAmountInSats(),
+      amount : getAmountInSats(),
       feeCalculation,
       speed,
-      customFee,
-      network : bitcoinjsNetwork === require('bitcoinjs-lib').networks.testnet ? 'testnet' : 'mainnet'
+      customFee
     })
     
     router.push('/send/confirm' as any)
-  }
+  }, [ validateTransaction, feeCalculation, destinationAddress, speed, setAmount, rawAmount, setCurrency, currency, getAmountInSats, customFee, router ])
 
   // Load wallet data on mount
   useEffect(() => {
     loadWalletData()
   }, [ loadWalletData ])
 
-  // Recalculate fees when amount changes
+  // Recalculate fees when amount changes (debounced)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       calculateTransactionFee()
@@ -356,15 +341,15 @@ export const useSendAmount = () => {
     return () => clearTimeout(timeoutId)
   }, [ calculateTransactionFee ])
 
-  // Handle currency change
-  const handleCurrencyChange = (newCurrency: string) => {
+  // Handle currency change - DO NOT UPDATE STORE IMMEDIATELY
+  const handleCurrencyChange = useCallback((newCurrency: string) => {
     const newCurrencyType = newCurrency as CurrencyType
     setLocalCurrency(newCurrencyType)
-    setCurrency(newCurrencyType)
-  }
+    // Only update store when proceeding to next screen
+  }, [])
   
-  // Handle input
-  const handleNumberPress = (num: string) => {
+  // Handle input - DO NOT UPDATE STORE IMMEDIATELY
+  const handleNumberPress = useCallback((num: string) => {
     // Use the raw amount (not formatted) for validation
     const isValid = validateBitcoinInput(rawAmount, num, currency)
     
@@ -376,28 +361,28 @@ export const useSendAmount = () => {
       const newAmount = prev === '0' && num !== '.' ? num :
         num === '.' && prev.includes('.') ? prev :
         prev + num
-      setAmount(newAmount) // Store raw amount in sendStore
+      // Only update store when proceeding to next screen
       return newAmount
     })
-  }
+  }, [ rawAmount, currency ])
   
-  const handleBackspace = () => {
+  const handleBackspace = useCallback(() => {
     setRawAmount(prev => {
       const newAmount = prev.length <= 1 ? '0' : prev.slice(0, -1)
-      setAmount(newAmount)
+      // Only update store when proceeding to next screen
       return newAmount
     })
-  }
+  }, [])
   
   // Handle back navigation
-  const handleBackPress = () => {
+  const handleBackPress = useCallback(() => {
     router.back()
-  }
+  }, [ router ])
   
   // Format displayed amount based on currency
-  const getFormattedAmount = () => {
+  const getFormattedAmount = useCallback(() => {
     return formatBitcoinAmount(rawAmount, currency)
-  }
+  }, [ rawAmount, currency ])
 
   return {
     // Display values
