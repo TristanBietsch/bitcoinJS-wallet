@@ -3,7 +3,7 @@ import { useWalletStore } from '@/src/store/walletStore'
 import { signTransaction } from '@/src/services/bitcoin/txSigner'
 import { bitcoinjsNetwork } from '@/src/config/env'
 import { fetchWalletUtxos, enrichUtxosWithPublicKeys, filterUtxosByConfirmation } from '@/src/services/bitcoin/wallet/walletUtxoService'
-import type { TransactionResult } from '@/src/services/transactionService'
+import type { TransactionResult } from '@/src/types/transaction.types'
 
 /**
  * Clean service layer for Send BTC transactions

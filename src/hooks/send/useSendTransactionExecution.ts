@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { SendTransactionService } from '@/src/services/sendTransactionService'
-import type { TransactionResult } from '@/src/services/transactionService'
+import type { TransactionResult } from '@/src/types/transaction.types'
 
 interface ExecutionState {
   isExecuting: boolean

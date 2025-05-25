@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useTransactionStore } from '@/src/store/transactionStore'
-import { TransactionService, TransactionResult } from '@/src/services/transactionService'
+import { SendTransactionService } from '@/src/services/sendTransactionService'
+import type { TransactionResult } from '@/src/types/transaction.types'
 
 interface ExecutionState {
   isExecuting: boolean
@@ -8,6 +9,11 @@ interface ExecutionState {
   result: TransactionResult | null
 }
 
+/**
+ * Legacy compatibility layer for the old useTransactionExecution hook
+ * This provides the same interface but uses the new SendTransactionService underneath
+ * @deprecated Use useSendTransactionExecution for new code
+ */
 export const useTransactionExecution = () => {
   const [ state, setState ] = useState<ExecutionState>({
     isExecuting : false,
@@ -21,7 +27,7 @@ export const useTransactionExecution = () => {
     setState({ isExecuting: true, error: null, result: null })
     
     try {
-      const result = await TransactionService.executeTransaction()
+      const result = await SendTransactionService.executeTransaction()
       
       setState({ isExecuting: false, error: null, result })
       
@@ -40,12 +46,14 @@ export const useTransactionExecution = () => {
   }, [ transactionStore ])
   
   const getTransactionSummary = useCallback(() => {
-    return TransactionService.getTransactionSummary()
+    return SendTransactionService.getTransactionSummary()
   }, [])
   
   const estimateFee = useCallback(async () => {
     try {
-      return await TransactionService.estimateFee()
+      // For compatibility, return the estimated fee from the new store
+      const sendStore = SendTransactionService.getTransactionSummary()
+      return sendStore.fee
     } catch (error) {
       console.error('Fee estimation failed:', error)
       return 0

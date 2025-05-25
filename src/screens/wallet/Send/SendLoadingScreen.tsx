@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { useRouter } from 'expo-router'
 import StatusScreenLayout from '@/src/components/layout/StatusScreenLayout'
 import EnhancedLoadingState from '@/src/components/ui/Feedback/EnhancedLoadingState'
-import { useTransactionExecution } from '@/src/hooks/send/useTransactionExecution'
+import { useSendTransactionExecution } from '@/src/hooks/send/useSendTransactionExecution'
 import { ThemedText } from '@/src/components/ui/Text'
 
 interface TransactionState {
@@ -27,11 +27,11 @@ export default function SendLoadingScreen() {
   const {
     executeTransaction,
     isExecuting,
-    error: executionError,
+    executionError,
     result,
-    isValid,
-    getValidationErrors
-  } = useTransactionExecution()
+    isValidTransaction,
+    getValidationStatus
+  } = useSendTransactionExecution()
 
   useEffect(() => {
     let isMounted = true
@@ -39,9 +39,9 @@ export default function SendLoadingScreen() {
     const processTransaction = async () => {
       try {
         // Validate transaction before starting
-        if (!isValid()) {
-          const errors = getValidationErrors()
-          throw new Error(`Transaction validation failed: ${errors.join(', ')}`)
+        if (!isValidTransaction) {
+          const validation = getValidationStatus()
+          throw new Error(`Transaction validation failed: ${validation.errors.join(', ')}`)
         }
         
         if (!isMounted) return
@@ -102,7 +102,7 @@ export default function SendLoadingScreen() {
     return () => {
       isMounted = false
     }
-  }, [ executeTransaction, isValid, getValidationErrors, router ])
+  }, [ executeTransaction, isValidTransaction, getValidationStatus, router ])
 
     return (
       <StatusScreenLayout>

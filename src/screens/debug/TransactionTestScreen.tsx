@@ -4,42 +4,43 @@ import { useRouter } from 'expo-router'
 import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
 import { ThemedText } from '@/src/components/ui/Text'
 import ActionButton from '@/src/components/ui/Button/ActionButton'
-import { useTransactionStore } from '@/src/store/transactionStore'
-import { useTransactionExecution } from '@/src/hooks/send/useTransactionExecution'
+import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
+import { SendTransactionService } from '@/src/services/sendTransactionService'
 
 /**
  * Test screen for the new transaction flow
  */
 export default function TransactionTestScreen() {
   const router = useRouter()
-  const transactionStore = useTransactionStore()
-  const { getTransactionSummary } = useTransactionExecution()
+  const sendStore = useSendTransactionStore()
 
   useEffect(() => {
-    // Load fee rates when screen mounts
-    transactionStore.loadFeeRates()
-  }, [ transactionStore ])
+    // Auto-load UTXOs when component mounts if we have transaction data
+    if (sendStore.derived.amountSats > 0) {
+      SendTransactionService.loadUtxosAndCalculateFees().catch(console.error)
+    }
+  }, [ sendStore.derived.amountSats ])
 
   const setupTestTransaction = () => {
     // Set up a test transaction
-    transactionStore.setRecipientAddress('tb1qunjkws5z3jxgh268c840kytl5622fwzf35k068')
-    transactionStore.setAmount('1000', 'SATS')
-    transactionStore.setSpeed('standard')
+    sendStore.setRecipientAddress('tb1qunjkws5z3jxgh268c840kytl5622fwzf35k068')
+    sendStore.setAmount('1000', 'SATS')
+    sendStore.setFeeRate(10) // Standard fee rate
     
     Alert.alert(
       'Test Transaction Set',
       'Test transaction has been configured:\n\n' +
       '• Address: tb1qunjkws...35k068\n' +
       '• Amount: 1000 SATS\n' +
-      '• Speed: Standard\n\n' +
+      '• Fee Rate: 10 sats/vByte\n\n' +
       'Ready to test the flow!',
       [ { text: 'OK' } ]
     )
   }
 
   const testConfirmScreen = () => {
-    if (!transactionStore.isValid()) {
-      const errors = transactionStore.getValidationErrors()
+    if (!sendStore.isValidTransaction()) {
+      const errors = sendStore.getValidationErrors()
       Alert.alert('Invalid Transaction', errors.join('\n'))
       return
     }
@@ -48,30 +49,29 @@ export default function TransactionTestScreen() {
   }
 
   const showSummary = () => {
-    const summary = getTransactionSummary()
+    const summary = SendTransactionService.getTransactionSummary()
     Alert.alert(
       'Transaction Summary',
-      `Address: ${summary.recipientAddress}\n` +
+      `Address: ${summary.recipient}\n` +
       `Amount: ${summary.amount} sats\n` +
       `Fee: ${summary.fee} sats\n` +
-      `Fee Rate: ${summary.feeRate} sats/vByte\n` +
       `Total: ${summary.total} sats\n` +
-      `Speed: ${summary.speed}`,
+      `Currency: ${summary.currency}`,
       [ { text: 'OK' } ]
     )
   }
 
   const resetTransaction = () => {
-    transactionStore.reset()
+    sendStore.reset()
     Alert.alert('Reset', 'Transaction store has been reset')
   }
 
-  const { transaction, feeRates, isLoadingFees, error } = transactionStore
+  const { inputs, derived, utxos, meta } = sendStore
 
   return (
     <SafeAreaContainer style={{ flex: 1, padding: 20 }}>
       <ThemedText style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' }}>
-        🧪 Transaction Flow Test
+        🧪 Send Transaction Test
       </ThemedText>
 
       {/* Current State */}
@@ -85,23 +85,26 @@ export default function TransactionTestScreen() {
           Current Transaction:
         </ThemedText>
         <ThemedText style={{ fontSize: 14, marginBottom: 5 }}>
-          Address: {transaction.recipientAddress || 'Not set'}
+          Address: {inputs.recipientAddress || 'Not set'}
         </ThemedText>
         <ThemedText style={{ fontSize: 14, marginBottom: 5 }}>
-          Amount: {transaction.amount} {transaction.currency}
+          Amount: {inputs.amount} {inputs.currency}
         </ThemedText>
         <ThemedText style={{ fontSize: 14, marginBottom: 5 }}>
-          Fee Rate: {transaction.feeRate} sats/vByte
+          Amount (sats): {derived.amountSats}
         </ThemedText>
         <ThemedText style={{ fontSize: 14, marginBottom: 5 }}>
-          Estimated Fee: {transaction.estimatedFee} sats
+          Fee Rate: {inputs.feeRate} sats/vByte
+        </ThemedText>
+        <ThemedText style={{ fontSize: 14, marginBottom: 5 }}>
+          Estimated Fee: {derived.estimatedFee} sats
         </ThemedText>
         <ThemedText style={{ fontSize: 14 }}>
-          Speed: {transaction.speed}
+          Total: {derived.totalSats} sats
         </ThemedText>
       </View>
 
-      {/* Fee Rates */}
+      {/* UTXO Information */}
       <View style={{ 
         backgroundColor : '#e8f5e8', 
         padding         : 15, 
@@ -109,27 +112,28 @@ export default function TransactionTestScreen() {
         marginBottom    : 20 
       }}>
         <ThemedText style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
-          Network Fee Rates:
+          UTXO Selection:
         </ThemedText>
-        {isLoadingFees ? (
+        {meta.isLoadingUtxos ? (
           <ThemedText style={{ fontSize: 14, fontStyle: 'italic' }}>
-            Loading fee rates...
+            Loading UTXOs...
           </ThemedText>
-        ) : feeRates ? (
+        ) : utxos.selectedUtxos.length > 0 ? (
           <>
-            <ThemedText style={{ fontSize: 14 }}>Economy: {feeRates.economy} sats/vByte</ThemedText>
-            <ThemedText style={{ fontSize: 14 }}>Standard: {feeRates.standard} sats/vByte</ThemedText>
-            <ThemedText style={{ fontSize: 14 }}>Express: {feeRates.express} sats/vByte</ThemedText>
+            <ThemedText style={{ fontSize: 14 }}>Selected UTXOs: {utxos.selectedUtxos.length}</ThemedText>
+            <ThemedText style={{ fontSize: 14 }}>Total Value: {utxos.totalUtxoValue} sats</ThemedText>
+            <ThemedText style={{ fontSize: 14 }}>Change: {utxos.changeAmount} sats</ThemedText>
+            <ThemedText style={{ fontSize: 14 }}>Estimated Size: {derived.estimatedSize} vBytes</ThemedText>
           </>
         ) : (
-          <ThemedText style={{ fontSize: 14, color: '#ff4444' }}>
-            Failed to load fee rates
+          <ThemedText style={{ fontSize: 14, color: '#666' }}>
+            No UTXOs selected yet
           </ThemedText>
         )}
       </View>
 
       {/* Error Display */}
-      {error && (
+      {(meta.error || derived.addressError || derived.amountError || derived.feeError) && (
         <View style={{ 
           backgroundColor : '#ffebee', 
           padding         : 15, 
@@ -139,7 +143,7 @@ export default function TransactionTestScreen() {
           borderWidth     : 1
         }}>
           <ThemedText style={{ fontSize: 14, color: '#d32f2f' }}>
-            ⚠️ {error}
+            ⚠️ {meta.error || derived.addressError || derived.amountError || derived.feeError}
           </ThemedText>
         </View>
       )}
@@ -154,13 +158,13 @@ export default function TransactionTestScreen() {
         <ActionButton
           title="📊 Show Summary"
           onPress={showSummary}
-          disabled={!transactionStore.isValid()}
+          disabled={!sendStore.isValidTransaction()}
         />
         
         <ActionButton
           title="🚀 Test Confirm Screen"
           onPress={testConfirmScreen}
-          disabled={!transactionStore.isValid()}
+          disabled={!sendStore.isValidTransaction()}
         />
         
         <ActionButton
@@ -174,19 +178,19 @@ export default function TransactionTestScreen() {
       <View style={{ 
         marginTop       : 20,
         padding         : 15,
-        backgroundColor : transactionStore.isValid() ? '#e8f5e8' : '#ffebee',
+        backgroundColor : sendStore.isValidTransaction() ? '#e8f5e8' : '#ffebee',
         borderRadius    : 8,
-        borderColor     : transactionStore.isValid() ? '#4caf50' : '#f44336',
+        borderColor     : sendStore.isValidTransaction() ? '#4caf50' : '#f44336',
         borderWidth     : 1
       }}>
         <ThemedText style={{ 
           fontSize  : 14, 
-          color     : transactionStore.isValid() ? '#2e7d32' : '#d32f2f',
+          color     : sendStore.isValidTransaction() ? '#2e7d32' : '#d32f2f',
           textAlign : 'center'
         }}>
-          {transactionStore.isValid() 
+          {sendStore.isValidTransaction() 
             ? '✅ Transaction is valid' 
-            : `❌ ${transactionStore.getValidationErrors().join(', ')}`
+            : `❌ ${sendStore.getValidationErrors().join(', ')}`
           }
         </ThemedText>
       </View>
