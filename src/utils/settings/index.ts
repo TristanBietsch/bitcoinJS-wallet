@@ -1,0 +1,2 @@
+// Re-export settings functions from their new location for backward compatibility
+export * from '../config/settings' 
