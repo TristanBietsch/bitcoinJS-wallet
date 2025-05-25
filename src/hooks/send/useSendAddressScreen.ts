@@ -1,250 +1,197 @@
-import { useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
-import { useAddressValidation } from '@/src/hooks/send/useAddressValidation'
-import { useSpeedOptions } from '@/src/hooks/send/useSpeedOptions'
-import { useCustomFee } from '@/src/hooks/send/useCustomFee'
-import { useProgressiveFeeLoading } from '@/src/hooks/send/useProgressiveFeeLoading'
-import { SpeedTier } from '@/src/types/domain/transaction'
-import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddress'
-import { bitcoinjsNetwork } from '@/src/config/env'
+import { validateBitcoinAddress } from '@/src/services/bitcoin/addressValidationService'
+import { getEnhancedFeeEstimates } from '@/src/services/bitcoin/feeEstimationService'
 
-export const useSendAddressScreen = () => {
-  const router = useRouter()
-  const { 
-    address: storedAddress, 
-    speed: storedSpeed, 
-    customFee: storedCustomFee,
-    setAddress: setStoreAddress, 
-    setSpeed: setStoreSpeed, 
-    setCustomFee: setStoreCustomFee,
-    setSelectedFeeOption: setStoreSelectedFeeOption,
-    reset: resetStore
-  } = useSendStore()
+// Use the FeeOption type from sendStore
+interface FeeOption {
+  feeRate: number
+  totalSats: number
+  confirmationTime: number
+}
+
+interface UseSendAddressScreenReturn {
+  // Address state
+  address: string
+  addressError: string | null
+  isValidAddress: boolean
   
-  const {
-    address,
-    addressError,
-    handleAddressChange,
-    checkClipboard,
-    resetAddress
-  } = useAddressValidation()
+  // Fee state
+  selectedSpeed: 'economy' | 'normal' | 'express' | 'custom'
+  feeOptions: FeeOption[]
+  customFeeRate: number
+  isLoadingFees: boolean
+  
+  // Actions
+  setAddress: (address: string) => void
+  setSelectedSpeed: (speed: 'economy' | 'normal' | 'express' | 'custom') => void
+  setCustomFeeRate: (rate: number) => void
+  handleContinue: () => void
+  loadFeeRates: () => Promise<void>
+}
 
-  const {
-    speed,
-    showSpeedInfoModal,
-    speedOptions,
-    isLoadingFees,
-    feeLoadError,
-    handleSpeedChange: handleSpeedChangeBase,
-    handleSpeedInfoPress,
-    handleCloseSpeedInfoModal,
-    resetSpeed,
-    refreshSpeedOptions
-  } = useSpeedOptions()
-
-  const {
-    customFee,
-    showCustomFeeModal,
-    setCustomFee,
-    setShowCustomFeeModal,
-    handleNumberPress,
-    handleCloseCustomFeeModal,
-    handleConfirmCustomFee,
-    resetCustomFee,
-    hasPersistedFee,
-    startEditingFee,
-    pendingInput,
-    feeError,
-    isInputValid
-  } = useCustomFee()
-
-  // Progressive fee loading with infinite loop fix applied
-  const { state: feeState } = useProgressiveFeeLoading()
-
-  // Load data from store when screen is focused
-  useEffect(() => {
-    // First check if we have data in the store
-    if (storedAddress) {
-      // Validate the address from the store
-      const validationResult = validateAndSanitizeAddress(storedAddress, bitcoinjsNetwork)
-      
-      if (validationResult.isValid) {
-        // If we have a valid address in the store, use it and don't check clipboard
-        handleAddressChange(storedAddress)
+/**
+ * Hook for managing the Send Address screen state and logic
+ * Consolidated version that doesn't use other hooks
+ */
+export function useSendAddressScreen(): UseSendAddressScreenReturn {
+  const router = useRouter()
+  const sendStore = useSendStore()
+  
+  // Local state
+  const [ addressError, setAddressError ] = useState<string | null>(null)
+  const [ isLoadingFees, setIsLoadingFees ] = useState(false)
+  
+  // Get values from stores
+  const address = sendStore.address || ''
+  const selectedSpeed = (sendStore.speed || 'normal') as 'economy' | 'normal' | 'express' | 'custom'
+  const customFeeRate = sendStore.customFee?.feeRate || 1
+  const feeOptions = sendStore.feeOptions || []
+  
+  // Validate address
+  const isValidAddress = (() => {
+    if (!address) return false
+    const validation = validateBitcoinAddress(address)
+    return validation.isValid
+  })()
+  
+  // Set address with validation
+  const setAddress = useCallback((newAddress: string) => {
+    sendStore.setAddress(newAddress)
+    
+    if (newAddress && newAddress.length > 0) {
+      const validation = validateBitcoinAddress(newAddress)
+      if (!validation.isValid) {
+        setAddressError(validation.error || 'Invalid Bitcoin address')
       } else {
-        // If the stored address is invalid, reset it
-        resetStore()
-        // Then check clipboard
-        checkClipboard()
+        setAddressError(null)
       }
     } else {
-      // Only check clipboard if we don't have an address yet
-      checkClipboard()
+      setAddressError(null)
     }
+  }, [])
+  
+  // Set selected speed
+  const setSelectedSpeed = useCallback((speed: 'economy' | 'normal' | 'express' | 'custom') => {
+    sendStore.setSpeed(speed)
     
-    // Handle custom fee first since it should override speed
-    if (storedCustomFee) {
-      setCustomFee(storedCustomFee)
-      handleSpeedChangeBase('custom')
-      setStoreSelectedFeeOption(undefined) // Clear selectedFeeOption for custom
-    } else if (storedSpeed) {
-      handleSpeedChangeBase(storedSpeed as SpeedTier)
+    // If switching to a preset speed, update the selected fee option
+    if (speed !== 'custom') {
+      const option = feeOptions.find((opt: FeeOption) => {
+        // Map speed names to fee rates
+        if (speed === 'economy' && opt.confirmationTime >= 144) return true
+        if (speed === 'normal' && opt.confirmationTime >= 6 && opt.confirmationTime < 144) return true
+        if (speed === 'express' && opt.confirmationTime < 6) return true
+        return false
+      })
+      if (option) {
+        sendStore.setSelectedFeeOption(option)
+      }
+    }
+  }, [ feeOptions ])
+  
+  // Set custom fee rate
+  const setCustomFeeRate = useCallback((rate: number) => {
+    if (rate > 0) {
+      sendStore.setCustomFee({
+        feeRate          : rate,
+        totalSats        : 0, // Will be calculated based on transaction
+        confirmationTime : 6  // Default estimate
+      })
+    }
+  }, [])
+  
+  // Load fee rates
+  const loadFeeRates = useCallback(async () => {
+    setIsLoadingFees(true)
+    try {
+      const rates = await getEnhancedFeeEstimates()
       
-      // Also set the selectedFeeOption for standard speeds
-      if (storedSpeed !== 'custom') {
-        const selectedSpeedOption = speedOptions.find(option => option.id === storedSpeed)
-        if (selectedSpeedOption && selectedSpeedOption.fee && selectedSpeedOption.feeRate) {
-          const feeOption = {
-            name            : selectedSpeedOption.label,
-            feeRate         : selectedSpeedOption.feeRate,
-            totalFee        : selectedSpeedOption.fee.sats,
-            estimatedBlocks : selectedSpeedOption.estimatedBlocks || 6,
-            estimatedTime   : selectedSpeedOption.estimatedTime || '~1 hour'
-          }
-          setStoreSelectedFeeOption(feeOption)
-          console.log('Restored selectedFeeOption for stored speed:', storedSpeed, feeOption)
+      // Convert to fee options format used by sendStore
+      const options: FeeOption[] = [
+        {
+          feeRate          : rates.economy,
+          totalSats        : 0, // Will be calculated based on transaction
+          confirmationTime : rates.confirmationTargets.economy
+        },
+        {
+          feeRate          : rates.normal,
+          totalSats        : 0,
+          confirmationTime : rates.confirmationTargets.normal
+        },
+        {
+          feeRate          : rates.fast,
+          totalSats        : 0,
+          confirmationTime : rates.confirmationTargets.fast
+        }
+      ]
+      
+      sendStore.setFeeOptions(options)
+      sendStore.setFeeRates({
+        economy   : rates.economy,
+        normal    : rates.normal,
+        fast      : rates.fast,
+        timestamp : rates.lastUpdated
+      })
+      
+      // If a speed is selected, update the fee option
+      if (selectedSpeed !== 'custom') {
+        const option = options.find((opt: FeeOption) => {
+          if (selectedSpeed === 'economy' && opt.confirmationTime >= 144) return true
+          if (selectedSpeed === 'normal' && opt.confirmationTime >= 6 && opt.confirmationTime < 144) return true
+          if (selectedSpeed === 'express' && opt.confirmationTime < 6) return true
+          return false
+        })
+        if (option) {
+          sendStore.setSelectedFeeOption(option)
         }
       }
+    } catch (error) {
+      console.error('Failed to load fee rates:', error)
+    } finally {
+      setIsLoadingFees(false)
     }
-  }, [ 
-    storedAddress, 
-    storedSpeed, 
-    storedCustomFee,
-    speedOptions,
-    checkClipboard,
-    handleAddressChange,
-    handleSpeedChangeBase,
-    resetStore,
-    setCustomFee,
-    setStoreSelectedFeeOption
-  ])
-
-  const handleQRScan = () => {
-    router.push('/send/camera' as any)
-  }
-
-  const handleBackPress = () => {
-    resetAddress()
-    resetSpeed()
-    resetCustomFee()
-    resetStore() // Reset store when explicitly going back to home
-    router.back()
-  }
-
-  const handleNextPress = () => {
-    if (!address || addressError) return
-    
-    // Only update store when user explicitly moves forward (prevents circular dependencies)
-    setStoreAddress(address)
-    setStoreSpeed(speed)
-    if (speed === 'custom') {
-      setStoreCustomFee(customFee)
-      setStoreSelectedFeeOption(undefined) // Clear selectedFeeOption for custom
-    } else {
-      // For standard speeds, ensure selectedFeeOption is set
-      const selectedSpeedOption = speedOptions.find(option => option.id === speed)
-      if (selectedSpeedOption && selectedSpeedOption.fee && selectedSpeedOption.feeRate) {
-        const feeOption = {
-          name            : selectedSpeedOption.label,
-          feeRate         : selectedSpeedOption.feeRate,
-          totalFee        : selectedSpeedOption.fee.sats,
-          estimatedBlocks : selectedSpeedOption.estimatedBlocks || 6,
-          estimatedTime   : selectedSpeedOption.estimatedTime || '~1 hour'
-        }
-        setStoreSelectedFeeOption(feeOption)
-      }
-    }
-    
-    router.push({
-      pathname : '/send/amount' as any,
-      params   : {
-        address,
-        speed
-      }
-    })
-  }
-
-  const handleSpeedChange = (newSpeed: SpeedTier) => {
-    if (newSpeed === 'custom') {
-      // Clear selectedFeeOption when switching to custom
-      setStoreSelectedFeeOption(undefined)
-      setShowCustomFeeModal(true)
+  }, [ selectedSpeed ])
+  
+  // Handle continue
+  const handleContinue = useCallback(() => {
+    if (!isValidAddress) {
+      setAddressError('Please enter a valid Bitcoin address')
       return
     }
     
-    // Clear custom fee when switching to a standard speed tier
-    setStoreCustomFee(undefined)
-    
-    // Find the corresponding speed option and set it as selectedFeeOption
-    const selectedSpeedOption = speedOptions.find(option => option.id === newSpeed)
-    if (selectedSpeedOption && selectedSpeedOption.fee && selectedSpeedOption.feeRate) {
-      // Convert SpeedOption to FeeOption format for the store
-      const feeOption = {
-        name            : selectedSpeedOption.label,
-        feeRate         : selectedSpeedOption.feeRate,
-        totalFee        : selectedSpeedOption.fee.sats,
-        estimatedBlocks : selectedSpeedOption.estimatedBlocks || 6,
-        estimatedTime   : selectedSpeedOption.estimatedTime || '~1 hour'
-      }
-      setStoreSelectedFeeOption(feeOption)
-      console.log('Set selectedFeeOption for speed:', newSpeed, feeOption)
-    } else {
-      console.warn('Could not find speed option for:', newSpeed)
-      setStoreSelectedFeeOption(undefined)
+    // Ensure we have a fee rate set
+    if (selectedSpeed === 'custom' && customFeeRate <= 0) {
+      return
     }
     
-    handleSpeedChangeBase(newSpeed)
-  }
-
-  const handleCustomFeeButtonConfirm = () => {
-    // Once custom fee is confirmed, set speed to 'custom'
-    handleSpeedChangeBase('custom')
-  }
+    // Navigate to amount screen
+    router.push('/send/amount' as any)
+  }, [ isValidAddress, selectedSpeed, customFeeRate, router ])
   
-  const handleCustomFeeConfirm = useCallback(() => {
-    // Set speed to custom first
-    handleSpeedChangeBase('custom')
-    // Then confirm the custom fee
-    handleConfirmCustomFee()
-  }, [ handleSpeedChangeBase, handleConfirmCustomFee ])
-
-  const handleCustomFeePress = () => {
-    startEditingFee()
-  }
-
+  // Load fee rates on mount
+  useEffect(() => {
+    loadFeeRates()
+  }, [])
+  
   return {
-    // State
+    // Address state
     address,
     addressError,
-    speed,
-    showSpeedInfoModal,
-    speedOptions,
-    customFee,
-    showCustomFeeModal,
-    hasPersistedFee,
-    pendingInput,
-    feeError,
-    isInputValid,
+    isValidAddress,
     
-    // Fee loading state for enhanced UX
-    feeLoading : feeState.isLoading || feeState.isBackgroundRefreshing,
+    // Fee state
+    selectedSpeed,
+    feeOptions,
+    customFeeRate,
     isLoadingFees,
-    feeLoadError,
     
-    // Handlers
-    handleAddressChange,
-    handleQRScan,
-    handleBackPress,
-    handleNextPress,
-    handleSpeedChange,
-    handleSpeedInfoPress,
-    handleCloseSpeedInfoModal,
-    handleCustomFeeButtonConfirm,
-    handleCustomFeePress,
-    handleNumberPress,
-    handleCloseCustomFeeModal,
-    handleConfirmCustomFee : handleCustomFeeConfirm,
-    refreshSpeedOptions
+    // Actions
+    setAddress,
+    setSelectedSpeed,
+    setCustomFeeRate,
+    handleContinue,
+    loadFeeRates
   }
 } 

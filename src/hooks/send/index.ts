@@ -1,11 +1,15 @@
-export * from './useCameraScanner'
-export * from './useSendAddressScreen'
-export * from './useAddressValidation'
-export * from './useCustomFee'
-export * from './useSendAmount'
-export * from './useSpeedOptions'
-// export * from './useSendForm' // Commented out due to "Cannot find module" error
-export * from './useTransactionParams'
-// export * from './useFeeSelection' // Commented out due to "Cannot find module" error
-export * from './useSendTransactionFlow'
-export * from './useProgressiveFeeLoading' 
+// Send transaction hooks - Refactored architecture
+export * from './useTransaction'           // Main unified transaction hook
+export * from './useSendAddressScreen'     // Address screen logic
+export * from './useSendAmount'            // Amount screen logic
+export * from './useCameraScanner'         // QR scanner logic
+
+// Legacy hooks - to be refactored
+export * from './useSendTransactionFlow'   // Will be replaced by useTransaction
+export * from './useAddressValidation'     // Will be integrated into screens
+export * from './useCustomFee'             // Will be integrated into screens
+export * from './useSpeedOptions'          // Will be integrated into screens
+export * from './useTransactionParams'     // Will be integrated into useTransaction
+export * from './useTransactionValidation' // Already integrated into useTransaction
+export * from './useTransactionNavigation' // Already integrated into useTransaction
+export * from './useProgressiveFeeLoading' // Will be integrated into screens 

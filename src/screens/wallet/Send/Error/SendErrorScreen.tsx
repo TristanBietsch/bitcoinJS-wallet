@@ -1,28 +1,35 @@
 import React from 'react'
+import { useRouter } from 'expo-router'
 import StatusScreenLayout from '@/src/components/layout/StatusScreenLayout'
 import StatusIcon from '@/src/components/ui/Feedback/StatusIcon'
 import MessageDisplay from '@/src/components/ui/Feedback/MessageDisplay'
 import ActionButtonGroup from '@/src/components/ui/Button/ActionButtonGroup'
-import { useTransactionNavigation } from '@/src/hooks/send/useTransactionNavigation'
-import { useSendStore } from '@/src/store/sendStore'
+import { useTransaction } from '@/src/hooks/send/useTransaction'
 
 /**
  * Screen displayed after a failed transaction
+ * Uses the new unified transaction architecture
  */
 export default function SendErrorScreen() {
-  const { navigateToHome, navigateToErrorDetails } = useTransactionNavigation()
-  const { errorMode } = useSendStore()
+  const router = useRouter()
+  const { state, actions } = useTransaction()
   
-  // Get the appropriate error message based on error mode
+  // Navigation handlers
+  const navigateToHome = () => {
+    actions.reset()
+    router.replace('/(tabs)/home' as any)
+  }
+  
+  const navigateToErrorDetails = () => {
+    router.push('/send/error/details' as any)
+  }
+  
+  // Get error message from transaction state
   const getErrorMessage = () => {
-    switch (errorMode) {
-      case 'validation':
-        return 'Transaction validation failed. Please check your input and try again.'
-      case 'network':
-        return 'Network error occurred. Please check your connection and try again.'
-      default:
-        return 'Your transaction failed. Please try again.'
+    if (state.error) {
+      return state.error.message
     }
+    return 'Your transaction failed. Please try again.'
   }
 
   return (
@@ -39,9 +46,9 @@ export default function SendErrorScreen() {
       {/* Action Buttons */}
       <ActionButtonGroup
         primaryText="Go Home"
-        secondaryText="Error Details"
+        secondaryText={state.canRetry ? "Try Again" : "Error Details"}
         onPrimaryPress={navigateToHome}
-        onSecondaryPress={navigateToErrorDetails}
+        onSecondaryPress={state.canRetry ? actions.retry : navigateToErrorDetails}
       />
     </StatusScreenLayout>
   )

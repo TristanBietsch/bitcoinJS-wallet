@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
+import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { useWalletStore } from '@/src/store/walletStore'
 import { CurrencyType } from '@/src/types/domain/finance'
 import { validateBitcoinInput } from '@/src/utils/formatting/currencyUtils'
@@ -11,8 +12,6 @@ import {
   enrichUtxosWithPublicKeys,
   calculateBalanceFromEnhancedUtxos 
 } from '@/src/services/bitcoin/wallet/walletUtxoService'
-import { selectUtxosEnhanced } from '@/src/utils/bitcoin/utxo'
-import { estimateTransactionSize } from '@/src/services/bitcoin/feeEstimationService'
 import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseService'
 import { bitcoinjsNetwork } from '@/src/config/env'
 import type { EnhancedUTXO } from '@/src/types/blockchain.types'
@@ -23,44 +22,59 @@ interface BalanceState {
   total: number
 }
 
-interface FeeCalculation {
-  selectedUtxos: Array<EnhancedUTXO & { publicKey: Buffer }>
-  estimatedSize: number
-  totalFee: number
-  changeAmount: number
-  totalRequired: number // amount + fee
-  feeRate: number
+interface UseSendAmountReturn {
+  // Display values
+  amount: string
+  currency: CurrencyType
+  
+  // Balance state
+  walletBalance: BalanceState
+  estimatedFee: number
+  totalRequired: number
+  
+  // Loading states
+  isLoadingBalance: boolean
+  isCalculatingFee: boolean
+  
+  // Validation
+  canProceedToNext: boolean
+  
+  // Handlers
+  handleCurrencyChange: (currency: string) => void
+  handleNumberPress: (num: string) => void
+  handleBackspace: () => void
+  handleBackPress: () => void
+  handleContinue: () => void
+  
+  // Actions
+  refreshBalance: () => Promise<void>
 }
 
-export const useSendAmount = () => {
+/**
+ * Hook for managing the Send Amount screen
+ * Simplified version that integrates with the new transaction architecture
+ */
+export function useSendAmount(): UseSendAmountReturn {
   const router = useRouter()
   const { wallet } = useWalletStore()
-  const { 
-    address: destinationAddress,
-    speed,
-    customFee,
-    selectedFeeOption,
-    feeRates,
-    amount: persistedAmount,
-    currency: persistedCurrency,
-    setAmount,
-    setCurrency,
-    setEstimatedTxSize,
-    setSelectedFeeOption
-  } = useSendStore()
+  const sendStore = useSendStore()
+  const sendTransactionStore = useSendTransactionStore()
   
   // Local state for amount and currency
-  const [ rawAmount, setRawAmount ] = useState(persistedAmount)
-  const [ currency, setLocalCurrency ] = useState<CurrencyType>(persistedCurrency || 'SATS')
+  const [ rawAmount, setRawAmount ] = useState(sendStore.amount || '0')
+  const [ currency, setLocalCurrency ] = useState<CurrencyType>(sendStore.currency || 'SATS')
   
-  // Bitcoin functionality state
+  // State
   const [ walletBalance, setWalletBalance ] = useState<BalanceState>({ confirmed: 0, unconfirmed: 0, total: 0 })
   const [ availableUtxos, setAvailableUtxos ] = useState<Array<EnhancedUTXO & { publicKey: Buffer }>>([])
-  const [ feeCalculation, setFeeCalculation ] = useState<FeeCalculation | null>(null)
   const [ isLoadingBalance, setIsLoadingBalance ] = useState(true)
   const [ isCalculatingFee, setIsCalculatingFee ] = useState(false)
-
-  // Convert amount to satoshis for calculations
+  
+  // Get values from transaction store
+  const estimatedFee = sendTransactionStore.derived.estimatedFee
+  const totalRequired = sendTransactionStore.derived.amountSats + sendTransactionStore.derived.estimatedFee
+  
+  // Convert amount to satoshis
   const getAmountInSats = useCallback((): number => {
     if (!rawAmount || rawAmount === '0') return 0
     
@@ -68,51 +82,20 @@ export const useSendAmount = () => {
     if (isNaN(numericAmount)) return 0
     
     if (currency === 'BTC') {
-      return Math.round(numericAmount * 100000000) // Convert BTC to sats
+      return Math.round(numericAmount * 100000000)
     } else {
-      return Math.round(numericAmount) // Already in sats
+      return Math.round(numericAmount)
     }
   }, [ rawAmount, currency ])
-
-  // Get current fee rate from previous screen selection
-  const getCurrentFeeRate = useCallback((): number => {
-    try {
-      if (speed === 'custom' && customFee) {
-        return customFee.feeRate
-      }
-      
-      if (selectedFeeOption) {
-        return selectedFeeOption.feeRate
-      }
-      
-      if (feeRates) {
-        switch (speed) {
-          case 'economy': 
-            return feeRates.economy
-          case 'standard': 
-            return feeRates.normal  
-          case 'express': 
-            return feeRates.fast
-          default: 
-            return feeRates.normal
-        }
-      }
-      
-      return 10 // Fallback fee rate
-    } catch (error) {
-      console.error('Error getting fee rate:', error)
-      return 10 // Fallback fee rate
-    }
-  }, [ speed, customFee, selectedFeeOption, feeRates ])
-
-  // Load wallet balance and UTXOs
+  
+  // Load wallet balance
   const loadWalletData = useCallback(async () => {
     if (!wallet) {
-      console.error('Wallet not available for balance loading')
+      console.error('Wallet not available')
       setIsLoadingBalance(false)
       return
     }
-
+    
     try {
       setIsLoadingBalance(true)
       
@@ -121,22 +104,24 @@ export const useSendAmount = () => {
       if (!mnemonic) {
         throw new Error('Wallet mnemonic not available')
       }
-
-      console.log('Loading wallet data for testnet:', bitcoinjsNetwork === require('bitcoinjs-lib').networks.testnet)
-
+      
       // Fetch wallet UTXOs
       const enhancedUtxos = await fetchWalletUtxos(wallet, mnemonic, bitcoinjsNetwork)
       const confirmedUtxos = filterUtxosByConfirmation(enhancedUtxos, false)
       const normalizedUtxos = enrichUtxosWithPublicKeys(confirmedUtxos, mnemonic, bitcoinjsNetwork)
-
+      
       // Calculate balance
       const balance = calculateBalanceFromEnhancedUtxos(enhancedUtxos)
       
       setWalletBalance(balance)
       setAvailableUtxos(normalizedUtxos)
       
-      console.log('Wallet balance loaded:', balance)
-      console.log('Available UTXOs:', normalizedUtxos.length)
+      // Use first native segwit address as change address
+      const changeAddress = wallet.addresses.nativeSegwit[0]
+      if (changeAddress && normalizedUtxos.length > 0) {
+        // Calculate initial fees
+        sendTransactionStore.calculateFeeAndUtxos(normalizedUtxos, changeAddress)
+      }
       
     } catch (error) {
       console.error('Error loading wallet data:', error)
@@ -144,245 +129,50 @@ export const useSendAmount = () => {
       setIsLoadingBalance(false)
     }
   }, [ wallet ])
-
-  // Calculate fee and UTXO selection for current amount using fee from previous screen
-  const calculateTransactionFee = useCallback(async () => {
-    const amountSats = getAmountInSats()
-    if (amountSats === 0 || availableUtxos.length === 0) {
-      setFeeCalculation(null)
-      return
-    }
-
-    try {
-      setIsCalculatingFee(true)
-      
-      const feeRate = getCurrentFeeRate()
-      console.log('Calculating transaction fee with rate:', feeRate, 'for amount:', amountSats)
-      
-      // Select UTXOs for this amount
-      const selectionResult = selectUtxosEnhanced(
-        availableUtxos,
-        amountSats,
-        feeRate,
-        {
-          preferAddressType  : 'native_segwit',
-          includeUnconfirmed : false,
-          minimizeInputs     : true
-        }
-      )
-
-      if (selectionResult) {
-        // Calculate real transaction size based on selected UTXOs
-        const inputTypes = selectionResult.selectedUtxos.map(utxo => utxo.addressType)
-        const hasChange = selectionResult.changeAmount > 0
-        const estimatedSize = estimateTransactionSize(
-          selectionResult.selectedUtxos.length,
-          1, // recipient output
-          inputTypes,
-          hasChange
-        )
-
-        const feeCalc: FeeCalculation = {
-          selectedUtxos : selectionResult.selectedUtxos,
-          estimatedSize,
-          totalFee      : selectionResult.totalFee,
-          changeAmount  : selectionResult.changeAmount,
-          totalRequired : amountSats + selectionResult.totalFee,
-          feeRate
-        }
-
-        setFeeCalculation(feeCalc)
-        setEstimatedTxSize(estimatedSize) // Update store for next screen
-        
-        console.log('Fee calculation successful:', feeCalc)
-      } else {
-        console.warn('Could not select UTXOs for amount:', amountSats)
-        setFeeCalculation(null)
-      }
-      
-    } catch (error) {
-      console.error('Error calculating transaction fee:', error)
-      setFeeCalculation(null)
-    } finally {
-      setIsCalculatingFee(false)
-    }
-  }, [ getAmountInSats, availableUtxos, getCurrentFeeRate, setEstimatedTxSize ])
-
-  // Validate transaction (console logs only, no UI errors)
-  const validateTransaction = useCallback(() => {
-    // Validate previous screen data
-    if (!destinationAddress || destinationAddress.trim() === '') {
-      console.error('No destination address selected')
-      return false
-    }
-
-    if (!speed) {
-      console.error('No fee speed selected')
-      return false
-    }
-
-    // Validate custom fee if speed is custom
-    if (speed === 'custom' && (!customFee || !customFee.feeRate || customFee.feeRate <= 0)) {
-      console.error('Invalid custom fee selected')
-      return false
-    }
-
-    const amountSats = getAmountInSats()
-    
-    if (amountSats === 0) {
-      console.log('Amount is zero, validation skipped')
-      return false
-    }
-
-    // Maximum single transaction limit (prevent accidentally large sends)
-    const MAX_SINGLE_TX = 100000000 // 1 BTC limit for safety
-    if (amountSats > MAX_SINGLE_TX) {
-      console.error(`Amount exceeds maximum single transaction limit: ${amountSats} > ${MAX_SINGLE_TX}`)
-      return false
-    }
-
-    // Check if we have any available balance
-    if (walletBalance.confirmed === 0) {
-      console.error('No confirmed funds available')
-      return false
-    }
-
-    // Check if amount exceeds available balance
-    if (amountSats > walletBalance.confirmed) {
-      const shortfall = amountSats - walletBalance.confirmed
-      console.error(`Insufficient funds. Need ${shortfall} more sats. Available: ${walletBalance.confirmed}, Requested: ${amountSats}`)
-      return false
-    }
-
-    // Check if we have UTXOs available for selection
-    if (availableUtxos.length === 0 && !isLoadingBalance) {
-      console.error('No spendable UTXOs available')
-      return false
-    }
-
-    // Check if UTXOs can cover amount + fee
-    if (feeCalculation === null && amountSats > 0 && availableUtxos.length > 0) {
-      console.error('Unable to calculate transaction fee')
-      return false
-    }
-
-    if (feeCalculation && feeCalculation.totalRequired > walletBalance.confirmed) {
-      const feeAmount = feeCalculation.totalFee
-      const totalNeeded = feeCalculation.totalRequired
-      const available = walletBalance.confirmed
-      const shortfall = totalNeeded - available
-      
-      console.error(`Insufficient funds for amount + fee. Need ${totalNeeded} sats (${amountSats} + ${feeAmount} fee) but only ${available} available. Short by ${shortfall} sats.`)
-      return false
-    }
-
-    // Warn if fee is unusually high compared to amount
-    if (feeCalculation && feeCalculation.totalFee > amountSats * 0.1) {
-      console.warn(`High fee warning: Network fee (${feeCalculation.totalFee} sats) is more than 10% of send amount (${amountSats} sats)`)
-      // Don't return false, just warn
-    }
-
-    console.log('Transaction validation passed')
-    return true
-  }, [ destinationAddress, speed, customFee, getAmountInSats, walletBalance.confirmed, feeCalculation, availableUtxos.length, isLoadingBalance ])
-
-  // Check if we can proceed to next screen
-  const canProceedToNext = !isLoadingBalance && 
-                          !isCalculatingFee && 
-                          feeCalculation !== null && 
-                          getAmountInSats() > 0 &&
-                          validateTransaction()
-
-  // Enhanced continue handler with comprehensive validation
-  const handleContinue = useCallback(() => {
-    // Validate transaction
-    if (!validateTransaction()) {
-      console.error('Transaction validation failed, cannot proceed')
-      return
-    }
-
-    // Validate current amount and fee calculation
-    if (!feeCalculation) {
-      console.error('No fee calculation available, cannot proceed')
-      return
-    }
-
-    // Ensure we have all required data
-    if (!destinationAddress || !speed) {
-      console.error('Missing required transaction data:', { destinationAddress, speed })
-      return
-    }
-
-    // Save current state to store ONLY when proceeding
-    setAmount(rawAmount)
-    setCurrency(currency)
-    
-    // IMPORTANT: Store the calculated fee rate so it's available for transaction processing
-    const currentFeeRate = getCurrentFeeRate()
-    if (currentFeeRate > 0) {
-      // Update the selectedFeeOption with the current fee rate to ensure it's persisted
-      setSelectedFeeOption({
-        name            : speed === 'custom' ? 'Custom' : speed.charAt(0).toUpperCase() + speed.slice(1),
-        feeRate         : currentFeeRate,
-        totalFee        : feeCalculation.totalFee,
-        estimatedBlocks : speed === 'economy' ? 144 : speed === 'express' ? 1 : 6,
-        estimatedTime   : speed === 'economy' ? '~24 hours' : speed === 'express' ? '~10 minutes' : '~1 hour'
-      })
-      
-      // Also update the new transaction store as a backup
-      const { useSendTransactionStore } = require('@/src/store/sendTransactionStore')
-      useSendTransactionStore.getState().setFeeRate(currentFeeRate)
-      
-      console.log('Stored fee rate for transaction:', currentFeeRate)
-    }
-    
-    console.log('Proceeding to confirmation with:', {
-      destinationAddress,
-      amount : getAmountInSats(),
-      feeCalculation,
-      speed,
-      customFee,
-      feeRate : currentFeeRate
-    })
-    
-    router.push('/send/confirm' as any)
-  }, [ validateTransaction, feeCalculation, destinationAddress, speed, setAmount, rawAmount, setCurrency, currency, getAmountInSats, customFee, getCurrentFeeRate, router, setSelectedFeeOption ])
-
-  // Load wallet data on mount
-  useEffect(() => {
-    loadWalletData()
-  }, [ loadWalletData ])
-
-  // Recalculate fees when amount changes (debounced)
+  
+  // Update transaction store when amount changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      calculateTransactionFee()
-    }, 500) // Debounce fee calculation
-
+      setIsCalculatingFee(true)
+      
+      // Update amount in both stores
+      const amountStr = rawAmount || '0'
+      sendStore.setAmount(amountStr)
+      sendStore.setCurrency(currency)
+      sendTransactionStore.setAmount(amountStr)
+      sendTransactionStore.setCurrency(currency)
+      
+      // Recalculate fees if we have UTXOs
+      if (availableUtxos.length > 0 && wallet?.addresses.nativeSegwit[0]) {
+        sendTransactionStore.calculateFeeAndUtxos(availableUtxos, wallet.addresses.nativeSegwit[0])
+      }
+      
+      setIsCalculatingFee(false)
+    }, 500) // Debounce
+    
     return () => clearTimeout(timeoutId)
-  }, [ calculateTransactionFee ])
-
-  // Handle currency change - DO NOT UPDATE STORE IMMEDIATELY
+  }, [ rawAmount, currency, availableUtxos, wallet ])
+  
+  // Validation
+  const canProceedToNext = !isLoadingBalance && 
+                          !isCalculatingFee && 
+                          getAmountInSats() > 0 &&
+                          sendTransactionStore.isValidTransaction() &&
+                          totalRequired <= walletBalance.confirmed
+  
+  // Handlers
   const handleCurrencyChange = useCallback((newCurrency: string) => {
-    const newCurrencyType = newCurrency as CurrencyType
-    setLocalCurrency(newCurrencyType)
-    // Only update store when proceeding to next screen
+    setLocalCurrency(newCurrency as CurrencyType)
   }, [])
   
-  // Handle input - DO NOT UPDATE STORE IMMEDIATELY
   const handleNumberPress = useCallback((num: string) => {
-    // Use the raw amount (not formatted) for validation
     const isValid = validateBitcoinInput(rawAmount, num, currency)
-    
-    if (!isValid) {
-      return
-    }
+    if (!isValid) return
     
     setRawAmount(prev => {
       const newAmount = prev === '0' && num !== '.' ? num :
         num === '.' && prev.includes('.') ? prev :
         prev + num
-      // Only update store when proceeding to next screen
       return newAmount
     })
   }, [ rawAmount, currency ])
@@ -390,33 +180,59 @@ export const useSendAmount = () => {
   const handleBackspace = useCallback(() => {
     setRawAmount(prev => {
       const newAmount = prev.length <= 1 ? '0' : prev.slice(0, -1)
-      // Only update store when proceeding to next screen
       return newAmount
     })
   }, [])
   
-  // Handle back navigation
   const handleBackPress = useCallback(() => {
     router.back()
   }, [ router ])
   
-  // Format displayed amount based on currency
+  const handleContinue = useCallback(() => {
+    if (!canProceedToNext) {
+      console.error('Cannot proceed - validation failed')
+      return
+    }
+    
+    // Ensure fee rate is set from previous screen
+    const feeRate = sendStore.selectedFeeOption?.feeRate || 
+                   (sendStore.speed === 'custom' ? sendStore.customFee?.feeRate : 0) || 
+                   10 // fallback
+    
+    sendTransactionStore.setFeeRate(feeRate)
+    
+    console.log('Proceeding to confirmation with:', {
+      amount: getAmountInSats(),
+      currency,
+      feeRate,
+      estimatedFee,
+      totalRequired
+    })
+    
+    router.push('/send/confirm' as any)
+  }, [ canProceedToNext, getAmountInSats, currency, estimatedFee, totalRequired, router ])
+  
+  // Format displayed amount
   const getFormattedAmount = useCallback(() => {
     return formatBitcoinAmount(rawAmount, currency)
   }, [ rawAmount, currency ])
-
+  
+  // Load wallet data on mount
+  useEffect(() => {
+    loadWalletData()
+  }, [ loadWalletData ])
+  
   return {
     // Display values
-    amount : getFormattedAmount(), // Formatted for display
+    amount: getFormattedAmount(),
     currency,
     
-    // Bitcoin state
+    // Balance state
     walletBalance,
-    feeCalculation,
-    estimatedFee  : feeCalculation?.totalFee || 0,
-    totalRequired : feeCalculation?.totalRequired || 0,
+    estimatedFee,
+    totalRequired,
     
-    // Loading states only (no error states for UI)
+    // Loading states
     isLoadingBalance,
     isCalculatingFee,
     
@@ -431,6 +247,6 @@ export const useSendAmount = () => {
     handleContinue,
     
     // Actions
-    refreshBalance : loadWalletData
+    refreshBalance: loadWalletData
   }
 } 
