@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-hooks'
-import { useTransaction } from '../useTransaction'
+import { useTransaction } from '../../src/hooks/send/useTransaction'
 import { useSendStore } from '@/src/store/sendStore'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { SendTransactionService } from '@/src/services/sendTransactionService'
@@ -15,9 +15,9 @@ jest.mock('@/src/services/bitcoin/addressValidationService')
 
 describe('useTransaction', () => {
   const mockRouter = {
-    replace: jest.fn(),
-    push: jest.fn(),
-    back: jest.fn()
+    replace : jest.fn(),
+    push    : jest.fn(),
+    back    : jest.fn()
   }
 
   beforeEach(() => {
@@ -26,41 +26,41 @@ describe('useTransaction', () => {
     
     // Mock store states
     ;(useSendStore as unknown as jest.Mock).mockReturnValue({
-      address: 'bc1qtest...',
-      amount: '1000',
-      speed: 'normal',
-      selectedFeeOption: { feeRate: 10 }
+      address           : 'bc1qtest...',
+      amount            : '1000',
+      speed             : 'normal',
+      selectedFeeOption : { feeRate: 10 }
     })
     
     ;(useSendTransactionStore as unknown as jest.Mock).mockReturnValue({
-      inputs: {
-        recipientAddress: 'bc1qtest...',
-        amount: '1000',
-        currency: 'SATS',
-        feeRate: 10
+      inputs : {
+        recipientAddress : 'bc1qtest...',
+        amount           : '1000',
+        currency         : 'SATS',
+        feeRate          : 10
       },
-      derived: {
-        amountSats: 1000,
-        isValidAddress: true,
-        estimatedFee: 150,
-        totalSats: 1150
+      derived : {
+        amountSats     : 1000,
+        isValidAddress : true,
+        estimatedFee   : 150,
+        totalSats      : 1150
       },
-      utxos: {
-        selectedUtxos: [{ value: 2000 }],
-        changeAddress: 'bc1qchange...'
+      utxos : {
+        selectedUtxos : [ { value: 2000 } ],
+        changeAddress : 'bc1qchange...'
       },
-      isValidTransaction: jest.fn().mockReturnValue(true),
-      getValidationErrors: jest.fn().mockReturnValue([]),
-      setRecipientAddress: jest.fn(),
-      setAmount: jest.fn(),
-      setFeeRate: jest.fn(),
-      calculateFeeAndUtxos: jest.fn(),
-      reset: jest.fn()
+      isValidTransaction   : jest.fn().mockReturnValue(true),
+      getValidationErrors  : jest.fn().mockReturnValue([]),
+      setRecipientAddress  : jest.fn(),
+      setAmount            : jest.fn(),
+      setFeeRate           : jest.fn(),
+      calculateFeeAndUtxos : jest.fn(),
+      reset                : jest.fn()
     })
     
     ;(validateBitcoinAddress as jest.Mock).mockReturnValue({
-      isValid: true,
-      error: null
+      isValid : true,
+      error   : null
     })
   })
 
@@ -69,13 +69,13 @@ describe('useTransaction', () => {
       const { result } = renderHook(() => useTransaction())
       
       expect(result.current.state).toEqual({
-        status: 'idle',
-        progress: 0,
-        message: '',
-        error: null,
-        canRetry: false,
-        isLoading: false,
-        transactionId: undefined
+        status        : 'idle',
+        progress      : 0,
+        message       : '',
+        error         : null,
+        canRetry      : false,
+        isLoading     : false,
+        transactionId : undefined
       })
     })
   })
@@ -92,8 +92,8 @@ describe('useTransaction', () => {
 
     it('should reject an invalid Bitcoin address', () => {
       ;(validateBitcoinAddress as jest.Mock).mockReturnValue({
-        isValid: false,
-        error: 'Invalid address format'
+        isValid : false,
+        error   : 'Invalid address format'
       })
       
       const { result } = renderHook(() => useTransaction())
@@ -164,15 +164,15 @@ describe('useTransaction', () => {
   describe('Transaction Execution', () => {
     it('should execute a valid transaction successfully', async () => {
       const mockResult = {
-        txid: 'abc123...',
-        fee: 150,
-        amount: 1000
+        txid   : 'abc123...',
+        fee    : 150,
+        amount : 1000
       }
       
       ;(SendTransactionService.executeTransaction as jest.Mock).mockResolvedValue(mockResult)
       ;(SendTransactionService.validateForExecution as jest.Mock).mockReturnValue({
-        isValid: true,
-        errors: []
+        isValid : true,
+        errors  : []
       })
       
       const { result } = renderHook(() => useTransaction())
@@ -191,8 +191,8 @@ describe('useTransaction', () => {
       const error = new Error('Insufficient funds')
       ;(SendTransactionService.executeTransaction as jest.Mock).mockRejectedValue(error)
       ;(SendTransactionService.validateForExecution as jest.Mock).mockReturnValue({
-        isValid: true,
-        errors: []
+        isValid : true,
+        errors  : []
       })
       
       const { result } = renderHook(() => useTransaction())
@@ -208,8 +208,8 @@ describe('useTransaction', () => {
 
     it('should prevent double execution', async () => {
       ;(SendTransactionService.validateForExecution as jest.Mock).mockReturnValue({
-        isValid: true,
-        errors: []
+        isValid : true,
+        errors  : []
       })
       
       const { result } = renderHook(() => useTransaction())
@@ -219,7 +219,7 @@ describe('useTransaction', () => {
         const promise1 = result.current.actions.executeTransaction()
         const promise2 = result.current.actions.executeTransaction()
         
-        await Promise.all([promise1, promise2])
+        await Promise.all([ promise1, promise2 ])
       })
       
       // Should only execute once
@@ -231,9 +231,9 @@ describe('useTransaction', () => {
     it('should navigate to error screen with error state', () => {
       const { result } = renderHook(() => useTransaction())
       const mockError = {
-        type: 'INSUFFICIENT_FUNDS',
-        message: 'Not enough funds',
-        code: 'INSUFFICIENT_FUNDS'
+        type    : 'INSUFFICIENT_FUNDS',
+        message : 'Not enough funds',
+        code    : 'INSUFFICIENT_FUNDS'
       }
       
       act(() => {
@@ -255,8 +255,8 @@ describe('useTransaction', () => {
       expect(result.current.state.status).toBe('success')
       expect(result.current.state.transactionId).toBe('tx123')
       expect(mockRouter.replace).toHaveBeenCalledWith({
-        pathname: '/send/success',
-        params: { transactionId: 'tx123' }
+        pathname : '/send/success',
+        params   : { transactionId: 'tx123' }
       })
     })
   })
@@ -268,9 +268,9 @@ describe('useTransaction', () => {
       // Set some state first
       act(() => {
         result.current.actions.navigateToError({
-          type: 'NETWORK_ERROR',
-          message: 'Network error',
-          code: 'NETWORK_ERROR'
+          type    : 'NETWORK_ERROR',
+          message : 'Network error',
+          code    : 'NETWORK_ERROR'
         } as any)
       })
       
@@ -282,21 +282,21 @@ describe('useTransaction', () => {
       })
       
       expect(result.current.state).toEqual({
-        status: 'idle',
-        progress: 0,
-        message: '',
-        error: null,
-        canRetry: false,
-        isLoading: false,
-        transactionId: undefined
+        status        : 'idle',
+        progress      : 0,
+        message       : '',
+        error         : null,
+        canRetry      : false,
+        isLoading     : false,
+        transactionId : undefined
       })
       expect(SendTransactionService.reset).toHaveBeenCalled()
     })
 
     it('should retry transaction after error', async () => {
       ;(SendTransactionService.validateForExecution as jest.Mock).mockReturnValue({
-        isValid: true,
-        errors: []
+        isValid : true,
+        errors  : []
       })
       
       const { result } = renderHook(() => useTransaction())
@@ -304,9 +304,9 @@ describe('useTransaction', () => {
       // Set error state
       act(() => {
         result.current.actions.navigateToError({
-          type: 'NETWORK_ERROR',
-          message: 'Network error',
-          code: 'NETWORK_ERROR'
+          type    : 'NETWORK_ERROR',
+          message : 'Network error',
+          code    : 'NETWORK_ERROR'
         } as any)
       })
       

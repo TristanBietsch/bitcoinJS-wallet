@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-native'
-import { useSendAddressScreen } from '../useSendAddressScreen'
+import { useSendAddressScreen } from '../../src/hooks/send/useSendAddressScreen'
 import { useSendStore } from '@/src/store/sendStore'
 import { validateBitcoinAddress } from '@/src/services/bitcoin/addressValidationService'
 import { getEnhancedFeeEstimates } from '@/src/services/bitcoin/feeEstimationService'
@@ -13,21 +13,21 @@ jest.mock('@/src/services/bitcoin/feeEstimationService')
 
 describe('useSendAddressScreen', () => {
   const mockRouter = {
-    push: jest.fn(),
-    back: jest.fn()
+    push : jest.fn(),
+    back : jest.fn()
   }
 
   const mockSendStore = {
-    address: '',
-    speed: 'normal',
-    customFee: null,
-    feeOptions: [],
-    setAddress: jest.fn(),
-    setSpeed: jest.fn(),
-    setCustomFee: jest.fn(),
-    setSelectedFeeOption: jest.fn(),
-    setFeeOptions: jest.fn(),
-    setFeeRates: jest.fn()
+    address              : '',
+    speed                : 'normal',
+    customFee            : null,
+    feeOptions           : [],
+    setAddress           : jest.fn(),
+    setSpeed             : jest.fn(),
+    setCustomFee         : jest.fn(),
+    setSelectedFeeOption : jest.fn(),
+    setFeeOptions        : jest.fn(),
+    setFeeRates          : jest.fn()
   }
 
   beforeEach(() => {
@@ -36,22 +36,22 @@ describe('useSendAddressScreen', () => {
     ;(useSendStore as unknown as jest.Mock).mockReturnValue(mockSendStore)
     
     ;(validateBitcoinAddress as jest.Mock).mockReturnValue({
-      isValid: true,
-      error: null
+      isValid : true,
+      error   : null
     })
     
     ;(getEnhancedFeeEstimates as jest.Mock).mockResolvedValue({
-      economy: 1,
-      normal: 10,
-      fast: 25,
-      slow: 5,
-      lastUpdated: Date.now(),
-      source: 'mempool',
-      confirmationTargets: {
-        economy: 144,
-        slow: 72,
-        normal: 6,
-        fast: 1
+      economy             : 1,
+      normal              : 10,
+      fast                : 25,
+      slow                : 5,
+      lastUpdated         : Date.now(),
+      source              : 'mempool',
+      confirmationTargets : {
+        economy : 144,
+        slow    : 72,
+        normal  : 6,
+        fast    : 1
       }
     })
   })
@@ -72,8 +72,8 @@ describe('useSendAddressScreen', () => {
 
     it('should show error for invalid address', () => {
       ;(validateBitcoinAddress as jest.Mock).mockReturnValue({
-        isValid: false,
-        error: 'Invalid Bitcoin address'
+        isValid : false,
+        error   : 'Invalid Bitcoin address'
       })
       
       const { result } = renderHook(() => useSendAddressScreen())
@@ -91,8 +91,8 @@ describe('useSendAddressScreen', () => {
       
       // Set invalid address first
       ;(validateBitcoinAddress as jest.Mock).mockReturnValue({
-        isValid: false,
-        error: 'Invalid'
+        isValid : false,
+        error   : 'Invalid'
       })
       
       act(() => {
@@ -139,9 +139,9 @@ describe('useSendAddressScreen', () => {
       
       expect(mockSendStore.setSpeed).toHaveBeenCalledWith('express')
       expect(mockSendStore.setSelectedFeeOption).toHaveBeenCalledWith({
-        feeRate: 25,
-        totalSats: 0,
-        confirmationTime: 1
+        feeRate          : 25,
+        totalSats        : 0,
+        confirmationTime : 1
       })
     })
 
@@ -153,9 +153,9 @@ describe('useSendAddressScreen', () => {
       })
       
       expect(mockSendStore.setCustomFee).toHaveBeenCalledWith({
-        feeRate: 15,
-        totalSats: 0,
-        confirmationTime: 6
+        feeRate          : 15,
+        totalSats        : 0,
+        confirmationTime : 6
       })
     })
 
@@ -179,8 +179,8 @@ describe('useSendAddressScreen', () => {
   describe('Navigation', () => {
     it('should navigate to amount screen when valid', () => {
       ;(validateBitcoinAddress as jest.Mock).mockReturnValue({
-        isValid: true,
-        error: null
+        isValid : true,
+        error   : null
       })
       
       mockSendStore.address = 'bc1qvalid...'
