@@ -202,7 +202,7 @@ export function useSendAmount(): UseSendAmountReturn {
     sendTransactionStore.setFeeRate(feeRate)
     
     console.log('Proceeding to confirmation with:', {
-      amount: getAmountInSats(),
+      amount : getAmountInSats(),
       currency,
       feeRate,
       estimatedFee,
@@ -224,7 +224,7 @@ export function useSendAmount(): UseSendAmountReturn {
   
   return {
     // Display values
-    amount: getFormattedAmount(),
+    amount : getFormattedAmount(),
     currency,
     
     // Balance state
@@ -247,6 +247,6 @@ export function useSendAmount(): UseSendAmountReturn {
     handleContinue,
     
     // Actions
-    refreshBalance: loadWalletData
+    refreshBalance : loadWalletData
   }
 } 
