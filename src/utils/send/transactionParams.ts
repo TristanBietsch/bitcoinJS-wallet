@@ -61,46 +61,73 @@ export function convertUIToBitcoinParams(): BitcoinTransactionParams {
  * Calculate fee rate from enhanced store state
  */
 function calculateFeeRateFromStore(sendState: any): number {
+  console.log('Calculating fee rate from store state:', {
+    speed             : sendState.speed,
+    customFee         : sendState.customFee,
+    selectedFeeOption : sendState.selectedFeeOption,
+    feeRates          : sendState.feeRates
+  })
+
   // First priority: custom fee if speed is 'custom'
   if (sendState.speed === 'custom' && sendState.customFee) {
-    return sendState.customFee.feeRate || 0
+    const customFeeRate = sendState.customFee.feeRate || 0
+    console.log('Using custom fee rate:', customFeeRate)
+    if (customFeeRate > 0) return customFeeRate
   }
   
   // Second priority: selected fee option from enhanced system
   if (sendState.selectedFeeOption) {
-    return sendState.selectedFeeOption.satPerVbyte || 0
+    const selectedFeeRate = sendState.selectedFeeOption.feeRate || sendState.selectedFeeOption.satPerVbyte || 0
+    console.log('Using selected fee option rate:', selectedFeeRate)
+    if (selectedFeeRate > 0) return selectedFeeRate
   }
   
   // Third priority: fee rates based on speed
   if (sendState.feeRates && sendState.speed) {
+    let speedBasedRate = 0
     switch (sendState.speed) {
       case 'economy':
-        return sendState.feeRates.economy || 0
+        speedBasedRate = sendState.feeRates.economy || 0
+        break
       case 'standard':
       case 'normal':
-        return sendState.feeRates.standard || sendState.feeRates.normal || 0
+        speedBasedRate = sendState.feeRates.standard || sendState.feeRates.normal || 0
+        break
       case 'priority':
       case 'fast':
-        return sendState.feeRates.priority || sendState.feeRates.fast || 0
+      case 'express':
+        speedBasedRate = sendState.feeRates.priority || sendState.feeRates.fast || 0
+        break
       default:
-        return sendState.feeRates.standard || sendState.feeRates.normal || 0
+        speedBasedRate = sendState.feeRates.standard || sendState.feeRates.normal || 0
+        break
     }
+    console.log('Using speed-based fee rate:', speedBasedRate, 'for speed:', sendState.speed)
+    if (speedBasedRate > 0) return speedBasedRate
   }
   
-  // Fallback based on speed setting
+  // Fallback based on speed setting with guaranteed positive values
+  let fallbackRate = 10 // Default fallback
   switch (sendState.speed) {
     case 'economy':
-      return 3 // Conservative economy rate
+      fallbackRate = 3 // Conservative economy rate
+      break
     case 'standard':
     case 'normal':
-      return 10 // Standard rate
+      fallbackRate = 10 // Standard rate
+      break
     case 'priority':
     case 'fast':
-      return 20 // Fast rate
+    case 'express':
+      fallbackRate = 20 // Fast rate
+      break
     default:
-      console.warn('No fee rate found, using fallback of 10 sat/vbyte')
-      return 10
+      fallbackRate = 10 // Default fallback
+      break
   }
+  
+  console.log('Using fallback fee rate:', fallbackRate, 'for speed:', sendState.speed)
+  return fallbackRate
 }
 
 /**

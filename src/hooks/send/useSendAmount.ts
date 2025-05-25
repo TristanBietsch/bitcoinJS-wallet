@@ -45,7 +45,8 @@ export const useSendAmount = () => {
     currency: persistedCurrency,
     setAmount,
     setCurrency,
-    setEstimatedTxSize
+    setEstimatedTxSize,
+    setSelectedFeeOption
   } = useSendStore()
   
   // Local state for amount and currency
@@ -316,16 +317,36 @@ export const useSendAmount = () => {
     setAmount(rawAmount)
     setCurrency(currency)
     
+    // IMPORTANT: Store the calculated fee rate so it's available for transaction processing
+    const currentFeeRate = getCurrentFeeRate()
+    if (currentFeeRate > 0) {
+      // Update the selectedFeeOption with the current fee rate to ensure it's persisted
+      setSelectedFeeOption({
+        name            : speed === 'custom' ? 'Custom' : speed.charAt(0).toUpperCase() + speed.slice(1),
+        feeRate         : currentFeeRate,
+        totalFee        : feeCalculation.totalFee,
+        estimatedBlocks : speed === 'economy' ? 144 : speed === 'express' ? 1 : 6,
+        estimatedTime   : speed === 'economy' ? '~24 hours' : speed === 'express' ? '~10 minutes' : '~1 hour'
+      })
+      
+      // Also update the new transaction store as a backup
+      const { useSendTransactionStore } = require('@/src/store/sendTransactionStore')
+      useSendTransactionStore.getState().setFeeRate(currentFeeRate)
+      
+      console.log('Stored fee rate for transaction:', currentFeeRate)
+    }
+    
     console.log('Proceeding to confirmation with:', {
       destinationAddress,
       amount : getAmountInSats(),
       feeCalculation,
       speed,
-      customFee
+      customFee,
+      feeRate : currentFeeRate
     })
     
     router.push('/send/confirm' as any)
-  }, [ validateTransaction, feeCalculation, destinationAddress, speed, setAmount, rawAmount, setCurrency, currency, getAmountInSats, customFee, router ])
+  }, [ validateTransaction, feeCalculation, destinationAddress, speed, setAmount, rawAmount, setCurrency, currency, getAmountInSats, customFee, getCurrentFeeRate, router, setSelectedFeeOption ])
 
   // Load wallet data on mount
   useEffect(() => {
