@@ -4,13 +4,13 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useSendStore } from '../../store/sendStore'
+import { useSendStore } from '@/src/store/sendStore'
 import { 
   getEnhancedFeeEstimates,
   calculateFeeOptions,
   type EnhancedFeeRates,
   type FeeOption
-} from '../../services/bitcoin/feeEstimationService'
+} from '@/src/services/bitcoin/feeEstimationService'
 
 interface ProgressiveFeeState {
   isLoading: boolean

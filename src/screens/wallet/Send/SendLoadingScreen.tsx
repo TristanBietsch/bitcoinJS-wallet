@@ -1,149 +1,66 @@
-import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
-import { useRouter } from 'expo-router'
+import React, { useEffect } from 'react'
 import StatusScreenLayout from '@/src/components/layout/StatusScreenLayout'
-import EnhancedLoadingState from '@/src/components/ui/Feedback/EnhancedLoadingState'
-import { useSendTransactionExecution } from '@/src/hooks/send/useSendTransactionExecution'
-import { ThemedText } from '@/src/components/ui/Text'
-
-interface TransactionState {
-  stage: string
-  progress: number
-  hasCompleted: boolean
-}
+import StatusIcon from '@/src/components/ui/Feedback/StatusIcon'
+import MessageDisplay from '@/src/components/ui/Feedback/MessageDisplay'
+import { useSendTransactionFlow } from '@/src/hooks/send/useSendTransactionFlow'
 
 /**
  * Screen that shows while a transaction is processing
- * Now uses the clean transaction store and service
+ * Uses the same modular layout as SendErrorScreen and SendSuccessScreen
+ * Handles transaction validation, execution, and navigation
  */
 export default function SendLoadingScreen() {
-  const router = useRouter()
-  const [ state, setState ] = useState<TransactionState>({
-    stage        : 'initializing',
-    progress     : 0,
-    hasCompleted : false
-  })
-  
-  const {
-    executeTransaction,
-    isExecuting,
-    executionError,
-    result,
-    isValidTransaction,
-    getValidationStatus
-  } = useSendTransactionExecution()
+  const { state, actions } = useSendTransactionFlow()
 
+  // Start transaction processing when component mounts
   useEffect(() => {
-    let isMounted = true
+    actions.processTransaction()
     
-    const processTransaction = async () => {
-      try {
-        // Validate transaction before starting
-        if (!isValidTransaction) {
-          const validation = getValidationStatus()
-          throw new Error(`Transaction validation failed: ${validation.errors.join(', ')}`)
-        }
-        
-        if (!isMounted) return
-        setState(prev => ({ ...prev, stage: 'validating_inputs', progress: 20 }))
-
-        if (!isMounted) return
-        setState(prev => ({ ...prev, stage: 'building_transaction', progress: 40 }))
-
-        if (!isMounted) return
-        setState(prev => ({ ...prev, stage: 'signing_transaction', progress: 60 }))
-
-        if (!isMounted) return
-        setState(prev => ({ ...prev, stage: 'broadcasting', progress: 80 }))
-        
-        // Execute the transaction using the new service
-        const transactionResult = await executeTransaction()
-        
-        if (!transactionResult) {
-          throw new Error('Transaction execution failed')
-        }
-        
-        console.log('✅ Transaction completed successfully:', transactionResult)
-
-        if (!isMounted) return
-        setState(prev => ({ ...prev, stage: 'completed', progress: 100, hasCompleted: true }))
-        
-        // Navigate to success screen after a brief delay
-        setTimeout(() => {
-          if (isMounted) {
-            console.log('Navigating to wallet screen')
-            router.replace('/(tabs)/wallet')
-          }
-        }, 2000)
-        
-      } catch (transactionError) {
-        console.error('Transaction execution error:', transactionError)
-        
-        if (!isMounted) return
-        
-        setState(prev => ({ 
-          ...prev, 
-          stage        : 'Transaction failed',
-          progress     : 0,
-          hasCompleted : true
-        }))
-
-        // Navigate back to confirm screen after showing error
-        setTimeout(() => {
-          if (isMounted) {
-            router.replace('/wallet/send/confirm')
-        }
-        }, 3000)
-      }
-    }
-
-    processTransaction()
-    
+    // Cleanup on unmount
     return () => {
-      isMounted = false
+      actions.cancel()
     }
-  }, [ executeTransaction, isValidTransaction, getValidationStatus, router ])
+  }, [])
 
-    return (
-      <StatusScreenLayout>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        {executionError ? (
-          <View style={{ alignItems: 'center' }}>
-            <ThemedText style={{ fontSize: 18, color: '#ff4444', marginBottom: 10, textAlign: 'center' }}>
-              ❌ {state.stage}
-          </ThemedText>
-            <ThemedText style={{ fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 }}>
-              {executionError}
-          </ThemedText>
-            <ThemedText style={{ fontSize: 12, color: '#999', textAlign: 'center' }}>
-              Returning to previous screen...
-          </ThemedText>
-        </View>
-        ) : (
-          <View style={{ alignItems: 'center' }}>
-      <EnhancedLoadingState
-              currentStage={state.stage}
-        progress={state.progress}
-              message={
-                state.hasCompleted 
-                  ? result 
-                    ? `Your Bitcoin has been sent! TXID: ${result.txid.slice(0, 8)}...`
-                    : 'Your Bitcoin has been sent!'
-                  : isExecuting 
-                    ? 'Processing your transaction...'
-                    : 'Please wait while we process your transaction...'
-              }
-              subText={
-                state.hasCompleted 
-                  ? result 
-                    ? `Fee: ${result.fee} sats | Amount: ${result.amount} sats`
-                    : ''
-                  : 'This may take a few moments'
-              }
-            />
-          </View>
-        )}
-      </View>
+  // Get loading message based on current stage
+  const getLoadingMessage = () => {
+    switch (state.currentStage) {
+      case 'validating_inputs':
+        return 'Validating transaction details...'
+      case 'initializing':
+        return 'Preparing transaction...'
+      case 'building_transaction':
+        return 'Building transaction...'
+      case 'signing_transaction':
+        return 'Signing transaction...'
+      case 'broadcasting':
+        return 'Broadcasting to network...'
+      case 'completed':
+        return 'Transaction completed!'
+      default:
+        return 'Processing your transaction...'
+    }
+  }
+
+  // Get subtitle with progress information
+  const getSubtitle = () => {
+    const baseMessage = getLoadingMessage()
+    if (state.progress > 0) {
+      return `${baseMessage} (${Math.round(state.progress)}% complete)`
+    }
+    return `${baseMessage} This may take a few moments.`
+  }
+
+  return (
+    <StatusScreenLayout>
+      {/* Loading Icon */}
+      <StatusIcon type="loading" />
+
+      {/* Loading Message */}
+      <MessageDisplay
+        title="Sending Bitcoin"
+        subtitle={getSubtitle()}
+      />
     </StatusScreenLayout>
   )
 } 
