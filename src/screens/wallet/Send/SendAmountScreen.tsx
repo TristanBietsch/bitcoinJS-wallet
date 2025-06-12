@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, StyleSheet, ActivityIndicator } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 
@@ -9,7 +9,6 @@ import ActionButton from '@/src/components/ui/Button/ActionButton'
 import NumberPad from '@/src/components/ui/NumberPad'
 import AmountEntrySection from '@/src/components/features/Send/Amount/AmountEntrySection'
 import { ThemedText } from '@/src/components/ui/Text'
-import { useTransaction } from '@/src/hooks/send/useTransaction'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { useWalletStore } from '@/src/store/walletStore'
 import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
@@ -17,7 +16,6 @@ import type { CurrencyType } from '@/src/types/domain/finance'
 
 export default function SendAmountScreen() {
   const router = useRouter()
-  const { validation, fees } = useTransaction()
   
   // Auto-sync wallet data
   useAutoWalletSync()
@@ -26,10 +24,8 @@ export default function SendAmountScreen() {
   const {
     inputs: { amount, currency },
     derived: { amountSats, amountError },
-    meta: { isLoadingUtxos, isCalculatingFee },
     setAmount,
-    setCurrency,
-    validateAmount
+    setCurrency
   } = useSendTransactionStore()
   
   // Wallet store for balance
@@ -95,48 +91,56 @@ export default function SendAmountScreen() {
     setIsValidating(true)
     
     try {
-      // Validate amount
-      validateAmount()
+      // Basic validation checks without triggering store updates
+      if (!amount || amount === '0') {
+        console.error('Amount is required')
+        return
+      }
       
-      // Load UTXOs and calculate fees for this amount
-      await fees.loadUtxosAndCalculateFees()
+      if (amountSats <= 0) {
+        console.error('Amount must be greater than 0')
+        return
+      }
       
-      // Navigate to confirmation screen
+      if (amountSats < 546) {
+        console.error('Amount is below dust limit (546 sats)')
+        return
+      }
+      
+      // Check sufficient balance
+      if (amountSats > balances.confirmed) {
+        console.error('Insufficient balance')
+        return
+      }
+      
+      // Navigate to confirmation screen - validation and fee loading will happen there
       router.push('/send/confirm')
+      
     } catch (error) {
       console.error('Error preparing transaction:', error)
-      // Error handling is managed by the transaction store
     } finally {
       setIsValidating(false)
     }
-  }, [ validateAmount, fees, router ])
+  }, [ amount, amountSats, balances, router ])
   
   // Check if user can proceed to next screen
   const canProceedToNext = useCallback(() => {
     if (!amount || amount === '0') return false
     if (amountError) return false
-    if (isValidating || isLoadingUtxos || isCalculatingFee) return false
+    if (isValidating) return false
     
-    // Basic amount validation
-    const amountValidation = validation.validateAmount(amountSats)
-    if (!amountValidation.isValid) return false
+    // Basic validation without calling external functions that might cause side effects
+    if (amountSats <= 0) return false
+    if (amountSats < 546) return false // Dust limit
     
     // Check if amount exceeds balance
     if (amountSats > balances.confirmed) return false
     
     return true
-  }, [ amount, amountSats, amountError, isValidating, isLoadingUtxos, isCalculatingFee, validation, balances ])
+  }, [ amount, amountSats, amountError, isValidating, balances ])
 
-  // Auto-validate amount when it changes
-  useEffect(() => {
-    if (amount && amount !== '0') {
-      const timer = setTimeout(() => {
-        validateAmount()
-      }, 500) // Debounce validation
-      
-      return () => clearTimeout(timer)
-    }
-  }, [ amount, validateAmount ])
+  // Note: Auto-validation removed to prevent render loops
+  // Validation happens when user presses continue button
 
   return (
     <SafeAreaContainer>
@@ -201,7 +205,7 @@ export default function SendAmountScreen() {
       <ScreenFooter withBorder={false}>
         {/* Continue Button */}
         <ActionButton
-          title={isValidating || isLoadingUtxos || isCalculatingFee ? "Preparing..." : "Continue"}
+          title={isValidating ? "Validating..." : "Continue"}
           onPress={handleContinue}
           disabled={!canProceedToNext()}
           style={{ 
@@ -211,14 +215,12 @@ export default function SendAmountScreen() {
           }}
         />
         
-        {/* Loading Indicator for Transaction Preparation */}
-        {(isValidating || isLoadingUtxos || isCalculatingFee) && (
+        {/* Loading Indicator for Amount Validation */}
+        {isValidating && (
           <View style={styles.preparingContainer}>
             <ActivityIndicator size="small" color="#007AFF" />
             <ThemedText style={styles.preparingText}>
-              {isLoadingUtxos && "Loading wallet data..."}
-              {isCalculatingFee && "Calculating fees..."}
-              {isValidating && "Validating amount..."}
+              Validating amount...
             </ThemedText>
           </View>
         )}

@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react'
-import { View, Alert } from 'react-native'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import { View, Alert, ActivityIndicator } from 'react-native'
 import { Stack } from 'expo-router'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
@@ -17,15 +17,39 @@ import { ThemedText } from '@/src/components/ui/Text'
  * Uses the new unified transaction architecture
  */
 export default function SendConfirmScreen() {
-  const { navigateBack, navigateToSendLoading } = useSendNavigation()
+  const { navigateBack } = useSendNavigation()
   const [ isValidating, setIsValidating ] = useState(false)
+  const [ isLoadingTransaction, setIsLoadingTransaction ] = useState(true)
+  const [ loadingError, setLoadingError ] = useState<string | null>(null)
   
   useAutoWalletSync()
   
-  // Get transaction data from stores
+  // Get transaction data from stores and hooks
   const transactionStore = useSendTransactionStore()
-  const { validation } = useTransaction()
+  const { validation, actions } = useTransaction()
   
+  // Load transaction data when screen loads
+  useEffect(() => {
+    const loadTransactionData = async () => {
+      try {
+        setIsLoadingTransaction(true)
+        setLoadingError(null)
+        
+        // Load UTXOs and calculate fees directly from service
+        const { SendTransactionService } = await import('@/src/services/sendTransactionService')
+        await SendTransactionService.loadUtxosAndCalculateFees()
+        
+        setIsLoadingTransaction(false)
+      } catch (error) {
+        console.error('Failed to load transaction data:', error)
+        setLoadingError(error instanceof Error ? error.message : 'Failed to load transaction data')
+        setIsLoadingTransaction(false)
+      }
+    }
+    
+    loadTransactionData()
+  }, []) // Empty dependency array - run only once
+
   // Get transaction parameters
   const address = transactionStore.inputs.recipientAddress
   const amount = transactionStore.derived.amountSats
@@ -105,44 +129,85 @@ export default function SendConfirmScreen() {
     setIsValidating(true)
     
     try {
-      const { balances } = useWalletStore.getState()
-      
-      console.log('Proceeding to send transaction:', {
+      console.log('Executing transaction:', {
         address,
         amount,
         currency,
         feeSats,
         feeRate,
-        totalAmount,
-        availableBalance : balances.confirmed
+        totalAmount
       })
       
-      navigateToSendLoading()
+      // Execute transaction using the unified hook
+      const result = await actions.executeTransaction()
+      
+      if (result) {
+        // Transaction successful - navigate to success
+        actions.navigateToSuccess(result.txid)
+      } else {
+        // Transaction failed but no error thrown
+        Alert.alert(
+          'Transaction Failed',
+          'Failed to send transaction. Please try again.',
+          [ { text: 'OK' } ]
+        )
+      }
       
     } catch (error) {
-      console.error('Error preparing transaction:', error)
-      Alert.alert(
-        'Transaction Error',
-        'Failed to prepare transaction. Please try again.',
-        [ { text: 'OK' } ]
-      )
+      console.error('Transaction execution failed:', error)
+      
+      // Let the transaction hook handle error navigation
+      if (error instanceof Error) {
+        const errorMessage = error.message || 'Unknown error occurred'
+        Alert.alert(
+          'Transaction Error',
+          errorMessage,
+          [ { text: 'OK' } ]
+        )
+      }
     } finally {
       setIsValidating(false)
     }
-  }, [ validationResult, isValidating, navigateToSendLoading, address, amount, currency, feeSats, feeRate, totalAmount ])
+  }, [ validationResult, isValidating, actions, address, amount, currency, feeSats, feeRate, totalAmount ])
 
   // Get wallet state directly to avoid reactive updates
   const wallet = useWalletStore.getState().wallet
 
-  if (!wallet) {
+  // Show loading state while preparing transaction
+  if (!wallet || isLoadingTransaction) {
     return (
       <SafeAreaContainer style={transactionStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <BackButton onPress={navigateBack} />
         
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <ThemedText style={{ fontSize: 16, textAlign: 'center' }}>
-            Loading wallet data...
+          <ActivityIndicator size="large" color="#007AFF" style={{ marginBottom: 16 }} />
+          <ThemedText style={{ fontSize: 16, textAlign: 'center', marginBottom: 8 }}>
+            {!wallet ? 'Loading wallet data...' : 'Loading transaction data...'}
+          </ThemedText>
+          {isLoadingTransaction && (
+            <ThemedText style={{ fontSize: 14, textAlign: 'center', color: '#666' }}>
+              Calculating fees and preparing transaction
+            </ThemedText>
+          )}
+        </View>
+      </SafeAreaContainer>
+    )
+  }
+
+  // Show error state if transaction loading failed
+  if (loadingError) {
+    return (
+      <SafeAreaContainer style={transactionStyles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <BackButton onPress={navigateBack} />
+        
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <ThemedText style={{ fontSize: 16, textAlign: 'center', color: '#d32f2f', marginBottom: 16 }}>
+            ⚠️ Failed to load transaction data
+          </ThemedText>
+          <ThemedText style={{ fontSize: 14, textAlign: 'center', color: '#666' }}>
+            {loadingError}
           </ThemedText>
         </View>
       </SafeAreaContainer>
