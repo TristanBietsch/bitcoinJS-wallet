@@ -6,6 +6,11 @@ import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddre
 import { validateBitcoinInput } from '@/src/utils/formatting/currencyUtils'
 import { bitcoinjsNetwork } from '@/src/config/env'
 import type { EnhancedUTXO } from '@/src/types/blockchain.types'
+import type { NormalizedUTXO, BuildTransactionParams } from '@/src/types/tx.types'
+import { buildTransaction } from '@/src/services/bitcoin/txBuilder'
+import { broadcastTx } from '@/src/services/bitcoin/broadcast'
+import { selectUtxosEnhanced } from '@/src/utils/bitcoin/utxo'
+import { estimateTransactionSize } from '@/src/services/bitcoin/feeEstimationService'
 
 // --- Core Types ---
 export interface SendTransactionInputs {
@@ -37,7 +42,7 @@ export interface SendTransactionMeta {
 }
 
 export interface SendTransactionUtxoData {
-  selectedUtxos    : Array<EnhancedUTXO & { publicKey: Buffer }>
+  selectedUtxos    : NormalizedUTXO[]
   changeAddress?   : string
   changeAmount     : number
   totalUtxoValue   : number
@@ -441,11 +446,6 @@ export const useSendTransactionStore = create<SendTransactionState>()(
         }))
 
         try {
-          // This would integrate with your existing UTXO selection logic
-          // For now, providing the interface structure
-          const { selectUtxosEnhanced } = require('@/src/utils/bitcoin/utxo')
-          const { estimateTransactionSize } = require('@/src/services/bitcoin/feeEstimationService')
-
           const selectionResult = selectUtxosEnhanced(
             availableUtxos,
             state.derived.amountSats,
@@ -458,7 +458,7 @@ export const useSendTransactionStore = create<SendTransactionState>()(
           )
 
           if (selectionResult) {
-            const inputTypes = selectionResult.selectedUtxos.map((utxo: EnhancedUTXO & { publicKey: Buffer }) => utxo.addressType)
+            const inputTypes = selectionResult.selectedUtxos.map(utxo => utxo.addressType)
             const hasChange = selectionResult.changeAmount > 0
             const estimatedSize = estimateTransactionSize(
               selectionResult.selectedUtxos.length,
@@ -469,10 +469,10 @@ export const useSendTransactionStore = create<SendTransactionState>()(
 
             set(prevState => ({
               utxos : {
-                selectedUtxos  : selectionResult.selectedUtxos,
+                selectedUtxos  : selectionResult.selectedUtxos as NormalizedUTXO[],
                 changeAddress,
                 changeAmount   : selectionResult.changeAmount,
-                totalUtxoValue : selectionResult.selectedUtxos.reduce((sum: number, utxo: EnhancedUTXO & { publicKey: Buffer }) => sum + utxo.value, 0)
+                totalUtxoValue : selectionResult.selectedUtxos.reduce((sum: number, utxo) => sum + utxo.value, 0)
               },
               derived : {
                 ...prevState.derived,
@@ -525,10 +525,7 @@ export const useSendTransactionStore = create<SendTransactionState>()(
         }))
 
         try {
-          // This would integrate with your existing transaction building logic
-          const { buildTransaction } = require('@/src/services/bitcoin/txBuilder')
-          
-          const buildParams = {
+          const buildParams: BuildTransactionParams = {
             inputs  : state.utxos.selectedUtxos,
             outputs : [ { 
               address : state.inputs.recipientAddress, 
@@ -539,7 +536,7 @@ export const useSendTransactionStore = create<SendTransactionState>()(
             network       : bitcoinjsNetwork
           }
 
-          const { psbt, feeDetails } = buildTransaction(buildParams)
+          const { psbt, feeDetails } = await buildTransaction(buildParams)
 
           set(prevState => ({
             meta : {
@@ -577,9 +574,6 @@ export const useSendTransactionStore = create<SendTransactionState>()(
         }))
 
         try {
-          // This would integrate with your existing broadcast logic
-          const { broadcastTx } = require('@/src/services/bitcoin/broadcast')
-          
           const txid = await broadcastTx(signedTxHex)
 
           set(prevState => ({
