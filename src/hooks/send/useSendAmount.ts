@@ -136,21 +136,21 @@ export function useSendAmount(): UseSendAmountReturn {
       setIsCalculatingFee(true)
       
       try {
-        // Update amount in both stores
-        const amountStr = rawAmount || '0'
-        sendStore.setAmount(amountStr)
-        sendStore.setCurrency(currency)
+      // Update amount in both stores
+      const amountStr = rawAmount || '0'
+      sendStore.setAmount(amountStr)
+      sendStore.setCurrency(currency)
         sendTransactionStore.setAmount(amountStr, currency)
-        sendTransactionStore.setCurrency(currency)
-        
-        // Recalculate fees if we have UTXOs
-        if (availableUtxos.length > 0 && wallet?.addresses.nativeSegwit[0]) {
-          sendTransactionStore.calculateFeeAndUtxos(availableUtxos, wallet.addresses.nativeSegwit[0])
-        }
+      sendTransactionStore.setCurrency(currency)
+      
+      // Recalculate fees if we have UTXOs
+      if (availableUtxos.length > 0 && wallet?.addresses.nativeSegwit[0]) {
+        sendTransactionStore.calculateFeeAndUtxos(availableUtxos, wallet.addresses.nativeSegwit[0])
+      }
       } catch (error) {
         console.error('Error updating transaction data:', error)
       } finally {
-        setIsCalculatingFee(false)
+      setIsCalculatingFee(false)
       }
     }, 500) // Debounce
     

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet } from 'react-native'
-import { Stack } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
@@ -13,80 +13,134 @@ import { getSpeedOptions } from '@/src/utils/send/speedOptions'
 import { SpeedOption, SpeedTier, CustomFee } from '@/src/types/domain/transaction'
 
 export default function SendAddressScreen() {
+  const router = useRouter()
+  
   const {
     address,
     addressError,
-    isValidAddress,
-    handleContinue
+    selectedSpeed,
+    customFeeRate,
+    isLoadingFees,
+    setAddress,
+    setSelectedSpeed,
+    setCustomFeeRate,
+    handleContinue,
+    loadFeeRates
   } = useSendAddressScreen()
 
-  // State for proper speed selection types
+  // State for proper speed selection component types
   const [ speedOptions, setSpeedOptions ] = useState<SpeedOption[]>([])
-  const [ selectedSpeed, setSelectedSpeed ] = useState<SpeedTier>('standard')
-  const [ customFee, setCustomFee ] = useState<CustomFee>({
-    totalSats        : 0,
-    confirmationTime : 60,
-    feeRate          : 10
-  })
-  const [ isLoadingFees, setIsLoadingFees ] = useState(false)
+  
+  // Modal state management
+  const [ showSpeedInfoModal, setShowSpeedInfoModal ] = useState(false)
+  const [ showCustomFeeModal, setShowCustomFeeModal ] = useState(false)
+  const [ pendingInput, setPendingInput ] = useState('')
 
-  // Load speed options
+  // Load speed options for the component
   useEffect(() => {
     const loadSpeedOptions = async () => {
-      setIsLoadingFees(true)
       try {
         const options = await getSpeedOptions()
         setSpeedOptions(options)
       } catch (error) {
         console.error('Failed to load speed options:', error)
-      } finally {
-        setIsLoadingFees(false)
       }
     }
     loadSpeedOptions()
   }, [])
 
-  // Handlers
-  const handleAddressChange = (_newAddress: string) => {
-    // Use existing setAddress logic from hook if available
+  // Navigation handlers
+  const handleBackPress = () => {
+    router.push('/' as any) // Navigate back to home screen
   }
 
-  const handleBackPress = () => {
-    // Navigate back
+  const handleNextPress = () => {
+    handleContinue() // This will navigate to /send/amount
+  }
+
+  // Address handlers
+  const handleAddressChange = (newAddress: string) => {
+    setAddress(newAddress) // Use the hook's setAddress function
   }
 
   const handleQRScan = () => {
-    // QR scan functionality
+    router.push('/send/camera' as any) // Navigate to QR scanner
   }
 
+  // Fee selection handlers - map between component types and hook types
   const handleSpeedChange = (speed: SpeedTier) => {
-    setSelectedSpeed(speed)
+    // Map SpeedTier to hook's speed type
+    const hookSpeed = speed === 'standard' ? 'normal' : speed
+    setSelectedSpeed(hookSpeed as 'economy' | 'normal' | 'express' | 'custom')
   }
 
-  const handleCustomFeeChange = (fee: CustomFee) => {
-    setCustomFee(fee)
+
+
+  // Modal handlers
+  const handleSpeedInfoPress = () => {
+    setShowSpeedInfoModal(true)
   }
-
-  // Mock handlers for modal functionality
-  const handleSpeedInfoPress = () => {}
-  const handleCloseSpeedInfoModal = () => {}
-  const handleCustomFeePress = () => {}
-  const handleNumberPress = () => {}
-  const handleCloseCustomFeeModal = () => {}
-  const refreshSpeedOptions = () => {}
-
-  // Additional handlers and state
-  const speed = selectedSpeed
-  const handleConfirmCustomFee = handleCustomFeeChange
-  const handleNextPress = handleContinue
   
-  // State for modals
-  const showSpeedInfoModal = false
-  const showCustomFeeModal = false
-  const pendingInput = ''
+  const handleCloseSpeedInfoModal = () => {
+    setShowSpeedInfoModal(false)
+  }
+  
+  const handleCustomFeePress = () => {
+    setShowCustomFeeModal(true)
+    // Switch to custom speed when opening custom fee modal
+    setSelectedSpeed('custom')
+  }
+  
+  const handleCloseCustomFeeModal = () => {
+    setShowCustomFeeModal(false)
+    setPendingInput('')
+  }
+  
+  const handleNumberPress = (num: string | 'backspace') => {
+    if (num === 'backspace') {
+      setPendingInput(prev => prev.slice(0, -1))
+    } else {
+      setPendingInput(prev => prev + num)
+    }
+  }
+  
+  const handleConfirmCustomFee = () => {
+    // Convert pendingInput to fee rate
+    const inputValue = parseFloat(pendingInput)
+    if (inputValue && inputValue > 0) {
+      // Create new CustomFee object with the input value as totalSats
+      const newCustomFee: CustomFee = {
+        totalSats        : inputValue,
+        confirmationTime : 60, // Default estimate for custom fees
+        feeRate          : Math.max(1, Math.round(inputValue / 200)) // Estimate fee rate based on average tx size
+      }
+      
+      // Update the fee rate in the hook
+      setCustomFeeRate(newCustomFee.feeRate)
+      
+      // Close the modal and clear pending input
+      setShowCustomFeeModal(false)
+      setPendingInput('')
+    }
+  }
+  
+  const refreshSpeedOptions = loadFeeRates
+
+  // Map hook data to component expectations
+  const mappedSelectedSpeed: SpeedTier = selectedSpeed === 'normal' ? 'standard' : selectedSpeed as SpeedTier
+  const customFee: CustomFee = {
+    totalSats        : pendingInput ? parseFloat(pendingInput) || 0 : 0,
+    confirmationTime : 60,
+    feeRate          : customFeeRate
+  }
+  const speed = mappedSelectedSpeed
+  
+  // Input validation - check if pendingInput is a valid number > 0
+  const isInputValid = !pendingInput || (parseFloat(pendingInput) > 0 && !isNaN(parseFloat(pendingInput)))
+  
+  // Additional state
   const feeError = null
   const feeLoadError = null
-  const isInputValid = isValidAddress
   const isBackButtonDisabled = false
 
   return (
