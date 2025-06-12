@@ -10,288 +10,273 @@ import {
   createAddressValidationError,
   createTransactionError,
   createNetworkError,
-  createFeeEstimationError,
-  createSecurityError
+  createSecurityError,
+  createFeeEstimationError
 } from '@/src/types/errors.types'
 
 /**
  * Enhanced service layer for Send BTC transactions
- * Integrates with SendTransactionStore and provides comprehensive error handling
+ * Optimized for integration with the unified useTransaction hook
  */
 export class SendTransactionService {
   
   /**
-   * Maps generic errors to structured SendBTCError types
+   * Maps generic errors to specific SendBTCError types for consistent error handling
    */
-  private static mapErrorToSendBTCError(error: Error, context?: string): SendBTCError {
+  private static mapErrorToSendBTCError(error: Error, context: string): SendBTCError {
     const errorMessage = error.message.toLowerCase()
     
     // Insufficient funds errors
     if (errorMessage.includes('insufficient funds') || 
         errorMessage.includes('not enough') || 
-        errorMessage.includes('needed:') ||
         errorMessage.includes('balance')) {
-      return createInsufficientFundsError(0, 0, { confirmed: 0, unconfirmed: 0 })
+      const walletState = useWalletStore.getState()
+      return createInsufficientFundsError(
+        0, // Will be filled with actual amounts by caller
+        walletState.balances.confirmed,
+                 { 
+           confirmed   : walletState.balances.confirmed, 
+           unconfirmed : walletState.balances.unconfirmed 
+         }
+      )
+    }
+    
+    // Network and API errors
+    if (errorMessage.includes('network') || 
+        errorMessage.includes('connection') || 
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('broadcast failed') ||
+        errorMessage.includes('api') ||
+        errorMessage.includes('fetch')) {
+      return createNetworkError('NETWORK_TIMEOUT', { endpoint: context })
     }
     
     // Address validation errors
     if (errorMessage.includes('invalid address') ||
-        errorMessage.includes('address validation') ||
-        errorMessage.includes('invalid character') ||
-        errorMessage.includes('invalid checksum')) {
+        errorMessage.includes('address') ||
+        errorMessage.includes('script')) {
       return createAddressValidationError('unknown', 'INVALID_ADDRESS')
     }
     
-    // Network/connectivity errors
-    if (errorMessage.includes('network') || 
-        errorMessage.includes('connection') || 
-        errorMessage.includes('timeout') ||
-        errorMessage.includes('fetch') ||
-        errorMessage.includes('broadcast failed')) {
-      return createNetworkError('NETWORK_TIMEOUT', { endpoint: context })
-    }
-    
-    // Fee-related errors
-    if (errorMessage.includes('fee') && 
-        (errorMessage.includes('too high') || errorMessage.includes('too low'))) {
-      return createFeeEstimationError('FEE_ESTIMATION_FAILED')
-    }
-    
-    // Security/wallet errors
+    // Security and wallet errors
     if (errorMessage.includes('seed phrase') ||
         errorMessage.includes('mnemonic') ||
-        errorMessage.includes('wallet locked') ||
-        errorMessage.includes('no wallet')) {
+        errorMessage.includes('wallet') ||
+        errorMessage.includes('signing')) {
       return createSecurityError('MNEMONIC_UNAVAILABLE')
     }
     
-    // Transaction building errors
-    if (errorMessage.includes('utxo') ||
-        errorMessage.includes('transaction build') ||
-        errorMessage.includes('signing') ||
-        errorMessage.includes('psbt')) {
-      const stage = errorMessage.includes('signing') ? 'sign' :
-                   errorMessage.includes('build') ? 'build' :
-                   errorMessage.includes('utxo') ? 'utxo_select' : 'build'
-      return createTransactionError('TRANSACTION_BUILD_FAILED', stage)
+    // Fee estimation errors
+    if (errorMessage.includes('fee') ||
+        errorMessage.includes('utxo') ||
+        errorMessage.includes('dust')) {
+      return createFeeEstimationError('FEE_ESTIMATION_FAILED')
     }
     
-    // Default to generic transaction error
-    return createTransactionError('TRANSACTION_BUILD_FAILED', 'build')
-  }
-  
-  /**
-   * Validates wallet and balance state before transaction operations
-   */
-  private static validateWalletState(): { isValid: boolean; error?: SendBTCError } {
-    const walletStore = useWalletStore.getState()
-    const sendStore = useSendTransactionStore.getState()
-    
-    if (!walletStore.wallet) {
-      return {
-        isValid : false,
-        error   : createSecurityError('MNEMONIC_UNAVAILABLE')
-      }
-    }
-    
-    if (!walletStore.seedPhrase) {
-      return {
-        isValid : false,
-        error   : createSecurityError('MNEMONIC_UNAVAILABLE')
-      }
-    }
-    
-    // Check if amount exceeds reasonable limits (security check)
-    const MAX_SINGLE_TX = 100_000_000 // 1 BTC
-    if (sendStore.derived.amountSats > MAX_SINGLE_TX) {
-      return {
-        isValid : false,
-        error   : createSecurityError('AMOUNT_TOO_LARGE', {
-          requiredAmount   : sendStore.derived.amountSats,
-          maxAllowedAmount : MAX_SINGLE_TX
-        })
-      }
-    }
-    
-    return { isValid: true }
-  }
-  
-  /**
-   * Validates fee rate is reasonable
-   */
-  private static validateFeeRate(feeRate: number): { isValid: boolean; error?: SendBTCError } {
-    if (feeRate <= 0) {
-      return {
-        isValid : false,
-        error   : createFeeEstimationError('FEE_TOO_LOW', { requestedFeeRate: feeRate, suggestedFeeRate: 1 })
-      }
-    }
-    
-    if (feeRate > 1000) {
-      return {
-        isValid : false,
-        error   : createFeeEstimationError('FEE_TOO_HIGH', { requestedFeeRate: feeRate, suggestedFeeRate: 20 })
-      }
-    }
-    
-    return { isValid: true }
+    // Default to transaction error
+    const stage = context.includes('build') ? 'build' : 
+                  context.includes('sign') ? 'sign' : 
+                  context.includes('broadcast') ? 'broadcast' : 'utxo_fetch'
+                  
+    return createTransactionError('TRANSACTION_BUILD_FAILED', stage)
   }
   
   /**
    * Load wallet UTXOs and calculate fees for current transaction
+   * Enhanced with better error handling and progress tracking
    */
   static async loadUtxosAndCalculateFees(): Promise<void> {
-    // Validate wallet state first
-    const walletValidation = this.validateWalletState()
-    if (!walletValidation.isValid) {
-      throw walletValidation.error
+    const walletStore = useWalletStore.getState()
+    
+    // Enhanced validation
+    if (!walletStore.wallet) {
+      throw this.mapErrorToSendBTCError(new Error('No wallet available'), 'wallet_check')
     }
     
-    const walletStore = useWalletStore.getState()
+    if (!walletStore.seedPhrase) {
+      throw this.mapErrorToSendBTCError(new Error('No seed phrase available'), 'security_check')
+    }
+    
     const sendActions = useSendTransactionStore.getState()
     
     try {
-      // Set loading state
+      // Set loading state with better tracking
       useSendTransactionStore.setState(state => ({
-        meta : { ...state.meta, isLoadingUtxos: true, error: undefined }
-      }))
-      
-      console.log('🔍 Fetching wallet UTXOs...')
-      
-      // Fetch UTXOs for the wallet
-      const rawUtxos = await fetchWalletUtxos(walletStore.wallet!, walletStore.seedPhrase!, bitcoinjsNetwork)
-      
-      if (!rawUtxos || rawUtxos.length === 0) {
-        throw createInsufficientFundsError(
-          sendActions.derived.totalSats,
-          0,
-          { confirmed: 0, unconfirmed: 0 }
-        )
-      }
-      
-      // Filter for confirmed UTXOs only
-      const confirmedUtxos = filterUtxosByConfirmation(rawUtxos, false)
-      
-      if (confirmedUtxos.length === 0) {
-        throw createInsufficientFundsError(
-          sendActions.derived.totalSats,
-          0,
-          { confirmed: 0, unconfirmed: rawUtxos.reduce((sum, utxo) => sum + utxo.value, 0) }
-        )
-      }
-      
-      // Enrich UTXOs with public keys and derivation paths
-      const enrichedUtxos = await enrichUtxosWithPublicKeys(
-        confirmedUtxos,
-        walletStore.seedPhrase!,
-        bitcoinjsNetwork
-      )
-      
-      console.log('✅ UTXOs loaded:', enrichedUtxos.length)
-      
-      // Use first native segwit address as change address
-      const changeAddress = walletStore.wallet!.addresses.nativeSegwit[0]
-      if (!changeAddress) {
-        throw createTransactionError('TRANSACTION_BUILD_FAILED', 'build')
-      }
-      
-      // Validate fee rate before calculation
-      const feeValidation = this.validateFeeRate(sendActions.inputs.feeRate)
-      if (!feeValidation.isValid) {
-        throw feeValidation.error
-      }
-      
-      // Calculate fees and select UTXOs
-      sendActions.calculateFeeAndUtxos(enrichedUtxos, changeAddress)
-      
-      // Check if UTXO selection was successful
-      const updatedState = useSendTransactionStore.getState()
-      if (updatedState.utxos.selectedUtxos.length === 0) {
-        const totalAvailable = enrichedUtxos.reduce((sum, utxo) => sum + utxo.value, 0)
-        throw createInsufficientFundsError(
-          updatedState.derived.totalSats,
-          totalAvailable,
-          { confirmed: totalAvailable, unconfirmed: 0 }
-        )
-      }
-      
-      useSendTransactionStore.setState(state => ({
-        meta : { ...state.meta, isLoadingUtxos: false }
-      }))
-      
-    } catch (error) {
-      console.error('Failed to load UTXOs:', error)
-      
-      const mappedError = error instanceof Error ? this.mapErrorToSendBTCError(error, 'UTXO_LOAD') : error as SendBTCError
-      
-      useSendTransactionStore.setState(state => ({
-        meta : {
-          ...state.meta,
-          isLoadingUtxos : false,
-          error          : mappedError.message
+        meta : { 
+          ...state.meta, 
+          isLoadingUtxos   : true, 
+          error            : undefined,
+          isCalculatingFee : false // Reset any previous fee calculation state
         }
       }))
       
-      throw mappedError
+      console.log('🔍 [SendTransactionService] Fetching wallet UTXOs...')
+      
+      // Fetch UTXOs with enhanced error handling
+      const rawUtxos = await fetchWalletUtxos(
+        walletStore.wallet, 
+        walletStore.seedPhrase, 
+        bitcoinjsNetwork
+      ).catch(error => {
+        throw this.mapErrorToSendBTCError(error, 'utxo_fetch')
+      })
+      
+      // Filter for confirmed UTXOs only (enhanced safety)
+      const confirmedUtxos = filterUtxosByConfirmation(rawUtxos, false)
+      
+      if (confirmedUtxos.length === 0) {
+        throw this.mapErrorToSendBTCError(
+          new Error('No confirmed UTXOs available'), 
+          'utxo_filter'
+        )
+      }
+      
+      console.log(`✅ [SendTransactionService] Found ${confirmedUtxos.length} confirmed UTXOs`)
+      
+             // Enrich UTXOs with public keys and derivation paths
+       let enrichedUtxos
+       try {
+         enrichedUtxos = await enrichUtxosWithPublicKeys(
+           confirmedUtxos,
+           walletStore.seedPhrase,
+           bitcoinjsNetwork
+         )
+       } catch (error: any) {
+         throw this.mapErrorToSendBTCError(error, 'utxo_enrich')
+       }
+      
+      console.log(`✅ [SendTransactionService] Enriched ${enrichedUtxos.length} UTXOs with keys`)
+      
+      // Get change address with validation
+      const changeAddress = walletStore.wallet.addresses.nativeSegwit[0]
+      if (!changeAddress) {
+        throw this.mapErrorToSendBTCError(
+          new Error('No change address available'), 
+          'change_address'
+        )
+      }
+      
+      // Calculate fees and select UTXOs with error handling
+      try {
+        sendActions.calculateFeeAndUtxos(enrichedUtxos, changeAddress)
+      } catch (error) {
+        throw this.mapErrorToSendBTCError(
+          error instanceof Error ? error : new Error('Fee calculation failed'), 
+          'fee_calculation'
+        )
+      }
+      
+      // Verify UTXO selection was successful
+      const updatedState = useSendTransactionStore.getState()
+      if (updatedState.utxos.selectedUtxos.length === 0) {
+        throw this.mapErrorToSendBTCError(
+          new Error('No suitable UTXOs found for transaction amount'), 
+          'utxo_selection'
+        )
+      }
+      
+      // Success - clear loading state
+      useSendTransactionStore.setState(state => ({
+        meta : { ...state.meta, isLoadingUtxos: false, error: undefined }
+      }))
+      
+      console.log('✅ [SendTransactionService] UTXO loading and fee calculation complete')
+      
+    } catch (error) {
+      console.error('[SendTransactionService] Failed to load UTXOs:', error)
+      
+      // Update state with error
+      useSendTransactionStore.setState(state => ({
+        meta : {
+          ...state.meta,
+          isLoadingUtxos   : false,
+          isCalculatingFee : false,
+          error            : error instanceof Error ? error.message : 'Failed to load wallet data'
+        }
+      }))
+      
+      // Re-throw as SendBTCError for useTransaction hook
+      if (error && typeof error === 'object' && 'code' in error) {
+        throw error // Already a SendBTCError
+      }
+      throw this.mapErrorToSendBTCError(
+        error instanceof Error ? error : new Error('Unknown error'), 
+        'utxo_loading'
+      )
     }
   }
   
   /**
    * Execute complete transaction flow: validate, build, sign, broadcast
+   * Enhanced for perfect integration with useTransaction hook
    */
   static async executeTransaction(): Promise<TransactionResult> {
-    // Validate wallet state first
-    const walletValidation = this.validateWalletState()
-    if (!walletValidation.isValid) {
-      throw walletValidation.error
-    }
-    
     const sendStore = useSendTransactionStore.getState()
     const walletStore = useWalletStore.getState()
     
-    // Validate transaction is ready
-    if (!sendStore.isValidTransaction()) {
-      throw createTransactionError('TRANSACTION_BUILD_FAILED', 'build')
+    // Enhanced pre-execution validation
+    if (!walletStore.wallet) {
+      throw this.mapErrorToSendBTCError(new Error('No wallet available'), 'wallet_check')
     }
     
-    console.log('✅ Transaction validation passed')
+    if (!walletStore.seedPhrase) {
+      throw this.mapErrorToSendBTCError(new Error('No seed phrase available for signing'), 'security_check')
+    }
+    
+    // Validate transaction readiness
+    if (!sendStore.isValidTransaction()) {
+      const errors = sendStore.getValidationErrors()
+      throw this.mapErrorToSendBTCError(
+        new Error(`Transaction validation failed: ${errors.join(', ')}`), 
+        'validation'
+      )
+    }
+    
+    console.log('✅ [SendTransactionService] Transaction validation passed')
     
     try {
       // Step 1: Build the transaction
-      console.log('🔨 Building transaction...')
-      const { psbt, fee } = await sendStore.buildTransaction()
-      
-              console.log('✅ Transaction built successfully', { 
-          fee, 
-          inputs        : psbt.inputCount, 
-          outputs       : psbt.data.outputs.length,
-          estimatedSize : sendStore.derived.estimatedSize
-        })
-      
-      // Step 2: Sign the transaction
-      console.log('✍️ Signing transaction...')
-      const signedTxHex = await signTransaction({
-        psbt,
-        mnemonic : walletStore.seedPhrase!,
-        network  : bitcoinjsNetwork,
+      console.log('🔨 [SendTransactionService] Building transaction...')
+      const { psbt, fee } = await sendStore.buildTransaction().catch(error => {
+        throw this.mapErrorToSendBTCError(
+          error instanceof Error ? error : new Error('Transaction build failed'), 
+          'build'
+        )
       })
       
-      if (!signedTxHex || signedTxHex.length === 0) {
-        throw createTransactionError('SIGNING_FAILED', 'sign')
-      }
+      console.log(`✅ [SendTransactionService] Transaction built successfully`, { 
+        fee, 
+        inputs  : psbt.inputCount, 
+        outputs : psbt.data.outputs.length 
+      })
       
-      console.log('✅ Transaction signed, hex length:', signedTxHex.length)
+      // Step 2: Sign the transaction
+      console.log('✍️ [SendTransactionService] Signing transaction...')
+      const signedTxHex = await signTransaction({
+        psbt,
+        mnemonic : walletStore.seedPhrase,
+        network  : bitcoinjsNetwork,
+      }).catch(error => {
+        throw this.mapErrorToSendBTCError(
+          error instanceof Error ? error : new Error('Transaction signing failed'), 
+          'sign'
+        )
+      })
+      
+      console.log('✅ [SendTransactionService] Transaction signed successfully')
       
       // Step 3: Broadcast the transaction
-      console.log('📡 Broadcasting transaction...')
-      const txid = await sendStore.broadcastTransaction(signedTxHex)
+      console.log('📡 [SendTransactionService] Broadcasting transaction...')
+      const txid = await sendStore.broadcastTransaction(signedTxHex).catch(error => {
+        throw this.mapErrorToSendBTCError(
+          error instanceof Error ? error : new Error('Transaction broadcast failed'), 
+          'broadcast'
+        )
+      })
       
-      if (!txid || txid.length !== 64) {
-        throw createNetworkError('BROADCAST_FAILED', { endpoint: 'broadcast' })
-      }
+      console.log(`✅ [SendTransactionService] Transaction broadcasted successfully: ${txid}`)
       
-      console.log('✅ Transaction broadcasted successfully:', txid)
-      
+      // Return standardized result
       return {
         txid,
         fee,
@@ -299,38 +284,38 @@ export class SendTransactionService {
       }
       
     } catch (error) {
-      console.error('Transaction execution failed:', error)
+      console.error('[SendTransactionService] Transaction execution failed:', error)
       
-      const mappedError = error instanceof Error ? this.mapErrorToSendBTCError(error, 'EXECUTE') : error as SendBTCError
-      throw mappedError
+      // Ensure we're throwing a SendBTCError for the hook
+      if (error && typeof error === 'object' && 'code' in error) {
+        throw error // Already a SendBTCError
+      }
+      throw this.mapErrorToSendBTCError(
+        error instanceof Error ? error : new Error('Unknown execution error'), 
+        'execution'
+      )
     }
   }
   
   /**
-   * Get transaction summary for confirmation screen
-   */
-  static getTransactionSummary() {
-    return useSendTransactionStore.getState().getTransactionSummary()
-  }
-  
-  /**
-   * Enhanced validation for transaction execution readiness
+   * Enhanced transaction validation for execution readiness
+   * Provides detailed validation suitable for useTransaction hook
    */
   static validateForExecution(): { isValid: boolean; errors: string[] } {
     const sendStore = useSendTransactionStore.getState()
-    const walletValidation = this.validateWalletState()
+    const walletStore = useWalletStore.getState()
     
-    const errors: string[] = []
+    const errors = sendStore.getValidationErrors()
     
-    // Include wallet validation errors
-    if (!walletValidation.isValid && walletValidation.error) {
-      errors.push(walletValidation.error.message)
+    // Enhanced execution readiness checks
+    if (!walletStore.wallet) {
+      errors.push('Wallet not available')
     }
     
-    // Include store validation errors
-    errors.push(...sendStore.getValidationErrors())
+    if (!walletStore.seedPhrase) {
+      errors.push('Seed phrase not available for signing')
+    }
     
-    // Additional checks for execution readiness
     if (sendStore.utxos.selectedUtxos.length === 0) {
       errors.push('No UTXOs selected for transaction')
     }
@@ -339,16 +324,14 @@ export class SendTransactionService {
       errors.push('No change address available')
     }
     
-    // Validate fee rate
-    const feeValidation = this.validateFeeRate(sendStore.inputs.feeRate)
-    if (!feeValidation.isValid && feeValidation.error) {
-      errors.push(feeValidation.error.message)
+    // Check balance sufficiency
+    if (sendStore.derived.totalSats > walletStore.balances.confirmed) {
+      errors.push(`Insufficient balance: need ${sendStore.derived.totalSats} sats, have ${walletStore.balances.confirmed} sats`)
     }
     
-    // Check if estimated fee is reasonable compared to amount
-    const feePercentage = (sendStore.derived.estimatedFee / sendStore.derived.amountSats) * 100
-    if (feePercentage > 50) { // Fee is more than 50% of amount
-      errors.push(`Fee (${sendStore.derived.estimatedFee} sats) is ${feePercentage.toFixed(1)}% of transaction amount`)
+    // Check for reasonable fee rate
+    if (sendStore.inputs.feeRate > 1000) {
+      errors.push('Fee rate is unusually high (>1000 sat/vB)')
     }
     
     return {
@@ -358,51 +341,51 @@ export class SendTransactionService {
   }
   
   /**
-   * Get detailed transaction preparation status
+   * Get transaction summary for confirmation screen
+   * Enhanced with additional validation
    */
-  static getPreparationStatus(): {
-    isReady: boolean
-    walletState: 'loading' | 'ready' | 'error'
-    utxosState: 'loading' | 'ready' | 'error' | 'insufficient'
-    validationState: 'pending' | 'valid' | 'invalid'
-    details: {
-      utxoCount: number
-      totalValue: number
-      estimatedFee: number
-      feeRate: number
-    }
-  } {
-    const sendStore = useSendTransactionStore.getState()
-    const walletStore = useWalletStore.getState()
+  static getTransactionSummary() {
+    const summary = useSendTransactionStore.getState().getTransactionSummary()
     
-    const walletState = !walletStore.wallet ? 'loading' : 
-                       !walletStore.seedPhrase ? 'error' : 'ready'
-    
-    const utxosState = sendStore.meta.isLoadingUtxos ? 'loading' :
-                      sendStore.meta.error ? 'error' :
-                      sendStore.utxos.selectedUtxos.length === 0 ? 'insufficient' : 'ready'
-    
-    const validationState = sendStore.isValidTransaction() ? 'valid' :
-                           sendStore.getValidationErrors().length > 0 ? 'invalid' : 'pending'
+    // Add validation to summary
+    const validation = this.validateForExecution()
     
     return {
-      isReady : walletState === 'ready' && utxosState === 'ready' && validationState === 'valid',
-      walletState,
-      utxosState,
-      validationState,
-      details : {
-        utxoCount    : sendStore.utxos.selectedUtxos.length,
-        totalValue   : sendStore.utxos.totalUtxoValue,
-        estimatedFee : sendStore.derived.estimatedFee,
-        feeRate      : sendStore.inputs.feeRate
-      }
+      ...summary,
+      isValid          : validation.isValid,
+      validationErrors : validation.errors
     }
   }
   
   /**
-   * Reset the transaction store and clear any cached data
+   * Enhanced reset that clears all transaction state
+   * Perfect for useTransaction hook integration
    */
   static reset(): void {
-    useSendTransactionStore.getState().reset()
+    const sendStore = useSendTransactionStore.getState()
+    sendStore.reset()
+    console.log('🔄 [SendTransactionService] Transaction state reset')
+  }
+  
+  /**
+   * Prepare transaction for execution (used by useTransaction hook)
+   * Combines UTXO loading and validation in one step
+   */
+  static async prepareTransaction(): Promise<void> {
+    console.log('🚀 [SendTransactionService] Preparing transaction...')
+    
+    // Step 1: Load UTXOs and calculate fees
+    await this.loadUtxosAndCalculateFees()
+    
+    // Step 2: Validate everything is ready
+    const validation = this.validateForExecution()
+    if (!validation.isValid) {
+      throw this.mapErrorToSendBTCError(
+        new Error(`Transaction preparation failed: ${validation.errors.join(', ')}`),
+        'preparation'
+      )
+    }
+    
+    console.log('✅ [SendTransactionService] Transaction preparation complete')
   }
 } 

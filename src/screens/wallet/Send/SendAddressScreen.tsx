@@ -74,6 +74,8 @@ export default function SendAddressScreen() {
     setSelectedSpeed(hookSpeed as 'economy' | 'normal' | 'express' | 'custom')
   }
 
+
+
   // Modal handlers
   const handleSpeedInfoPress = () => {
     setShowSpeedInfoModal(true)
@@ -126,14 +128,11 @@ export default function SendAddressScreen() {
 
   // Map hook data to component expectations
   const mappedSelectedSpeed: SpeedTier = selectedSpeed === 'normal' ? 'standard' : selectedSpeed as SpeedTier
-  
-  // Create custom fee object that immediately reflects pending input
   const customFee: CustomFee = {
-    totalSats        : pendingInput ? parseFloat(pendingInput) || 0 : (customFeeRate > 0 ? customFeeRate * 200 : 0), // Show pending input immediately, or estimate from fee rate
+    totalSats        : pendingInput ? parseFloat(pendingInput) || 0 : 0,
     confirmationTime : 60,
-    feeRate          : pendingInput ? Math.max(1, Math.round((parseFloat(pendingInput) || 0) / 200)) : customFeeRate // Calculate fee rate from pending input
+    feeRate          : customFeeRate
   }
-  
   const speed = mappedSelectedSpeed
   
   // Input validation - check if pendingInput is a valid number > 0
