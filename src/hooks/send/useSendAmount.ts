@@ -128,30 +128,34 @@ export function useSendAmount(): UseSendAmountReturn {
     } finally {
       setIsLoadingBalance(false)
     }
-  }, [ wallet ])
+  }, [ wallet, sendTransactionStore ])
   
   // Update transaction store when amount changes
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       setIsCalculatingFee(true)
       
-      // Update amount in both stores
-      const amountStr = rawAmount || '0'
-      sendStore.setAmount(amountStr)
-      sendStore.setCurrency(currency)
-      sendTransactionStore.setAmount(amountStr)
-      sendTransactionStore.setCurrency(currency)
-      
-      // Recalculate fees if we have UTXOs
-      if (availableUtxos.length > 0 && wallet?.addresses.nativeSegwit[0]) {
-        sendTransactionStore.calculateFeeAndUtxos(availableUtxos, wallet.addresses.nativeSegwit[0])
+      try {
+        // Update amount in both stores
+        const amountStr = rawAmount || '0'
+        sendStore.setAmount(amountStr)
+        sendStore.setCurrency(currency)
+        sendTransactionStore.setAmount(amountStr, currency)
+        sendTransactionStore.setCurrency(currency)
+        
+        // Recalculate fees if we have UTXOs
+        if (availableUtxos.length > 0 && wallet?.addresses.nativeSegwit[0]) {
+          sendTransactionStore.calculateFeeAndUtxos(availableUtxos, wallet.addresses.nativeSegwit[0])
+        }
+      } catch (error) {
+        console.error('Error updating transaction data:', error)
+      } finally {
+        setIsCalculatingFee(false)
       }
-      
-      setIsCalculatingFee(false)
     }, 500) // Debounce
     
     return () => clearTimeout(timeoutId)
-  }, [ rawAmount, currency, availableUtxos, wallet ])
+  }, [ rawAmount, currency, availableUtxos, wallet, sendStore, sendTransactionStore ])
   
   // Validation
   const canProceedToNext = !isLoadingBalance && 
@@ -210,7 +214,7 @@ export function useSendAmount(): UseSendAmountReturn {
     })
     
     router.push('/send/confirm' as any)
-  }, [ canProceedToNext, getAmountInSats, currency, estimatedFee, totalRequired, router ])
+  }, [ canProceedToNext, getAmountInSats, currency, estimatedFee, totalRequired, router, sendStore, sendTransactionStore ])
   
   // Format displayed amount
   const getFormattedAmount = useCallback(() => {

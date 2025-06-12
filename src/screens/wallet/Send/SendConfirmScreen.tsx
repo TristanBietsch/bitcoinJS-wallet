@@ -86,7 +86,7 @@ export default function SendConfirmScreen() {
       isValid : true, 
       error   : null
     }
-  }, [ address, amount, currency, totalAmount, feeSats, feeRate, validation ])
+  }, [ address, amount, totalAmount, feeRate, validation ])
 
   const handleSendPress = useCallback(async () => {
     if (!validationResult.isValid) {

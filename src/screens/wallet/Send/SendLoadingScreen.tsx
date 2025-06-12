@@ -27,7 +27,7 @@ export default function SendLoadingScreen() {
     }
     
     executeTransaction()
-  }, []) // Only run once on mount
+  }, [ actions, state.error ]) // Add dependencies
 
   // Get subtitle based on current state
   const getSubtitle = () => {

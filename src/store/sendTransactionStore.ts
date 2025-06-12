@@ -368,7 +368,7 @@ export const useSendTransactionStore = create<SendTransactionState>()(
             }
           }))
 
-        } catch (error) {
+        } catch {
           set(state => ({
             derived : {
               ...state.derived,

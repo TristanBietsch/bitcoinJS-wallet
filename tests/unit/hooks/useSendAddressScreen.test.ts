@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-native'
-import { useSendAddressScreen } from '../../src/hooks/send/useSendAddressScreen'
+import { useSendAddressScreen } from '@/src/hooks/send/useSendAddressScreen'
 import { useSendStore } from '@/src/store/sendStore'
 import { validateBitcoinAddress } from '@/src/services/bitcoin/addressValidationService'
 import { getEnhancedFeeEstimates } from '@/src/services/bitcoin/feeEstimationService'
@@ -21,7 +21,7 @@ describe('useSendAddressScreen', () => {
     address              : '',
     speed                : 'normal',
     customFee            : null,
-    feeOptions           : [],
+    feeOptions           : [] as Array<{ feeRate: number; totalSats: number; confirmationTime: number }>,
     setAddress           : jest.fn(),
     setSpeed             : jest.fn(),
     setCustomFee         : jest.fn(),

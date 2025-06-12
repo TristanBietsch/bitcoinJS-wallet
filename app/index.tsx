@@ -5,8 +5,9 @@ import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator } from 'rea
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { useWalletStore } from '@/src/store/walletStore'
-import { Colors } from '@/src/constants/colors'
 import logger, { LogScope } from '@/src/utils/logger'
+import { Colors } from '@/src/constants/colors'
+
 
 export default function Home() {
   const [ isChecking, setIsChecking ] = useState(true)

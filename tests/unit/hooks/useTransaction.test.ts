@@ -1,5 +1,5 @@
-import { renderHook, act } from '@testing-library/react-hooks'
-import { useTransaction } from '../../src/hooks/send/useTransaction'
+import { renderHook, act } from '@testing-library/react-native'
+import { useTransaction } from '@/src/hooks/send/useTransaction'
 import { useSendStore } from '@/src/store/sendStore'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { SendTransactionService } from '@/src/services/sendTransactionService'
@@ -151,7 +151,7 @@ describe('useTransaction', () => {
       await act(async () => {
         try {
           await result.current.fees.loadUtxosAndCalculateFees()
-        } catch (e) {
+        } catch {
           // Expected to throw
         }
       })

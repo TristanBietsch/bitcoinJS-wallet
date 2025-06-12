@@ -69,7 +69,7 @@ interface LegacySendState {
 
 export const useSendStore = create<LegacySendState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Default legacy state
       address   : '',
       speed     : 'economy',
