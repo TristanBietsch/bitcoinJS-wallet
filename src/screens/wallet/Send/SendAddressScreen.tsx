@@ -89,6 +89,8 @@ export default function SendAddressScreen() {
     setShowCustomFeeModal(true)
     // Switch to custom speed when opening custom fee modal
     setSelectedSpeed('custom')
+    // Initialize pending input with current custom fee rate
+    setPendingInput(customFeeRate > 0 ? customFeeRate.toString() : '')
   }
   
   const handleCloseCustomFeeModal = () => {
@@ -105,18 +107,11 @@ export default function SendAddressScreen() {
   }
   
   const handleConfirmCustomFee = () => {
-    // Convert pendingInput to fee rate
+    // Convert pendingInput to fee rate (user enters sat/vB directly)
     const inputValue = parseFloat(pendingInput)
     if (inputValue && inputValue > 0) {
-      // Create new CustomFee object with the input value as totalSats
-      const newCustomFee: CustomFee = {
-        totalSats        : inputValue,
-        confirmationTime : 60, // Default estimate for custom fees
-        feeRate          : Math.max(1, Math.round(inputValue / 200)) // Estimate fee rate based on average tx size
-      }
-      
-      // Update the fee rate in the hook
-      setCustomFeeRate(newCustomFee.feeRate)
+      // Update the fee rate in the hook (input is already in sat/vB)
+      setCustomFeeRate(inputValue)
       
       // Close the modal and clear pending input
       setShowCustomFeeModal(false)
@@ -128,8 +123,12 @@ export default function SendAddressScreen() {
 
   // Map hook data to component expectations
   const mappedSelectedSpeed: SpeedTier = selectedSpeed === 'normal' ? 'standard' : selectedSpeed as SpeedTier
+  
+  // Create customFee object - use pendingInput when modal is open, otherwise use stored rate
   const customFee: CustomFee = {
-    totalSats        : pendingInput ? parseFloat(pendingInput) || 0 : 0,
+    totalSats : showCustomFeeModal 
+      ? (pendingInput ? parseFloat(pendingInput) || 0 : 0)
+      : customFeeRate, // Display the actual fee rate as sat/vB when modal is closed
     confirmationTime : 60,
     feeRate          : customFeeRate
   }
