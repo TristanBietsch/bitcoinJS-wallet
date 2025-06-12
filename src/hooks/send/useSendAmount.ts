@@ -4,7 +4,6 @@ import { useSendStore } from '@/src/store/sendStore'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { useWalletStore } from '@/src/store/walletStore'
 import { CurrencyType } from '@/src/types/domain/finance'
-import { validateBitcoinInput } from '@/src/utils/formatting/currencyUtils'
 import { formatBitcoinAmount } from '@/src/utils/formatting/formatCurrencyValue'
 import { 
   fetchWalletUtxos, 
@@ -99,6 +98,22 @@ export function useSendAmount(): UseSendAmountReturn {
     try {
       setIsLoadingBalance(true)
       
+      // First, try to get balance from wallet store if available
+      const walletStore = useWalletStore.getState()
+      if (walletStore.balances.confirmed > 0) {
+        setWalletBalance({
+          confirmed   : walletStore.balances.confirmed,
+          unconfirmed : walletStore.balances.unconfirmed,
+          total       : walletStore.balances.confirmed + walletStore.balances.unconfirmed
+        })
+        setIsLoadingBalance(false)
+        console.log('Loaded balance from wallet store:', walletStore.balances)
+        return
+      }
+      
+      // If wallet store doesn't have balance, fetch it
+      console.log('Fetching fresh wallet data...')
+      
       // Get mnemonic for UTXO operations
       const mnemonic = await seedPhraseService.retrieveSeedPhrase()
       if (!mnemonic) {
@@ -112,6 +127,7 @@ export function useSendAmount(): UseSendAmountReturn {
       
       // Calculate balance
       const balance = calculateBalanceFromEnhancedUtxos(enhancedUtxos)
+      console.log('Calculated balance from UTXOs:', balance)
       
       setWalletBalance(balance)
       setAvailableUtxos(normalizedUtxos)
@@ -125,6 +141,8 @@ export function useSendAmount(): UseSendAmountReturn {
       
     } catch (error) {
       console.error('Error loading wallet data:', error)
+      // Set a default balance to prevent loading state from being stuck
+      setWalletBalance({ confirmed: 0, unconfirmed: 0, total: 0 })
     } finally {
       setIsLoadingBalance(false)
     }
@@ -136,23 +154,23 @@ export function useSendAmount(): UseSendAmountReturn {
       setIsCalculatingFee(true)
       
       try {
-      // Update amount in both stores
-      const amountStr = rawAmount || '0'
-      sendStore.setAmount(amountStr)
-      sendStore.setCurrency(currency)
+        // Update amount in both stores
+        const amountStr = rawAmount || '0'
+        sendStore.setAmount(amountStr)
+        sendStore.setCurrency(currency)
         sendTransactionStore.setAmount(amountStr, currency)
-      sendTransactionStore.setCurrency(currency)
-      
-      // Recalculate fees if we have UTXOs
-      if (availableUtxos.length > 0 && wallet?.addresses.nativeSegwit[0]) {
-        sendTransactionStore.calculateFeeAndUtxos(availableUtxos, wallet.addresses.nativeSegwit[0])
-      }
+        sendTransactionStore.setCurrency(currency)
+        
+        // Recalculate fees if we have UTXOs
+        if (availableUtxos.length > 0 && wallet?.addresses.nativeSegwit[0]) {
+          sendTransactionStore.calculateFeeAndUtxos(availableUtxos, wallet.addresses.nativeSegwit[0])
+        }
       } catch (error) {
         console.error('Error updating transaction data:', error)
       } finally {
-      setIsCalculatingFee(false)
+        setIsCalculatingFee(false)
       }
-    }, 500) // Debounce
+    }, 150) // Reduced from 500ms to 150ms for better responsiveness
     
     return () => clearTimeout(timeoutId)
   }, [ rawAmount, currency, availableUtxos, wallet, sendStore, sendTransactionStore ])
@@ -164,28 +182,34 @@ export function useSendAmount(): UseSendAmountReturn {
                           sendTransactionStore.isValidTransaction() &&
                           totalRequired <= walletBalance.confirmed
   
-  // Handlers
+  // Handlers - Properly memoized to prevent unnecessary re-renders
   const handleCurrencyChange = useCallback((newCurrency: string) => {
     setLocalCurrency(newCurrency as CurrencyType)
   }, [])
   
   const handleNumberPress = useCallback((num: string) => {
-    const isValid = validateBitcoinInput(rawAmount, num, currency)
-    if (!isValid) return
-    
     setRawAmount(prev => {
-      const newAmount = prev === '0' && num !== '.' ? num :
-        num === '.' && prev.includes('.') ? prev :
-        prev + num
+      // Quick validation without expensive operations
+      if (num === '.' && prev.includes('.')) return prev
+      if (prev === '0' && num !== '.' && num !== '0') return num
+      
+      // Basic validation for currency type
+      const newAmount = prev + num
+      if (currency === 'BTC') {
+        // Allow up to 8 decimal places for BTC
+        const parts = newAmount.split('.')
+        if (parts[1] && parts[1].length > 8) return prev
+      } else {
+        // Don't allow decimals for SATS
+        if (num === '.') return prev
+      }
+      
       return newAmount
     })
-  }, [ rawAmount, currency ])
+  }, [ currency ])
   
   const handleBackspace = useCallback(() => {
-    setRawAmount(prev => {
-      const newAmount = prev.length <= 1 ? '0' : prev.slice(0, -1)
-      return newAmount
-    })
+    setRawAmount(prev => prev.length <= 1 ? '0' : prev.slice(0, -1))
   }, [])
   
   const handleBackPress = useCallback(() => {

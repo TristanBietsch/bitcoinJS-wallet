@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { Stack } from 'expo-router'
 
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
@@ -31,13 +31,27 @@ export default function SendAmountScreen() {
     handleNumberPress,
     handleBackspace,
     handleBackPress,
-    handleContinue
+    handleContinue,
+    
+    // Actions
+    refreshBalance
   } = useSendAmount()
 
   // Format satoshis for display
   const formatSats = (sats: number): string => {
+    if (sats === 0) return '0 sats'
     return sats.toLocaleString() + ' sats'
   }
+
+  // Debug logging for balance issues
+  React.useEffect(() => {
+    console.log('SendAmountScreen - Balance state:', {
+      isLoadingBalance,
+      confirmedBalance   : walletBalance.confirmed,
+      unconfirmedBalance : walletBalance.unconfirmed,
+      totalBalance       : walletBalance.total
+    })
+  }, [ isLoadingBalance, walletBalance ])
 
   return (
     <SafeAreaContainer>
@@ -76,6 +90,11 @@ export default function SendAmountScreen() {
                 <ThemedText style={styles.unconfirmedBalance}>
                   +{formatSats(walletBalance.unconfirmed)} pending
                 </ThemedText>
+              )}
+              {walletBalance.confirmed === 0 && walletBalance.unconfirmed === 0 && (
+                <TouchableOpacity onPress={refreshBalance} style={styles.refreshButton}>
+                  <ThemedText style={styles.refreshText}>Tap to refresh</ThemedText>
+                </TouchableOpacity>
               )}
             </View>
           )}
@@ -146,5 +165,12 @@ const styles = StyleSheet.create({
     fontSize   : 16,
     color      : '#666',
     marginLeft : 8,
+  },
+  refreshButton : {
+    padding : 8,
+  },
+  refreshText : {
+    fontSize : 14,
+    color    : '#666',
   },
 }) 

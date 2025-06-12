@@ -251,7 +251,6 @@ export class SendTransactionService {
     
     // Validate transaction is ready
     if (!sendStore.isValidTransaction()) {
-      const errors = sendStore.getValidationErrors()
       throw createTransactionError('TRANSACTION_BUILD_FAILED', 'build')
     }
     
