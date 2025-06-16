@@ -17,6 +17,54 @@ import {
 } from '../services/bitcoin/blockchain'
 import type { EsploraTransaction } from '../types/blockchain.types'
 
+// Global reference to query client for transaction cache invalidation
+let globalQueryClient: any = null
+
+/**
+ * Set the query client for transaction cache invalidation
+ * This will be called from the app root layout
+ */
+export function setQueryClientForWalletStore(queryClient: any) {
+  globalQueryClient = queryClient
+}
+
+/**
+ * Invalidate transaction cache after wallet sync
+ */
+function invalidateTransactionCache(walletId?: string) {
+  if (!globalQueryClient) {
+    console.warn('[WalletStore] QueryClient not available for transaction cache invalidation')
+    return
+  }
+  
+  console.log('🔄 [WalletStore] Invalidating transaction cache after wallet sync')
+  
+  try {
+    // Import query keys dynamically to avoid circular dependency
+    import('../hooks/transaction/useTransactionHistory').then(module => {
+      const { TRANSACTION_QUERY_KEYS } = module
+      
+      // Invalidate all transaction-related queries
+      if (walletId) {
+        globalQueryClient.invalidateQueries({
+          queryKey : TRANSACTION_QUERY_KEYS.history(walletId)
+        })
+      }
+      
+      // Invalidate all transaction queries for good measure
+      globalQueryClient.invalidateQueries({
+        queryKey : TRANSACTION_QUERY_KEYS.list()
+      })
+      
+      console.log('✅ [WalletStore] Transaction cache invalidated')
+    }).catch(error => {
+      console.warn('[WalletStore] Failed to invalidate transaction cache:', error)
+    })
+  } catch (error) {
+    console.warn('[WalletStore] Error during transaction cache invalidation:', error)
+  }
+}
+
 // Define the wallet store state type
 interface WalletState {
   // Wallet data
@@ -43,33 +91,18 @@ interface WalletState {
   clearWallet: () => Promise<void>
 }
 
-// Create basic storage for data (temporary implementation)
-// WARNING: No encryption - for development use only
+// Custom AsyncStorage wrapper to handle Zustand's persistence
 const simpleStorage = {
-  getItem : async (key: string): Promise<string | null> => {
-    try {
-      return await AsyncStorage.getItem(`wallet_${key}`)
-    } catch (error) {
-      logger.error(LogScope.STORAGE, 'Error retrieving from storage', error)
-      return null
-    }
+  setItem : (name: string, value: string) => {
+    return AsyncStorage.setItem(name, value)
   },
-  
-  setItem : async (key: string, value: string): Promise<void> => {
-    try {
-      await AsyncStorage.setItem(`wallet_${key}`, value)
-    } catch (error) {
-      logger.error(LogScope.STORAGE, 'Error saving to storage', error)
-    }
+  getItem : (name: string) => {
+    const value = AsyncStorage.getItem(name)
+    return value ?? null
   },
-  
-  removeItem : async (key: string): Promise<void> => {
-    try {
-      await AsyncStorage.removeItem(`wallet_${key}`)
-    } catch (error) {
-      logger.error(LogScope.STORAGE, 'Error removing from storage', error)
-    }
-  }
+  removeItem : (name: string) => {
+    return AsyncStorage.removeItem(name)
+  },
 }
 
 // Create the wallet store with persistence
@@ -181,7 +214,7 @@ export const useWalletStore = create<WalletState>()(
         }
       },
       
-      // Refresh wallet data (balances, transactions, UTXOs)
+      // Refresh wallet data (balances, transactions, UTXOs) with transaction cache integration
       refreshWalletData : async (silent = false, addressToRefresh?: string) => {
         const { wallet } = get()
         
@@ -289,6 +322,11 @@ export const useWalletStore = create<WalletState>()(
           }))
           
           logger.walletSuccess(`Data refreshed for ${primaryAddress.slice(0, 8)}...${primaryAddress.slice(-4)}`)
+          
+          // Invalidate transaction cache after successful wallet sync
+          if (wallet?.id) {
+            invalidateTransactionCache(wallet.id)
+          }
           
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error refreshing wallet'

@@ -17,6 +17,8 @@ import { useWalletStore } from '@/src/store/walletStore'
 import { isOnboardingComplete } from '@/src/utils/storage'
 import logger, { LogScope } from '@/src/utils/logger'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setQueryClientForTransactionService } from '@/src/services/sendTransactionService'
+import { setQueryClientForWalletStore } from '@/src/store/walletStore'
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [
@@ -42,6 +44,10 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+// Set up transaction cache integration
+setQueryClientForTransactionService(queryClient)
+setQueryClientForWalletStore(queryClient)
 
 export default function RootLayout() {
   const pathname = usePathname()

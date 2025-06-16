@@ -4,6 +4,7 @@
  * Fetches and processes transaction history from blockchain APIs
  * Transforms raw blockchain data to UI-friendly format using sats as currency
  * Follows existing Bitcoin service patterns for consistency
+ * Enhanced with pagination support for performance optimization
  */
 
 import { getTxs, getTransactionDetails } from './blockchain'
@@ -18,68 +19,65 @@ function determineTransactionType(
   transaction: EsploraTransaction, 
   walletAddresses: string[]
 ): 'send' | 'receive' {
-  // Check if any inputs belong to our wallet (we're sending)
-  const hasOurInputs = transaction.vin.some(input => 
+  const hasInputFromWallet = transaction.vin.some(input => 
     input.prevout?.scriptpubkey_address && 
     walletAddresses.includes(input.prevout.scriptpubkey_address)
   )
   
-  // Check if any outputs belong to our wallet (we're receiving)
-  const hasOurOutputs = transaction.vout.some(output => 
+  const hasOutputToWallet = transaction.vout.some(output => 
     output.scriptpubkey_address && 
     walletAddresses.includes(output.scriptpubkey_address)
   )
   
-  // If we have inputs, it's a send transaction
-  if (hasOurInputs) {
+  // If we're sending from our wallet to somewhere else, it's a send
+  if (hasInputFromWallet && !hasOutputToWallet) {
     return 'send'
   }
   
-  // If we only have outputs, it's a receive transaction
-  if (hasOurOutputs) {
+  // If we're receiving to our wallet (regardless of change outputs), it's a receive
+  if (hasOutputToWallet) {
     return 'receive'
   }
   
-  // Fallback (shouldn't happen for wallet transactions)
+  // Default fallback (shouldn't happen with proper wallet transactions)
   return 'receive'
 }
 
 /**
- * Calculate the net amount for a transaction from the wallet's perspective
+ * Calculates the net amount and recipient for a transaction
  */
 function calculateNetAmount(
   transaction: EsploraTransaction,
   walletAddresses: string[]
 ): { amount: number; recipientAddress?: string } {
-  let totalInputs = 0
-  let totalOutputs = 0
+  let netAmount = 0
   let recipientAddress: string | undefined
   
-  // Calculate total inputs from our wallet
+  // Calculate amount from inputs (what we're spending)
   transaction.vin.forEach(input => {
     if (input.prevout?.scriptpubkey_address && 
         walletAddresses.includes(input.prevout.scriptpubkey_address)) {
-      totalInputs += input.prevout.value
+      netAmount -= input.prevout.value
     }
   })
   
-  // Calculate total outputs to our wallet and find recipient
+  // Calculate amount from outputs (what we're receiving or change)
   transaction.vout.forEach(output => {
     if (output.scriptpubkey_address) {
       if (walletAddresses.includes(output.scriptpubkey_address)) {
-        totalOutputs += output.value
-      } else if (!recipientAddress) {
-        // First non-wallet address is likely the recipient
-        recipientAddress = output.scriptpubkey_address
+        // This is our address (change or receive)
+        netAmount += output.value
+      } else {
+        // This is an external address (recipient for sends)
+        if (!recipientAddress && netAmount < 0) {
+          recipientAddress = output.scriptpubkey_address
+        }
       }
     }
   })
   
-  // Net amount is what we received minus what we sent
-  const netAmount = totalOutputs - totalInputs
-  
   return {
-    amount : Math.abs(netAmount),
+    amount           : Math.abs(netAmount),
     recipientAddress
   }
 }
@@ -96,11 +94,11 @@ function transformTransaction(
   
   // Create the base transaction
   const transaction: Transaction = {
-    id       : esploraTransaction.txid,
+    id            : esploraTransaction.txid,
     type,
     amount, // Already in sats
-    currency : 'sats',
-    date     : esploraTransaction.status.block_time 
+    currency      : 'sats',
+    date          : esploraTransaction.status.block_time 
       ? new Date(esploraTransaction.status.block_time * 1000) 
       : new Date(),
     status        : esploraTransaction.status.confirmed ? 'completed' : 'pending',
@@ -115,11 +113,12 @@ function transformTransaction(
 }
 
 /**
- * Fetches transaction history for a wallet
+ * Fetches transaction history for a wallet with pagination support
  */
 export async function fetchTransactionHistory(
   wallet: BitcoinWallet,
-  limit: number = 50
+  limit: number = 50,
+  offset: number = 0
 ): Promise<Transaction[]> {
   try {
     // Get all wallet addresses
@@ -129,7 +128,7 @@ export async function fetchTransactionHistory(
       ...wallet.addresses.nativeSegwit
     ]
     
-    console.log(`🔍 [TransactionHistoryService] Fetching transactions for ${allAddresses.length} addresses...`)
+    console.log(`🔍 [TransactionHistoryService] Fetching transactions for ${allAddresses.length} addresses (limit: ${limit}, offset: ${offset})...`)
     
     // Fetch transactions for all addresses in parallel
     const transactionPromises = allAddresses.map(async (address) => {
@@ -154,12 +153,13 @@ export async function fetchTransactionHistory(
       return timeB - timeA // Most recent first
     })
     
-    // Transform to UI format
-    const uiTransactions = uniqueTransactions
-      .slice(0, limit)
-      .map(tx => transformTransaction(tx, allAddresses))
+    // Apply pagination
+    const paginatedTransactions = uniqueTransactions.slice(offset, offset + limit)
     
-    console.log(`✅ [TransactionHistoryService] Found ${uiTransactions.length} transactions`)
+    // Transform to UI format
+    const uiTransactions = paginatedTransactions.map(tx => transformTransaction(tx, allAddresses))
+    
+    console.log(`✅ [TransactionHistoryService] Found ${uiTransactions.length} transactions (page ${Math.floor(offset / limit) + 1})`)
     
     return uiTransactions
     
@@ -170,18 +170,23 @@ export async function fetchTransactionHistory(
 }
 
 /**
- * Fetches detailed information for a specific transaction
+ * Fetches details for a specific transaction
  */
 export async function fetchTransactionDetails(
   txid: string,
   wallet: BitcoinWallet
 ): Promise<Transaction | null> {
   try {
-    console.log(`🔍 [TransactionHistoryService] Fetching details for transaction ${txid}`)
+    console.log(`🔍 [TransactionHistoryService] Fetching details for transaction: ${txid}`)
     
     const esploraTransaction = await getTransactionDetails(txid)
     
-    // Get all wallet addresses for context
+    if (!esploraTransaction) {
+      console.warn(`Transaction ${txid} not found`)
+      return null
+    }
+    
+    // Get all wallet addresses for transformation
     const allAddresses = [
       ...wallet.addresses.legacy,
       ...wallet.addresses.segwit,
@@ -190,21 +195,29 @@ export async function fetchTransactionDetails(
     
     const transaction = transformTransaction(esploraTransaction, allAddresses)
     
-    console.log(`✅ [TransactionHistoryService] Transaction details fetched for ${txid}`)
+    console.log(`✅ [TransactionHistoryService] Fetched details for transaction: ${txid}`)
     
     return transaction
     
   } catch (error) {
     console.error(`Failed to fetch transaction details for ${txid}:`, error)
-    return null
+    throw new Error(`Failed to fetch transaction details: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
 /**
- * Gets the transaction status for display
+ * Utility function to format transaction amount for display
  */
-export function getTransactionStatusText(transaction: Transaction): string {
-  switch (transaction.status) {
+export function formatTransactionAmount(amount: number, includeSign: boolean = false): string {
+  const formattedAmount = amount.toLocaleString()
+  return includeSign ? `+${formattedAmount}` : formattedAmount
+}
+
+/**
+ * Utility function to get transaction status text
+ */
+export function getTransactionStatusText(status: Transaction['status']): string {
+  switch (status) {
     case 'completed':
       return 'Confirmed'
     case 'pending':
@@ -217,22 +230,51 @@ export function getTransactionStatusText(transaction: Transaction): string {
 }
 
 /**
- * Formats transaction amount for display
- */
-export function formatTransactionAmount(transaction: Transaction): string {
-  const sign = transaction.type === 'send' ? '-' : '+'
-  return `${sign}${transaction.amount.toLocaleString()} sats`
-}
-
-/**
- * Gets the appropriate address for display (recipient for sends, sender for receives)
+ * Utility function to get display address for transaction
  */
 export function getDisplayAddress(transaction: Transaction): string {
   if (transaction.type === 'send' && transaction.recipient) {
     return transaction.recipient
   }
   
-  // For receives, we don't typically show the sender address
-  // Return a placeholder or the transaction ID
-  return `Transaction ${transaction.txid?.slice(0, 8) || transaction.id}...`
+  // For receive transactions or when recipient is not available
+  return transaction.txid?.slice(0, 12) || transaction.id.slice(0, 12) || 'Unknown'
+}
+
+/**
+ * Get transaction count for a wallet (for pagination calculations)
+ */
+export async function getTransactionCount(wallet: BitcoinWallet): Promise<number> {
+  try {
+    const allAddresses = [
+      ...wallet.addresses.legacy,
+      ...wallet.addresses.segwit,
+      ...wallet.addresses.nativeSegwit
+    ]
+    
+    // Fetch all transactions to get count (this could be optimized with API support)
+    const transactionPromises = allAddresses.map(async (address) => {
+      try {
+        const transactions = await getTxs(address)
+        return transactions
+      } catch (error) {
+        console.error(`Error fetching transaction count for address ${address}:`, error)
+        return []
+      }
+    })
+    
+    const transactionArrays = await Promise.all(transactionPromises)
+    const allTransactions = transactionArrays.flat()
+    
+    // Remove duplicates by txid
+    const uniqueTransactions = Array.from(
+      new Map(allTransactions.map(tx => [ tx.txid, tx ])).values()
+    )
+    
+    return uniqueTransactions.length
+    
+  } catch (error) {
+    console.error('Failed to get transaction count:', error)
+    return 0
+  }
 } 
