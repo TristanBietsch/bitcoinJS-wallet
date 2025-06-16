@@ -14,6 +14,8 @@ import type { BitcoinWallet } from './wallet/bitcoinWalletService'
 
 /**
  * Determines if a transaction is a send or receive for the wallet
+ * Fixed logic: if we have inputs from our wallet, it's a send (we're spending)
+ * If we only have outputs to our wallet, it's a receive
  */
 function determineTransactionType(
   transaction: EsploraTransaction, 
@@ -29,12 +31,13 @@ function determineTransactionType(
     walletAddresses.includes(output.scriptpubkey_address)
   )
   
-  // If we're sending from our wallet to somewhere else, it's a send
-  if (hasInputFromWallet && !hasOutputToWallet) {
+  // If we have any inputs from our wallet, it means we're spending (sending)
+  // This is true even if we have change outputs back to our wallet
+  if (hasInputFromWallet) {
     return 'send'
   }
   
-  // If we're receiving to our wallet (regardless of change outputs), it's a receive
+  // If we only have outputs to our wallet (no inputs from wallet), it's a receive
   if (hasOutputToWallet) {
     return 'receive'
   }
@@ -45,40 +48,55 @@ function determineTransactionType(
 
 /**
  * Calculates the net amount and recipient for a transaction
+ * For sends: shows amount sent to external addresses (excluding change)
+ * For receives: shows amount received to our addresses
  */
 function calculateNetAmount(
   transaction: EsploraTransaction,
   walletAddresses: string[]
 ): { amount: number; recipientAddress?: string } {
-  let netAmount = 0
-  let recipientAddress: string | undefined
+  const isWalletTransaction = transaction.vin.some(input => 
+    input.prevout?.scriptpubkey_address && 
+    walletAddresses.includes(input.prevout.scriptpubkey_address)
+  )
   
-  // Calculate amount from inputs (what we're spending)
-  transaction.vin.forEach(input => {
-    if (input.prevout?.scriptpubkey_address && 
-        walletAddresses.includes(input.prevout.scriptpubkey_address)) {
-      netAmount -= input.prevout.value
-    }
-  })
-  
-  // Calculate amount from outputs (what we're receiving or change)
-  transaction.vout.forEach(output => {
-    if (output.scriptpubkey_address) {
-      if (walletAddresses.includes(output.scriptpubkey_address)) {
-        // This is our address (change or receive)
-        netAmount += output.value
-      } else {
-        // This is an external address (recipient for sends)
-        if (!recipientAddress && netAmount < 0) {
-          recipientAddress = output.scriptpubkey_address
+  if (isWalletTransaction) {
+    // This is a send transaction - calculate amount sent to external addresses
+    let amountSentToExternals = 0
+    let recipientAddress: string | undefined
+    
+    transaction.vout.forEach(output => {
+      if (output.scriptpubkey_address) {
+        if (!walletAddresses.includes(output.scriptpubkey_address)) {
+          // This output goes to an external address (not our wallet)
+          amountSentToExternals += output.value
+          if (!recipientAddress) {
+            recipientAddress = output.scriptpubkey_address
+          }
         }
+        // Skip outputs to our own addresses (change outputs)
       }
+    })
+    
+    return {
+      amount: amountSentToExternals,
+      recipientAddress
     }
-  })
-  
-  return {
-    amount           : Math.abs(netAmount),
-    recipientAddress
+  } else {
+    // This is a receive transaction - calculate amount received to our addresses
+    let amountReceived = 0
+    
+    transaction.vout.forEach(output => {
+      if (output.scriptpubkey_address && 
+          walletAddresses.includes(output.scriptpubkey_address)) {
+        amountReceived += output.value
+      }
+    })
+    
+    return {
+      amount: amountReceived,
+      recipientAddress: undefined
+    }
   }
 }
 
