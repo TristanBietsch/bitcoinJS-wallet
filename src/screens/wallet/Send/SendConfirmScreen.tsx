@@ -115,43 +115,18 @@ export default function SendConfirmScreen() {
 
     setIsValidating(true)
     
-    try {
-      console.log('Executing transaction:', {
-        address     : recipientAddress,
-        amount      : amountSats,
-        currency,
-        feeSats     : estimatedFee,
-        feeRate,
-        totalAmount : totalSats
-      })
-      
-      // Execute transaction using the service
-      const result = await SendTransactionService.executeTransaction()
-      
-      if (result?.txid) {
-        // Transaction successful - navigate to success screen
-        router.push('/send/success' as any)
-      } else {
-        // Transaction failed but no error thrown
-        Alert.alert(
-          'Transaction Failed',
-          'Failed to send transaction. Please try again.',
-          [ { text: 'OK' } ]
-        )
-      }
-      
-    } catch (error) {
-      console.error('Transaction execution failed:', error)
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      Alert.alert(
-        'Transaction Error',
-        errorMessage,
-        [ { text: 'OK' } ]
-      )
-    } finally {
-      setIsValidating(false)
-    }
+    console.log('Navigating to loading screen for transaction execution:', {
+      address     : recipientAddress,
+      amount      : amountSats,
+      currency,
+      feeSats     : estimatedFee,
+      feeRate,
+      totalAmount : totalSats
+    })
+    
+    // Navigate to loading screen - it will handle transaction execution
+    router.push('/send/loading' as any)
+    setIsValidating(false)
   }, [ validateTransaction, isValidating, recipientAddress, amountSats, currency, estimatedFee, feeRate, totalSats, router ])
 
   // Show loading state while preparing transaction
