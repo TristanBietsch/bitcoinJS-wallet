@@ -33,7 +33,7 @@ export default function SendAmountScreen() {
   
   // Local loading state for amount validation
   const [ isValidating, setIsValidating ] = useState(false)
-  
+
   // Format satoshis for display
   const formatSats = (sats: number): string => {
     return sats.toLocaleString() + ' sats'

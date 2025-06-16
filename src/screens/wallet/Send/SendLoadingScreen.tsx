@@ -23,12 +23,12 @@ export default function SendLoadingScreen() {
       
       try {
         console.log('🚀 [SendLoadingScreen] Starting transaction execution...')
-        const result = await actions.executeTransaction()
-        
-        if (result) {
+      const result = await actions.executeTransaction()
+      
+      if (result) {
           console.log('✅ [SendLoadingScreen] Transaction successful:', result.txid)
-          // Success - navigation is handled by the hook
-          actions.navigateToSuccess(result.txid)
+        // Success - navigation is handled by the hook
+        actions.navigateToSuccess(result.txid)
         } else {
           console.log('❌ [SendLoadingScreen] Transaction failed without error')
           // Check if there's an error in state
@@ -49,7 +49,7 @@ export default function SendLoadingScreen() {
     
     // Small delay to ensure component is fully mounted
     const timer = setTimeout(() => {
-      executeTransaction()
+    executeTransaction()
     }, 100)
     
     return () => {

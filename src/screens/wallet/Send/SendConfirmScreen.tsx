@@ -1,22 +1,24 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { View, Alert, ActivityIndicator } from 'react-native'
 import { Stack } from 'expo-router'
 import { BackButton } from '@/src/components/ui/Navigation/BackButton'
 import SafeAreaContainer from '@/src/components/layout/SafeAreaContainer'
 import TransactionSummaryFooter from '@/src/components/features/Send/Confirmation/TransactionSummaryFooter'
 import { useSendNavigation } from '@/src/components/ui/Navigation/sendNavigation'
-import { useTransaction } from '@/src/hooks/send/useTransaction'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
-import { transactionStyles } from '@/src/constants/transactionStyles'
 import { useWalletStore } from '@/src/store/walletStore'
+import { SendTransactionService } from '@/src/services/sendTransactionService'
+import { transactionStyles } from '@/src/constants/transactionStyles'
 import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
 import { ThemedText } from '@/src/components/ui/Text'
+import { useRouter } from 'expo-router'
 
 /**
  * Screen for confirming transaction details before sending
- * Uses the new unified transaction architecture
+ * Uses the unified transaction store pattern like SendAmountScreen
  */
 export default function SendConfirmScreen() {
+  const router = useRouter()
   const { navigateBack } = useSendNavigation()
   const [ isValidating, setIsValidating ] = useState(false)
   const [ isLoadingTransaction, setIsLoadingTransaction ] = useState(true)
@@ -24,9 +26,18 @@ export default function SendConfirmScreen() {
   
   useAutoWalletSync()
   
-  // Get transaction data from stores and hooks
-  const transactionStore = useSendTransactionStore()
-  const { validation, actions } = useTransaction()
+  // Use only the transaction store like SendAmountScreen does
+  const {
+    inputs: { recipientAddress, currency, feeRate },
+    derived: { amountSats, estimatedFee, totalSats, addressError, amountError, feeError },
+    meta: { isLoadingUtxos, isCalculatingFee, error: storeError },
+    utxos: { selectedUtxos },
+    isValidTransaction,
+    getValidationErrors
+  } = useSendTransactionStore()
+  
+  // Get wallet data
+  const { wallet, balances } = useWalletStore()
   
   // Load transaction data when screen loads
   useEffect(() => {
@@ -35,8 +46,7 @@ export default function SendConfirmScreen() {
         setIsLoadingTransaction(true)
         setLoadingError(null)
         
-        // Load UTXOs and calculate fees directly from service
-        const { SendTransactionService } = await import('@/src/services/sendTransactionService')
+        // Load UTXOs and calculate fees using the service
         await SendTransactionService.loadUtxosAndCalculateFees()
         
         setIsLoadingTransaction(false)
@@ -49,74 +59,51 @@ export default function SendConfirmScreen() {
     
     loadTransactionData()
   }, []) // Empty dependency array - run only once
-
-  // Get transaction parameters
-  const address = transactionStore.inputs.recipientAddress
-  const amount = transactionStore.derived.amountSats
-  const currency = transactionStore.inputs.currency
-  const feeSats = transactionStore.derived.estimatedFee
-  const feeRate = transactionStore.inputs.feeRate
-  const totalAmount = transactionStore.derived.totalSats
-
-  const validationResult = useMemo(() => {
-    // Get wallet and balances directly to avoid reactive updates
-    const { wallet, balances } = useWalletStore.getState()
-    
-    if (!address || !amount || !wallet) {
+  
+  // Validation function
+  const validateTransaction = useCallback(() => {
+    if (!recipientAddress || !amountSats || !wallet) {
       return { isValid: false, error: 'Missing required transaction data' }
     }
 
-    // Use the validation utility from useTransaction
-    const addressValidation = validation.validateAddress(address)
-    if (!addressValidation.isValid) {
-      return { 
-        isValid : false, 
-        error   : addressValidation.error || 'Invalid recipient address'
-      }
+    if (addressError) {
+      return { isValid: false, error: addressError }
     }
 
-    const amountValidation = validation.validateAmount(amount)
-    if (!amountValidation.isValid) {
-      return { 
-        isValid : false, 
-        error   : amountValidation.error || 'Invalid amount'
-      }
+    if (amountError) {
+      return { isValid: false, error: amountError }
     }
 
-    const feeValidation = validation.validateFeeRate(feeRate)
-    if (!feeValidation.isValid) {
-      return { 
-        isValid : false, 
-        error   : feeValidation.error || 'Invalid fee rate'
-      }
+    if (feeError) {
+      return { isValid: false, error: feeError }
     }
       
-    if (totalAmount > balances.confirmed) {
+    if (totalSats > balances.confirmed) {
       return { 
         isValid : false, 
-        error   : `Insufficient balance. Need ${totalAmount} sats, have ${balances.confirmed} sats`
+        error   : `Insufficient balance. Need ${totalSats} sats, have ${balances.confirmed} sats`
       }
     }
 
-    // Check if transaction is ready
-    if (!validation.isTransactionReady()) {
-      return {
-        isValid : false,
-        error   : 'Transaction is not ready. Please check all inputs.'
-      }
+    if (selectedUtxos.length === 0) {
+      return { isValid: false, error: 'No UTXOs selected for transaction' }
     }
 
-    return { 
-      isValid : true, 
-      error   : null
+    if (!isValidTransaction()) {
+      const errors = getValidationErrors()
+      return { isValid: false, error: errors.join(', ') }
     }
-  }, [ address, amount, totalAmount, feeRate, validation ])
 
+    return { isValid: true, error: null }
+  }, [ recipientAddress, amountSats, wallet, addressError, amountError, feeError, totalSats, balances.confirmed, selectedUtxos.length, isValidTransaction, getValidationErrors ])
+
+  // Handle transaction execution
   const handleSendPress = useCallback(async () => {
-    if (!validationResult.isValid) {
+    const validation = validateTransaction()
+    if (!validation.isValid) {
       Alert.alert(
         'Transaction Error',
-        validationResult.error || 'Unknown validation error',
+        validation.error || 'Unknown validation error',
         [ { text: 'OK' } ]
       )
       return
@@ -130,20 +117,20 @@ export default function SendConfirmScreen() {
     
     try {
       console.log('Executing transaction:', {
-        address,
-        amount,
+        address     : recipientAddress,
+        amount      : amountSats,
         currency,
-        feeSats,
+        feeSats     : estimatedFee,
         feeRate,
-        totalAmount
+        totalAmount : totalSats
       })
       
-      // Execute transaction using the unified hook
-      const result = await actions.executeTransaction()
+      // Execute transaction using the service
+      const result = await SendTransactionService.executeTransaction()
       
-      if (result) {
-        // Transaction successful - navigate to success
-        actions.navigateToSuccess(result.txid)
+      if (result?.txid) {
+        // Transaction successful - navigate to success screen
+        router.push('/send/success' as any)
       } else {
         // Transaction failed but no error thrown
         Alert.alert(
@@ -156,25 +143,19 @@ export default function SendConfirmScreen() {
     } catch (error) {
       console.error('Transaction execution failed:', error)
       
-      // Let the transaction hook handle error navigation
-      if (error instanceof Error) {
-        const errorMessage = error.message || 'Unknown error occurred'
-        Alert.alert(
-          'Transaction Error',
-          errorMessage,
-          [ { text: 'OK' } ]
-        )
-      }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      Alert.alert(
+        'Transaction Error',
+        errorMessage,
+        [ { text: 'OK' } ]
+      )
     } finally {
       setIsValidating(false)
     }
-  }, [ validationResult, isValidating, actions, address, amount, currency, feeSats, feeRate, totalAmount ])
-
-  // Get wallet state directly to avoid reactive updates
-  const wallet = useWalletStore.getState().wallet
+  }, [ validateTransaction, isValidating, recipientAddress, amountSats, currency, estimatedFee, feeRate, totalSats, router ])
 
   // Show loading state while preparing transaction
-  if (!wallet || isLoadingTransaction) {
+  if (!wallet || isLoadingTransaction || isLoadingUtxos || isCalculatingFee) {
     return (
       <SafeAreaContainer style={transactionStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -183,20 +164,22 @@ export default function SendConfirmScreen() {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <ActivityIndicator size="large" color="#007AFF" style={{ marginBottom: 16 }} />
           <ThemedText style={{ fontSize: 16, textAlign: 'center', marginBottom: 8 }}>
-            {!wallet ? 'Loading wallet data...' : 'Loading transaction data...'}
+            {!wallet ? 'Loading wallet data...' : 
+             isLoadingTransaction ? 'Loading transaction data...' :
+             isLoadingUtxos ? 'Loading wallet UTXOs...' :
+             isCalculatingFee ? 'Calculating fees...' : 'Preparing transaction...'}
           </ThemedText>
-          {isLoadingTransaction && (
-            <ThemedText style={{ fontSize: 14, textAlign: 'center', color: '#666' }}>
-              Calculating fees and preparing transaction
-            </ThemedText>
-          )}
+          <ThemedText style={{ fontSize: 14, textAlign: 'center', color: '#666' }}>
+            Please wait while we prepare your transaction
+          </ThemedText>
         </View>
       </SafeAreaContainer>
     )
   }
 
   // Show error state if transaction loading failed
-  if (loadingError) {
+  if (loadingError || storeError) {
+    const displayError = loadingError || storeError
     return (
       <SafeAreaContainer style={transactionStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -207,12 +190,14 @@ export default function SendConfirmScreen() {
             ⚠️ Failed to load transaction data
           </ThemedText>
           <ThemedText style={{ fontSize: 14, textAlign: 'center', color: '#666' }}>
-            {loadingError}
+            {displayError}
           </ThemedText>
         </View>
       </SafeAreaContainer>
     )
   }
+
+  const validation = validateTransaction()
 
   return (
     <SafeAreaContainer style={transactionStyles.container}>
@@ -220,7 +205,7 @@ export default function SendConfirmScreen() {
       
       <BackButton onPress={navigateBack} />
       
-      {!validationResult.isValid && (
+      {!validation.isValid && (
         <View style={{ 
           margin          : 20, 
           padding         : 15, 
@@ -230,7 +215,7 @@ export default function SendConfirmScreen() {
           borderColor     : '#f44336'
         }}>
           <ThemedText style={{ color: '#d32f2f', fontSize: 14, textAlign: 'center' }}>
-            ⚠️ {validationResult.error}
+            ⚠️ {validation.error}
           </ThemedText>
         </View>
       )}
@@ -251,12 +236,12 @@ export default function SendConfirmScreen() {
       )}
       
       <TransactionSummaryFooter
-        amount={amount}
-        address={address}
-        feeSats={feeSats}
+        amount={amountSats}
+        address={recipientAddress}
+        feeSats={estimatedFee}
         feeRate={feeRate}
         currency={currency}
-        totalAmount={totalAmount}
+        totalAmount={totalSats}
         onSendPress={handleSendPress}
       />
     </SafeAreaContainer>
