@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { Transaction } from '@/tests/mockData/transactionData'
+import { Transaction } from '@/src/types/domain/transaction/transaction.types'
 import { ActivityGroup } from './ActivityGroup'
 import { SectionDivider } from '@/src/components/ui/Divider/SectionDivider'
 

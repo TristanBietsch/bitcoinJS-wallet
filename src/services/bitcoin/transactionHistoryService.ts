@@ -96,11 +96,11 @@ function transformTransaction(
   
   // Create the base transaction
   const transaction: Transaction = {
-    id            : esploraTransaction.txid,
+    id       : esploraTransaction.txid,
     type,
     amount, // Already in sats
-    currency      : 'sats',
-    date          : esploraTransaction.status.block_time 
+    currency : 'sats',
+    date     : esploraTransaction.status.block_time 
       ? new Date(esploraTransaction.status.block_time * 1000) 
       : new Date(),
     status        : esploraTransaction.status.confirmed ? 'completed' : 'pending',

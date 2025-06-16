@@ -33,21 +33,21 @@ export function useTransactionHistory(limit: number = 50) {
   const queryClient = useQueryClient()
   
   const query = useQuery({
-    queryKey    : wallet ? TRANSACTION_QUERY_KEYS.history(wallet.id) : [ 'transactions', 'no-wallet' ],
-    queryFn     : async (): Promise<Transaction[]> => {
+    queryKey : wallet ? TRANSACTION_QUERY_KEYS.history(wallet.id) : [ 'transactions', 'no-wallet' ],
+    queryFn  : async (): Promise<Transaction[]> => {
       if (!wallet) {
         return []
       }
       
-      return await fetchTransactionHistory(wallet, limit)
+      return fetchTransactionHistory(wallet, limit)
     },
-    enabled     : !!wallet, // Only fetch when wallet is available
-    staleTime   : 5 * 60 * 1000, // 5 minutes - transactions don't change often
-    gcTime      : 10 * 60 * 1000, // 10 minutes cache time
+    enabled              : !!wallet, // Only fetch when wallet is available
+    staleTime            : 5 * 60 * 1000, // 5 minutes - transactions don't change often
+    gcTime               : 10 * 60 * 1000, // 10 minutes cache time
     refetchOnWindowFocus : false, // Don't refetch on window focus
     refetchOnMount       : 'always', // Always refetch on mount for fresh data
-    retry       : 3, // Retry failed requests 3 times
-    retryDelay  : (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    retry                : 3, // Retry failed requests 3 times
+    retryDelay           : (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   })
   
   // Invalidate transaction history when needed
@@ -78,19 +78,19 @@ export function useTransactionHistory(limit: number = 50) {
     isRefreshing : query.isRefetching,
     
     // Error states
-    error        : query.error,
-    isError      : query.isError,
+    error   : query.error,
+    isError : query.isError,
     
     // Success state
-    isSuccess    : query.isSuccess,
+    isSuccess : query.isSuccess,
     
     // Actions
-    refresh      : refreshHistory,
-    invalidate   : invalidateHistory,
+    refresh    : refreshHistory,
+    invalidate : invalidateHistory,
     
     // Status info
-    lastUpdated  : query.dataUpdatedAt,
-    fetchStatus  : query.fetchStatus,
+    lastUpdated : query.dataUpdatedAt,
+    fetchStatus : query.fetchStatus,
   }
 }
 
@@ -107,14 +107,14 @@ export function useTransactionDetails(txid: string | undefined) {
         return null
       }
       
-      return await fetchTransactionDetails(txid, wallet)
+      return fetchTransactionDetails(txid, wallet)
     },
-    enabled     : !!txid && !!wallet, // Only fetch when both txid and wallet are available
-    staleTime   : 60 * 60 * 1000, // 1 hour - transaction details are immutable
-    gcTime      : 2 * 60 * 60 * 1000, // 2 hours cache time
+    enabled              : !!txid && !!wallet, // Only fetch when both txid and wallet are available
+    staleTime            : 60 * 60 * 1000, // 1 hour - transaction details are immutable
+    gcTime               : 2 * 60 * 60 * 1000, // 2 hours cache time
     refetchOnWindowFocus : false,
-    retry       : 3,
-    retryDelay  : (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry                : 3,
+    retryDelay           : (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
   
   return {
@@ -122,15 +122,15 @@ export function useTransactionDetails(txid: string | undefined) {
     transaction : query.data,
     
     // Loading states
-    isLoading   : query.isLoading,
-    isFetching  : query.isFetching,
+    isLoading  : query.isLoading,
+    isFetching : query.isFetching,
     
     // Error states
-    error       : query.error,
-    isError     : query.isError,
+    error   : query.error,
+    isError : query.isError,
     
     // Success state
-    isSuccess   : query.isSuccess,
+    isSuccess : query.isSuccess,
     
     // Status info
     lastUpdated : query.dataUpdatedAt,
@@ -170,8 +170,8 @@ export function useTransactionCache() {
   const prefetchTransaction = (txid: string) => {
     if (wallet) {
       queryClient.prefetchQuery({
-        queryKey : TRANSACTION_QUERY_KEYS.details(txid),
-        queryFn  : () => fetchTransactionDetails(txid, wallet),
+        queryKey  : TRANSACTION_QUERY_KEYS.details(txid),
+        queryFn   : () => fetchTransactionDetails(txid, wallet),
         staleTime : 60 * 60 * 1000, // 1 hour
       })
     }
@@ -199,11 +199,11 @@ export function useTransactions(options: {
     enableUtils = true 
   } = options
   
-  // Core transaction history
+  // Core transaction history - always call this hook
   const history = useTransactionHistory(enableHistory ? limit : 0)
   
-  // Utilities
-  const utils = enableUtils ? useTransactionUtils() : null
+  // Utilities - always call this hook too to avoid conditional usage
+  const utils = useTransactionUtils()
   
   // Cache management
   const cache = useTransactionCache()
@@ -218,24 +218,24 @@ export function useTransactions(options: {
     isRefreshing : history.isRefreshing,
     
     // Error states
-    error        : history.error,
-    isError      : history.isError,
+    error   : history.error,
+    isError : history.isError,
     
     // Success state
-    isSuccess    : history.isSuccess,
+    isSuccess : history.isSuccess,
     
     // Actions
-    refresh      : history.refresh,
-    invalidate   : history.invalidate,
+    refresh    : history.refresh,
+    invalidate : history.invalidate,
     
-    // Utils (if enabled)
-    utils,
+    // Utils (conditionally return based on enableUtils, but always call the hook)
+    utils : enableUtils ? utils : null,
     
     // Cache management
     cache,
     
     // Status info
-    lastUpdated  : history.lastUpdated,
-    fetchStatus  : history.fetchStatus,
+    lastUpdated : history.lastUpdated,
+    fetchStatus : history.fetchStatus,
   }
 } 

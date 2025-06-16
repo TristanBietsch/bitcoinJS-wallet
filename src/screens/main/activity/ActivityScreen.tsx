@@ -23,11 +23,10 @@ export default function ActivityScreen() {
     refresh,
     isRefreshing
   } = useTransactions({
-    limit: 100 // Fetch more transactions for better grouping
+    limit : 100 // Fetch more transactions for better grouping
   })
   
-  // Group transactions by time periods using existing hook
-  // Note: Using transactions directly - grouping hook may need updates for real transaction data
+  // Group transactions by time periods using existing hook (now works with real Transaction interface)
   const groupedTransactions = useGroupedTransactions(transactions)
   
   // Loading state
@@ -98,73 +97,73 @@ export default function ActivityScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  container : {
+    flex            : 1,
+    backgroundColor : '#FFFFFF',
   },
-  scrollView: {
-    flex: 1,
+  scrollView : {
+    flex : 1,
   },
-  scrollViewContent: {
-    paddingTop: 16,
-    paddingBottom: 32,
+  scrollViewContent : {
+    paddingTop    : 16,
+    paddingBottom : 32,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  loadingContainer : {
+    flex           : 1,
+    justifyContent : 'center',
+    alignItems     : 'center',
+    padding        : 20,
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+  loadingText : {
+    marginTop : 16,
+    fontSize  : 16,
+    color     : '#666',
+    textAlign : 'center',
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  errorContainer : {
+    flex           : 1,
+    justifyContent : 'center',
+    alignItems     : 'center',
+    padding        : 20,
   },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#d32f2f',
-    textAlign: 'center',
-    marginBottom: 8,
+  errorTitle : {
+    fontSize     : 18,
+    fontWeight   : '600',
+    color        : '#d32f2f',
+    textAlign    : 'center',
+    marginBottom : 8,
   },
-  errorMessage: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
+  errorMessage : {
+    fontSize     : 14,
+    color        : '#666',
+    textAlign    : 'center',
+    marginBottom : 16,
+    lineHeight   : 20,
   },
-  retryText: {
-    fontSize: 16,
-    color: '#007AFF',
-    textAlign: 'center',
-    textDecorationLine: 'underline',
+  retryText : {
+    fontSize           : 16,
+    color              : '#007AFF',
+    textAlign          : 'center',
+    textDecorationLine : 'underline',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    marginTop: 100,
+  emptyContainer : {
+    flex           : 1,
+    justifyContent : 'center',
+    alignItems     : 'center',
+    padding        : 40,
+    marginTop      : 100,
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 12,
+  emptyTitle : {
+    fontSize     : 20,
+    fontWeight   : '600',
+    color        : '#333',
+    textAlign    : 'center',
+    marginBottom : 12,
   },
-  emptyMessage: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
+  emptyMessage : {
+    fontSize   : 16,
+    color      : '#666',
+    textAlign  : 'center',
+    lineHeight : 22,
   },
 }) 

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Transaction } from '@/tests/mockData/transactionData'
+import { Transaction } from '@/src/types/domain/transaction/transaction.types'
 import { isToday, isThisWeek, getMonthYear } from '@/src/utils/helpers/dateHelpers'
 
 interface GroupedTransactions {
@@ -15,9 +15,11 @@ interface GroupedTransactions {
  */
 export const useGroupedTransactions = (transactions: Transaction[]): GroupedTransactions => {
   return useMemo(() => {
-    // Sort transactions by timestamp (newest first)
+    // Sort transactions by date (newest first)
     const sortedTransactions = [ ...transactions ].sort((a, b) => {
-      return b.timestamp - a.timestamp
+      const timestampA = a.date instanceof Date ? a.date.getTime() : new Date(a.date).getTime()
+      const timestampB = b.date instanceof Date ? b.date.getTime() : new Date(b.date).getTime()
+      return timestampB - timestampA
     })
     
     // Group by time periods
@@ -26,7 +28,10 @@ export const useGroupedTransactions = (transactions: Transaction[]): GroupedTran
     const monthGroups: { [key: string]: Transaction[] } = {}
     
     sortedTransactions.forEach(transaction => {
-      const timestamp = transaction.timestamp
+      // Convert date to timestamp for helper functions
+      const timestamp = transaction.date instanceof Date 
+        ? transaction.date.getTime() 
+        : new Date(transaction.date).getTime()
       
       if (isToday(timestamp)) {
         today.push(transaction)

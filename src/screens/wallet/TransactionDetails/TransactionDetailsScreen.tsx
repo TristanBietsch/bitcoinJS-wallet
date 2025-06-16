@@ -3,7 +3,7 @@
  */
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { useTransactionDetails } from '@/src/hooks/transaction/useTransactionDetails'
+import { useTransactionDetails } from '@/src/hooks/transaction/useTransactionHistory'
 import { useTransactionDetailsNavigation } from '@/src/hooks/transaction/useTransactionDetailsNavigation'
 import { 
   TransactionDetails,
@@ -17,12 +17,13 @@ import { TransactionConstants } from '@/src/constants/transaction'
 
 /**
  * Screen that displays detailed transaction information
+ * Now uses real blockchain transaction data from our unified system
  */
 export default function TransactionDetailsScreen() {
   const { id, navigateBack } = useTransactionDetailsNavigation()
-  const { transaction, loading, error } = useTransactionDetails(id)
+  const { transaction, isLoading, error } = useTransactionDetails(id)
 
-  if (loading) {
+  if (isLoading) {
     return <TransactionDetailsLoading onBackPress={navigateBack} />
   }
 

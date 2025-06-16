@@ -3,6 +3,7 @@ import { useWalletStore } from '@/src/store/walletStore'
 import { signTransaction } from '@/src/services/bitcoin/txSigner'
 import { bitcoinjsNetwork } from '@/src/config/env'
 import { fetchWalletUtxos, enrichUtxosWithPublicKeys, filterUtxosByConfirmation } from '@/src/services/bitcoin/wallet/walletUtxoService'
+import { TRANSACTION_QUERY_KEYS } from '@/src/hooks/transaction/useTransactionHistory'
 import type { TransactionResult } from '@/src/types/transaction.types'
 import type { SendBTCError } from '@/src/types/errors.types'
 import {
@@ -14,11 +15,61 @@ import {
   createFeeEstimationError
 } from '@/src/types/errors.types'
 
+// Global query client for cache invalidation
+let queryClient: any = null
+
+/**
+ * Set the query client instance for cache invalidation
+ * This should be called from the app's query client setup
+ */
+export function setQueryClientForTransactionService(client: any) {
+  queryClient = client
+}
+
 /**
  * Enhanced service layer for Send BTC transactions
  * Optimized for integration with the unified useTransaction hook
  */
 export class SendTransactionService {
+  
+  /**
+   * Invalidates transaction cache after successful transaction
+   */
+  private static invalidateTransactionCache(txid: string) {
+    if (!queryClient) {
+      console.warn('[SendTransactionService] QueryClient not available for cache invalidation')
+      return
+    }
+    
+    const wallet = useWalletStore.getState().wallet
+    if (!wallet) {
+      console.warn('[SendTransactionService] No wallet available for cache invalidation')
+      return
+    }
+    
+    console.log('🔄 [SendTransactionService] Invalidating transaction cache after successful broadcast')
+    
+    // Invalidate transaction history for the wallet
+    queryClient.invalidateQueries({
+      queryKey : TRANSACTION_QUERY_KEYS.history(wallet.id)
+    })
+    
+    // Invalidate all transaction queries for good measure
+    queryClient.invalidateQueries({
+      queryKey : TRANSACTION_QUERY_KEYS.list()
+    })
+    
+    // Prefetch the new transaction details
+    queryClient.prefetchQuery({
+      queryKey : TRANSACTION_QUERY_KEYS.details(txid),
+      queryFn  : () => import('./bitcoin/transactionHistoryService').then(module => 
+        module.fetchTransactionDetails(txid, wallet)
+      ),
+      staleTime : 60 * 60 * 1000, // 1 hour
+    })
+    
+    console.log('✅ [SendTransactionService] Transaction cache invalidated')
+  }
   
   /**
    * Maps generic errors to specific SendBTCError types for consistent error handling
@@ -34,10 +85,10 @@ export class SendTransactionService {
       return createInsufficientFundsError(
         0, // Will be filled with actual amounts by caller
         walletState.balances.confirmed,
-                 { 
-           confirmed   : walletState.balances.confirmed, 
-           unconfirmed : walletState.balances.unconfirmed 
-         }
+        { 
+          confirmed   : walletState.balances.confirmed, 
+          unconfirmed : walletState.balances.unconfirmed 
+        }
       )
     }
     
@@ -133,17 +184,17 @@ export class SendTransactionService {
       
       console.log(`✅ [SendTransactionService] Found ${confirmedUtxos.length} confirmed UTXOs`)
       
-             // Enrich UTXOs with public keys and derivation paths
-       let enrichedUtxos
-       try {
-         enrichedUtxos = await enrichUtxosWithPublicKeys(
-           confirmedUtxos,
-           walletStore.seedPhrase,
-           bitcoinjsNetwork
-         )
-       } catch (error: any) {
-         throw this.mapErrorToSendBTCError(error, 'utxo_enrich')
-       }
+      // Enrich UTXOs with public keys and derivation paths
+      let enrichedUtxos
+      try {
+        enrichedUtxos = await enrichUtxosWithPublicKeys(
+          confirmedUtxos,
+          walletStore.seedPhrase,
+          bitcoinjsNetwork
+        )
+      } catch (error: any) {
+        throw this.mapErrorToSendBTCError(error, 'utxo_enrich')
+      }
       
       console.log(`✅ [SendTransactionService] Enriched ${enrichedUtxos.length} UTXOs with keys`)
       
@@ -208,7 +259,7 @@ export class SendTransactionService {
   
   /**
    * Execute complete transaction flow: validate, build, sign, broadcast
-   * Enhanced for perfect integration with useTransaction hook
+   * Enhanced for perfect integration with useTransaction hook and cache invalidation
    */
   static async executeTransaction(): Promise<TransactionResult> {
     const sendStore = useSendTransactionStore.getState()
@@ -276,6 +327,9 @@ export class SendTransactionService {
       
       console.log(`✅ [SendTransactionService] Transaction broadcasted successfully: ${txid}`)
       
+      // Step 4: Invalidate transaction cache for immediate UI updates
+      this.invalidateTransactionCache(txid)
+      
       // Return standardized result
       return {
         txid,
@@ -284,16 +338,8 @@ export class SendTransactionService {
       }
       
     } catch (error) {
-      console.error('[SendTransactionService] Transaction execution failed:', error)
-      
-      // Ensure we're throwing a SendBTCError for the hook
-      if (error && typeof error === 'object' && 'code' in error) {
-        throw error // Already a SendBTCError
-      }
-      throw this.mapErrorToSendBTCError(
-        error instanceof Error ? error : new Error('Unknown execution error'), 
-        'execution'
-      )
+      console.error('💥 [SendTransactionService] Transaction execution failed:', error)
+      throw error
     }
   }
   
@@ -358,16 +404,6 @@ export class SendTransactionService {
   }
   
   /**
-   * Enhanced reset that clears all transaction state
-   * Perfect for useTransaction hook integration
-   */
-  static reset(): void {
-    const sendStore = useSendTransactionStore.getState()
-    sendStore.reset()
-    console.log('🔄 [SendTransactionService] Transaction state reset')
-  }
-  
-  /**
    * Prepare transaction for execution (used by useTransaction hook)
    * Combines UTXO loading and validation in one step
    */
@@ -387,5 +423,12 @@ export class SendTransactionService {
     }
     
     console.log('✅ [SendTransactionService] Transaction preparation complete')
+  }
+  
+  /**
+   * Reset service state (used by useTransaction hook)
+   */
+  static reset() {
+    useSendTransactionStore.getState().reset()
   }
 } 

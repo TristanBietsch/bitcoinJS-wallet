@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import { Transaction } from '@/tests/mockData/transactionData'
+import { Transaction } from '@/src/types/domain/transaction/transaction.types'
 
 /**
  * Navigation utilities for transaction-related screens
