@@ -3,11 +3,12 @@ import { z } from 'zod'
 // --- Esplora API Specific Schemas & Types ---
 
 // Status object found in UTXO and Transaction responses
+// Fixed to handle unconfirmed transactions that may have undefined block data
 const EsploraStatusSchema = z.object({
   confirmed    : z.boolean(),
-  block_height : z.number().nullable(),
-  block_hash   : z.string().nullable(),
-  block_time   : z.number().nullable(),
+  block_height : z.number().nullish(), // nullish() accepts both null and undefined
+  block_hash   : z.string().nullish(),
+  block_time   : z.number().nullish(),
 })
 export type EsploraStatus = z.infer<typeof EsploraStatusSchema>;
 

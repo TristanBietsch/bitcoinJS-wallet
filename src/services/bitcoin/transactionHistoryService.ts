@@ -110,7 +110,7 @@ function transformTransaction(
   const type = determineTransactionType(esploraTransaction, walletAddresses)
   const { amount, recipientAddress } = calculateNetAmount(esploraTransaction, walletAddresses)
   
-  // Create the base transaction
+  // Create the base transaction with proper handling of unconfirmed transactions
   const transaction: Transaction = {
     id            : esploraTransaction.txid,
     type,
@@ -118,13 +118,13 @@ function transformTransaction(
     currency      : 'sats',
     date          : esploraTransaction.status.block_time 
       ? new Date(esploraTransaction.status.block_time * 1000) 
-      : new Date(),
+      : new Date(), // Use current time for unconfirmed transactions
     status        : esploraTransaction.status.confirmed ? 'completed' : 'pending',
     fee           : esploraTransaction.fee,
     txid          : esploraTransaction.txid,
     recipient     : type === 'send' ? recipientAddress : undefined,
     total         : amount + esploraTransaction.fee,
-    confirmations : esploraTransaction.status.block_height ? 1 : 0, // Simplified
+    confirmations : esploraTransaction.status.block_height ? 1 : 0, // 0 for unconfirmed
   }
   
   return transaction

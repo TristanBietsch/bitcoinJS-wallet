@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 
@@ -9,8 +9,7 @@ import ActionButton from '@/src/components/ui/Button/ActionButton'
 import { AddressInput } from '@/src/components/features/Send/Address/AddressInput'
 import { SpeedSelection } from '@/src/components/features/Send/Fees/SpeedSelection'
 import { useSendAddressScreen } from '@/src/hooks/send/useSendAddressScreen'
-import { getSpeedOptions } from '@/src/utils/send/speedOptions'
-import { SpeedOption, SpeedTier, CustomFee } from '@/src/types/domain/transaction'
+import { SpeedTier, CustomFee } from '@/src/types/domain/transaction'
 
 export default function SendAddressScreen() {
   const router = useRouter()
@@ -21,6 +20,7 @@ export default function SendAddressScreen() {
     selectedSpeed,
     customFeeRate,
     isLoadingFees,
+    feeOptions,
     setAddress,
     setSelectedSpeed,
     setCustomFeeRate,
@@ -28,26 +28,10 @@ export default function SendAddressScreen() {
     loadFeeRates
   } = useSendAddressScreen()
 
-  // State for proper speed selection component types
-  const [ speedOptions, setSpeedOptions ] = useState<SpeedOption[]>([])
-  
   // Modal state management
   const [ showSpeedInfoModal, setShowSpeedInfoModal ] = useState(false)
   const [ showCustomFeeModal, setShowCustomFeeModal ] = useState(false)
   const [ pendingInput, setPendingInput ] = useState('')
-
-  // Load speed options for the component
-  useEffect(() => {
-    const loadSpeedOptions = async () => {
-      try {
-        const options = await getSpeedOptions()
-        setSpeedOptions(options)
-      } catch (error) {
-        console.error('Failed to load speed options:', error)
-      }
-    }
-    loadSpeedOptions()
-  }, [])
 
   // Navigation handlers
   const handleBackPress = () => {
@@ -73,8 +57,6 @@ export default function SendAddressScreen() {
     const hookSpeed = speed === 'standard' ? 'normal' : speed
     setSelectedSpeed(hookSpeed as 'economy' | 'normal' | 'express' | 'custom')
   }
-
-
 
   // Modal handlers
   const handleSpeedInfoPress = () => {
@@ -124,6 +106,21 @@ export default function SendAddressScreen() {
   // Map hook data to component expectations
   const mappedSelectedSpeed: SpeedTier = selectedSpeed === 'normal' ? 'standard' : selectedSpeed as SpeedTier
   
+  // Convert feeOptions from hook to speedOptions format
+  const speedOptions = feeOptions.map(option => ({
+    id: option.confirmationTime >= 144 ? 'economy' : 
+        option.confirmationTime >= 6 ? 'standard' : 'express',
+    label: option.confirmationTime >= 144 ? 'Economy' : 
+           option.confirmationTime >= 6 ? 'Standard' : 'Express',
+    fee: {
+      sats: Math.round(option.feeRate * 200) // Estimate with 200 vBytes
+    },
+    feeRate: option.feeRate,
+    estimatedTime: option.confirmationTime >= 144 ? '~24 hours' :
+                   option.confirmationTime >= 6 ? '~1 hour' : '~10 minutes',
+    estimatedBlocks: option.confirmationTime
+  }))
+  
   // Create customFee object - use pendingInput when modal is open, otherwise use stored rate
   const customFee: CustomFee = {
     totalSats : showCustomFeeModal 
@@ -132,7 +129,6 @@ export default function SendAddressScreen() {
     confirmationTime : 60,
     feeRate          : customFeeRate
   }
-  const speed = mappedSelectedSpeed
   
   // Input validation - check if pendingInput is a valid number > 0
   const isInputValid = !pendingInput || (parseFloat(pendingInput) > 0 && !isNaN(parseFloat(pendingInput)))
@@ -165,7 +161,7 @@ export default function SendAddressScreen() {
         {/* Speed Selection Section */}
         <SpeedSelection
           speedOptions={speedOptions}
-          selectedSpeed={speed}
+          selectedSpeed={mappedSelectedSpeed}
           customFee={customFee}
           showSpeedInfoModal={showSpeedInfoModal}
           showCustomFeeModal={showCustomFeeModal}
