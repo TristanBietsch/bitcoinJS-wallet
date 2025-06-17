@@ -107,7 +107,7 @@ export const useSeedPhraseValidation = (seedPhrase: string) => {
         wordCount    : wordCount
       })
     }
-  }, [ seedPhrase ])
+  }, [ seedPhrase, successAnim ])
   
   // Get specific error suggestions if there are invalid words
   const getSuggestionText = () => {

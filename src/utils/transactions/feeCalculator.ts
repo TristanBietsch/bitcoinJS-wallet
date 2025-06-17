@@ -1,6 +1,8 @@
-import { speedOptions } from '@/src/config/transactionFees'
 import { CurrencyType } from '@/src/types/domain/finance'
 import { SATS_PER_BTC } from '@/src/constants/currency'
+
+// Default transaction size for estimates
+const DEFAULT_TX_SIZE_VBYTES = 200
 
 /**
  * Type for transaction fee
@@ -10,8 +12,23 @@ export type TransactionFee = {
   feeRate: number
 }
 
+// Fallback fee rates for immediate calculation
+const FALLBACK_FEE_RATES = {
+  economy  : 1,
+  standard : 10,
+  express  : 25
+}
+
+/**
+ * Calculate transaction fee from fee rate
+ */
+const estimateTransactionFee = (txSizeVBytes: number, feeRatePerVByte: number): number => {
+  return Math.ceil(txSizeVBytes * feeRatePerVByte)
+}
+
 /**
  * Calculate the transaction fee based on speed or custom fee
+ * Uses fallback fee rates for immediate calculation
  * @param speed Selected speed type
  * @param customFee Optional custom fee settings
  * @returns Fee object with sats and feeRate
@@ -27,15 +44,12 @@ export const calculateTransactionFee = (
     }
   } 
   
-  // Use fee from predefined speed options
-  const selectedSpeedOption = speedOptions[speed as keyof typeof speedOptions]
-  if (!selectedSpeedOption) {
-    console.warn(`Invalid speed option: ${speed}. Defaulting to a zero fee.`)
-    return { sats: 0, feeRate: 0 }
-  }
+  // Use fallback fee rates for immediate calculation
+  const feeRate = FALLBACK_FEE_RATES[speed as keyof typeof FALLBACK_FEE_RATES] || FALLBACK_FEE_RATES.standard
+  
   return {
-    sats    : selectedSpeedOption.sats,
-    feeRate : selectedSpeedOption.feeRate
+    sats : estimateTransactionFee(DEFAULT_TX_SIZE_VBYTES, feeRate),
+    feeRate
   }
 }
 

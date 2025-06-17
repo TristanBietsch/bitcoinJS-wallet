@@ -196,7 +196,8 @@ export const verifyMnemonicAddress = async (
   try {
     const keyPair = await deriveFromMnemonic(mnemonic, path, network)
     return keyPair.address === expectedAddress
-  } catch (_error) {
+  } catch (error) {
+    console.error('Error verifying mnemonic address:', error)
     return false
   }
 }

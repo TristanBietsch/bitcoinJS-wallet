@@ -1,33 +1,9 @@
-import { SpeedOption } from '@/src/types/domain/transaction'
-import { transactionFees } from '@/tests/mockData/transactionData'
+/**
+ * @deprecated This file is deprecated. Use utils/send/speedOptions.ts instead.
+ * This file remains for backward compatibility but forwards to the real implementation.
+ */
 
-export const speedOptions: SpeedOption[] = [
-  {
-    id    : 'economy',
-    label : 'Economy',
-    fee   : {
-      sats : transactionFees.tiers.economy.sats,
-      usd  : transactionFees.tiers.economy.usd
-    }
-  },
-  {
-    id    : 'standard',
-    label : 'Standard',
-    fee   : {
-      sats : transactionFees.tiers.standard.sats,
-      usd  : transactionFees.tiers.standard.usd
-    }
-  },
-  {
-    id    : 'express',
-    label : 'Express',
-    fee   : {
-      sats : transactionFees.tiers.express.sats,
-      usd  : transactionFees.tiers.express.usd
-    }
-  }
-]
+import { getSpeedOptions, speedOptions } from '@/src/utils/send/speedOptions'
 
-export const getFormattedUsdFee = (sats: number): string => {
-  return (sats * transactionFees.conversion.satToDollar).toFixed(2)
-} 
+// Re-export the real implementations
+export { getSpeedOptions, speedOptions } 

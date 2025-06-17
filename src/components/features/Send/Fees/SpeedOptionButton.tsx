@@ -8,21 +8,23 @@ interface SpeedOptionButtonProps {
   option: SpeedOption
   isSelected: boolean
   onPress: () => void
+  disabled?: boolean
 }
 
 export const SpeedOptionButton: React.FC<SpeedOptionButtonProps> = ({
   option,
   isSelected,
-  onPress
+  onPress,
+  disabled = false
 }) => {
   const renderIcon = () => {
     switch (option.id) {
       case 'economy':
-        return <Turtle size={32} color="#000" />
+        return <Turtle size={32} color={disabled ? "#ccc" : "#000"} />
       case 'standard':
-        return <Squirrel size={32} color="#000" />
+        return <Squirrel size={32} color={disabled ? "#ccc" : "#000"} />
       case 'express':
-        return <Rabbit size={32} color="#000" />
+        return <Rabbit size={32} color={disabled ? "#ccc" : "#000"} />
       default:
         return null
     }
@@ -30,17 +32,29 @@ export const SpeedOptionButton: React.FC<SpeedOptionButtonProps> = ({
 
   return (
     <TouchableOpacity
-      style={[ styles.speedButton, isSelected && styles.selectedSpeed ]}
+      style={[ 
+        styles.speedButton, 
+        isSelected && styles.selectedSpeed,
+        disabled && styles.disabledSpeed
+      ]}
       onPress={onPress}
+      disabled={disabled}
     >
       <View style={styles.speedLeft}>
         {renderIcon()}
-        <ThemedText style={styles.speedLabel}>{option.label}</ThemedText>
+        <View style={styles.speedLabelContainer}>
+          <ThemedText style={styles.speedLabel}>{option.label}</ThemedText>
+          {option.estimatedTime && (
+            <ThemedText style={styles.estimatedTime}>{option.estimatedTime}</ThemedText>
+          )}
+        </View>
       </View>
       {option.fee && (
         <View style={styles.feeInfo}>
           <ThemedText style={styles.satsAmount}>{option.fee.sats} sats</ThemedText>
-          <ThemedText style={styles.usdAmount}>${option.fee.usd} USD</ThemedText>
+          {option.feeRate && (
+            <ThemedText style={styles.feeRate}>{option.feeRate} sat/vB</ThemedText>
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -49,25 +63,35 @@ export const SpeedOptionButton: React.FC<SpeedOptionButtonProps> = ({
 
 const styles = StyleSheet.create({
   speedButton : {
-    flexDirection   : 'row',
-    justifyContent  : 'space-between',
-    alignItems      : 'center',
-    backgroundColor : '#F5F5F5',
-    borderRadius    : 12,
-    padding         : 16,
-    height          : 72
+    flexDirection  : 'row',
+    justifyContent : 'space-between',
+    alignItems     : 'center',
+    borderRadius   : 12,
+    padding        : 16,
+    height         : 72
   },
   selectedSpeed : {
     backgroundColor : '#E5E5E5'
+  },
+  disabledSpeed : {
+    backgroundColor : '#ccc'
   },
   speedLeft : {
     flexDirection : 'row',
     alignItems    : 'center',
     gap           : 12
   },
+  speedLabelContainer : {
+    flexDirection : 'column'
+  },
   speedLabel : {
     fontSize   : 16,
     fontWeight : '500'
+  },
+  estimatedTime : {
+    fontSize  : 12,
+    color     : '#666',
+    marginTop : 2
   },
   feeInfo : {
     alignItems : 'flex-end'
@@ -77,8 +101,8 @@ const styles = StyleSheet.create({
     fontWeight : '500',
     color      : '#666'
   },
-  usdAmount : {
-    fontSize  : 14,
+  feeRate : {
+    fontSize  : 12,
     color     : '#999',
     marginTop : 2
   }

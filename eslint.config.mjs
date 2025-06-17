@@ -3,6 +3,7 @@ import path     from 'node:path'
 import js       from '@eslint/js'
 import tsParser from '@typescript-eslint/parser'
 import tsPlugin from '@typescript-eslint/eslint-plugin'
+import reactHooksPlugin from 'eslint-plugin-react-hooks'
 
 import { fileURLToPath } from 'node:url'
 import { FlatCompat }    from '@eslint/eslintrc'
@@ -49,6 +50,7 @@ export default [
 
     plugins: {
       '@typescript-eslint' : tsPlugin,
+      'react-hooks'        : reactHooksPlugin,
     },
 
     files: [
@@ -107,6 +109,9 @@ export default [
       '@typescript-eslint/no-invalid-void-type': ['error', {
         allowInGenericTypeArguments: true,
       }],
+
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
     },
   }
 ];

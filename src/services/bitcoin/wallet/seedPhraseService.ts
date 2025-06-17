@@ -1,6 +1,8 @@
 import * as bip39 from 'bip39'
 import { Buffer } from 'buffer'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SecureStore from 'expo-secure-store'
+
+const SECURE_SEED_PHRASE_KEY = 'com.nummus.wallet.seed_phrase'
 
 /**
  * Seed phrase word length options
@@ -57,44 +59,34 @@ export const seedPhraseService = {
    * @returns Array of individual words
    */
   getWords : (mnemonic: string): string[] => {
-    return mnemonic.trim().split(/\s+/)
+    return mnemonic.trim().split(/\s+/g)
   },
   
   /**
-   * Store a seed phrase (temporarily with NO encryption)
+   * Store a seed phrase securely.
    * 
    * @param mnemonic The mnemonic seed phrase to store
-   * @param id Optional identifier (defaults to 'primary_seed')
    * @returns Promise resolving when storage is complete
    */
-  storeSeedPhrase : async (mnemonic: string, id: string = 'primary_seed'): Promise<void> => {
-    // TEMPORARY IMPLEMENTATION - STORES UNENCRYPTED
-    // TODO: Replace with proper secure storage
-    await AsyncStorage.setItem(`temp_seedphrase_${id}`, mnemonic)
-    console.warn('WARNING: Seed phrase stored WITHOUT encryption - FOR DEVELOPMENT USE ONLY')
+  storeSeedPhrase : async (mnemonic: string): Promise<void> => {
+    await SecureStore.setItemAsync(SECURE_SEED_PHRASE_KEY, mnemonic)
   },
   
   /**
-   * Retrieve a stored seed phrase
+   * Retrieve a stored seed phrase securely.
    * 
-   * @param id Optional identifier (defaults to 'primary_seed')
    * @returns Promise resolving to the seed phrase or null if not found
    */
-  retrieveSeedPhrase : async (id: string = 'primary_seed'): Promise<string | null> => {
-    // TEMPORARY IMPLEMENTATION - NO ENCRYPTION
-    // TODO: Replace with proper secure storage retrieval
-    return AsyncStorage.getItem(`temp_seedphrase_${id}`)
+  retrieveSeedPhrase : async (): Promise<string | null> => {
+    return SecureStore.getItemAsync(SECURE_SEED_PHRASE_KEY)
   },
   
   /**
-   * Remove a stored seed phrase
+   * Remove a stored seed phrase securely.
    * 
-   * @param id Optional identifier (defaults to 'primary_seed')
    * @returns Promise resolving when removal is complete
    */
-  removeSeedPhrase : async (id: string = 'primary_seed'): Promise<void> => {
-    // TEMPORARY IMPLEMENTATION - NO ENCRYPTION
-    // TODO: Replace with proper secure deletion
-    await AsyncStorage.removeItem(`temp_seedphrase_${id}`)
+  removeSeedPhrase : async (): Promise<void> => {
+    await SecureStore.deleteItemAsync(SECURE_SEED_PHRASE_KEY)
   }
 } 

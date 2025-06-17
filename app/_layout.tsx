@@ -15,6 +15,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useWalletStore } from '@/src/store/walletStore'
 // import { scheduleKeyRotation } from '@/src/utils/security/keyRotationUtils' // Temporarily removed
 import { isOnboardingComplete } from '@/src/utils/storage'
+import logger, { LogScope } from '@/src/utils/logger'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setQueryClientForTransactionService } from '@/src/services/sendTransactionService'
+import { setQueryClientForWalletStore } from '@/src/store/walletStore'
 
 // Routes where bottom navigation should be hidden
 const HIDDEN_NAV_ROUTES = [
@@ -31,6 +35,20 @@ const HIDDEN_NAV_ROUTES = [
 
 const LOCK_TIMEOUT = 5 * 60 * 1000 // 5 minutes in milliseconds
 
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions : {
+    queries : {
+      staleTime : 1000 * 60 * 5, // 5 minutes
+      retry     : 2,
+    },
+  },
+})
+
+// Set up transaction cache integration
+setQueryClientForTransactionService(queryClient)
+setQueryClientForWalletStore(queryClient)
+
 export default function RootLayout() {
   const pathname = usePathname()
   const appState = useRef(AppState.currentState)
@@ -45,10 +63,10 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        console.log('App has come to the foreground!')
+        logger.success(LogScope.INIT, 'App resumed from background')
         const timeInBackground = Date.now() - lastActiveTime
         if (timeInBackground > LOCK_TIMEOUT && wallet) {
-          console.log('App was in background for too long. Locking wallet.')
+          logger.info(LogScope.INIT, 'Auto-lock triggered after background timeout')
           await clearWallet()
           const onboardingCompleted = await isOnboardingComplete()
           if (onboardingCompleted) {
@@ -58,7 +76,7 @@ export default function RootLayout() {
           }
         }
       } else if (nextAppState.match(/inactive|background/)) {
-        console.log('App has gone to the background or become inactive.')
+        logger.info(LogScope.INIT, 'App entered background/inactive state')
         setLastActiveTime(Date.now())
       }
       appState.current = nextAppState
@@ -77,15 +95,17 @@ export default function RootLayout() {
 
     const initApp = async () => {
       try {
-        console.log('Running App Initialization...')
+        logger.initProgress('Starting app initialization')
         await initializeWallet()
         
         if (!useWalletStore.getState().wallet && !pathname.includes('onboarding')) {
-          console.log('No wallet found, redirecting to onboarding')
+          logger.init('No wallet found, redirecting to onboarding')
           router.replace('/onboarding' as any)
+        } else {
+          logger.init('App initialization completed')
         }
       } catch (error) {
-        console.error('Failed to initialize wallet:', error)
+        logger.error(LogScope.INIT, 'Failed to initialize wallet', error)
         if (!pathname.includes('onboarding')) {
           router.replace('/onboarding' as any)
         }
@@ -124,13 +144,15 @@ export default function RootLayout() {
     <>
       <SafeAreaProvider>
         <GestureHandlerRootView style={styles.container}>
-          <AppProvider>
-            <View style={styles.content}>
-              <Slot />
-            </View>
-            {!shouldHideNav && <TabBottomNavigation />}
-            <StatusBar style="auto" />
-          </AppProvider>
+          <QueryClientProvider client={queryClient}>
+            <AppProvider>
+              <View style={styles.content}>
+                <Slot />
+              </View>
+              {!shouldHideNav && <TabBottomNavigation />}
+              <StatusBar style="auto" />
+            </AppProvider>
+          </QueryClientProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </>

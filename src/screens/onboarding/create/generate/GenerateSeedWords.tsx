@@ -47,47 +47,20 @@ export default function GenerateSeedWords({
     return seedPhraseService.getWords(seedPhrase)
   }, [ seedPhrase ])
   
-  // Check for existing wallet on mount
-  useEffect(() => {
-    const checkExistingWallet = async () => {
-      try {
-        // Check if we already generated a wallet during this session
-        const existingSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
-        if (existingSeedPhrase) {
-          console.log("Found existing wallet, using stored seed phrase")
-          setStoredSeedPhrase(existingSeedPhrase)
-          setIsGenerating(false)
-          return
-        }
-        
-        // If no existing wallet, continue with wallet generation
-        setupWallet()
-      } catch (error) {
-        console.error('Error checking for existing wallet:', error)
-        setWalletError('Error checking for existing wallet')
-        setIsGenerating(false)
-      }
-    }
-    
-    checkExistingWallet()
-  }, [])
-  
-  // Generate Bitcoin keys from the seed phrase
-  const setupWallet = async () => {
+  // Define setupWallet before the useEffect that uses it
+  // Wrap in useCallback as it's a dependency of useEffect
+  const setupWallet = useCallback(async () => {
     try {
       setIsGenerating(true)
       
-      // Generate the Bitcoin key pair
       const keyPair = await keyManagement.deriveFromMnemonic(
         seedPhrase,
-        undefined, // Use default derivation path
-        BITCOIN_NETWORK // Use configured network (regtest, testnet, or mainnet)
+        undefined, 
+        BITCOIN_NETWORK
       )
       
-      // Store the seed phrase securely
       await seedPhraseService.storeSeedPhrase(seedPhrase)
       
-      // For development: log the generated address (remove in production)
       console.log(`Generated ${BITCOIN_NETWORK} address: ${keyPair.address}`)
       
       setIsGenerating(false)
@@ -96,7 +69,30 @@ export default function GenerateSeedWords({
       setWalletError(error instanceof Error ? error.message : 'Unknown error')
       setIsGenerating(false)
     }
-  }
+  }, [ seedPhrase, setIsGenerating, setWalletError ])
+  
+  // Check for existing wallet on mount
+  useEffect(() => {
+    const checkExistingWallet = async () => {
+      try {
+        const existingSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
+        if (existingSeedPhrase) {
+          console.log("Found existing wallet, using stored seed phrase")
+          setStoredSeedPhrase(existingSeedPhrase)
+          setIsGenerating(false)
+          return
+        }
+        
+        setupWallet() // Now setupWallet is defined
+      } catch (error) {
+        console.error('Error checking for existing wallet:', error)
+        setWalletError('Error checking for existing wallet')
+        setIsGenerating(false)
+      }
+    }
+    
+    checkExistingWallet()
+  }, [ setupWallet, setIsGenerating, setWalletError ])
   
   // Custom back handler with confirmation using our modular component
   const handleBackWithConfirmation = useCallback(() => {

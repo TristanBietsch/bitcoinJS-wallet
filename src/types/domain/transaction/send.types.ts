@@ -3,8 +3,11 @@ export interface SpeedOption {
   label: string
   fee?: {
     sats: number
-    usd: number
+    usd?: number  // Optional for backward compatibility
   }
+  feeRate?: number  // Fee rate in sats/vbyte
+  estimatedTime?: string  // Human-readable time estimate
+  estimatedBlocks?: number  // Estimated blocks for confirmation
 }
 
 export interface CustomFee {

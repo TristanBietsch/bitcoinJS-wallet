@@ -2,7 +2,7 @@ import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { ActivityItem } from './ActivityItem'
-import { Transaction } from '@/tests/mockData/transactionData'
+import { Transaction } from '@/src/types/domain/transaction/transaction.types'
 import { fonts } from '@/src/constants/fonts'
 
 interface ActivityGroupProps {

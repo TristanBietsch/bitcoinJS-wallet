@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
-import { Transaction } from '@/tests/mockData/transactionData'
+import { Transaction } from '@/src/types/domain/transaction/transaction.types'
 import { fonts } from '@/src/constants/fonts'
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react-native'
 
@@ -16,22 +16,37 @@ interface ActivityItemProps {
   onPress?: () => void;
 }
 
+// Helper function to get display address from transaction
+const getDisplayAddress = (transaction: Transaction): string => {
+  // For send transactions, show recipient address
+  if (transaction.type === 'send' && transaction.recipient) {
+    return transaction.recipient
+  }
+  
+  // For receive transactions, we might not have sender info
+  // Use transaction ID as fallback
+  return transaction.txid?.slice(0, 8) || transaction.id.slice(0, 8) || 'Unknown'
+}
+
 export const ActivityItem: React.FC<ActivityItemProps> = ({ 
   transaction, 
   onPress 
 }) => {
-  const { type, amount, address } = transaction
+  const { type, amount } = transaction
   
   // Determine activity type label based on transaction type
   const activityType = type === 'send' ? 'Sent Bitcoin' : 'Received Bitcoin'
   
-  // Format the amount with a sign
+  // Format the amount in sats with a sign
   const formattedAmount = type === 'receive' 
-    ? `$${amount.toFixed(2)}` 
-    : `-$${amount.toFixed(2)}`
+    ? `+${amount.toLocaleString()} sats` 
+    : `-${amount.toLocaleString()} sats`
   
   // Color for the amount (green for receive, standard text color for send)
   const amountColor = type === 'receive' ? styles.receiveAmount : {}
+  
+  // Get appropriate address to display
+  const displayAddress = getDisplayAddress(transaction)
   
   return (
     <TouchableOpacity 
@@ -54,7 +69,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
           {activityType}
         </ThemedText>
         <ThemedText type="default" style={styles.address}>
-          {truncateAddress(address)}
+          {truncateAddress(displayAddress)}
         </ThemedText>
       </View>
       

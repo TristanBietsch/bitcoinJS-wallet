@@ -27,17 +27,46 @@ interface ShareActionsResult {
 export const useShareActions = ({ address, amounts, title = 'Bitcoin Invoice' }: UseShareActionsProps): ShareActionsResult => {
   const { copied, copyToClipboard } = useClipboard()
   
-  // Handle copying address to clipboard
+  // Handle copying full URI to clipboard
   const handleCopy = useCallback(() => {
-    copyToClipboard(address)
-  }, [ address, copyToClipboard ])
+    if (address) {
+      const satsAmount = amounts.sats || '0'
+      const amountInBTC = parseFloat(satsAmount) / 100000000
+      
+      // Create the same bitcoin URI that's used in the QR code
+      const bitcoinURI = amountInBTC > 0 
+        ? `bitcoin:${address}?amount=${amountInBTC.toFixed(8)}`
+        : `bitcoin:${address}`
+        
+      copyToClipboard(bitcoinURI)
+    }
+  }, [ address, amounts.sats, copyToClipboard ])
   
   // Handle sharing invoice details
   const handleShare = useCallback(async () => {
     try {
-      const message = `Bitcoin Invoice:
+      // Don't share if we don't have an address yet
+      if (!address || address.trim() === '') {
+        console.log('Cannot share: address not available yet')
+        return
+      }
+
+      const satsAmount = amounts.sats || '0'
+      const amountInBTC = parseFloat(satsAmount) / 100000000
+      
+      // Create a bitcoin URI for easy payment
+      const bitcoinURI = amountInBTC > 0 
+        ? `bitcoin:${address}?amount=${amountInBTC.toFixed(8)}`
+        : `bitcoin:${address}`
+
+      const message = `Bitcoin Payment Request
+
 Address: ${address}
-Amount: ${amounts.sats} SATS`
+Amount: ${satsAmount} sats (${amountInBTC.toFixed(8)} BTC)
+
+Bitcoin URI: ${bitcoinURI}
+
+You can copy this URI to make a payment using any Bitcoin wallet.`
 
       await Share.share({
         message,

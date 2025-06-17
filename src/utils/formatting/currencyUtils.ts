@@ -45,10 +45,10 @@ export const validateBitcoinInput = (
     if (newDigit === '.') {
       return false // SATS are whole numbers
     }
-    // SATS can be up to 15 digits as 100,000,000 (SATS_PER_BTC) * 1,000,000 (max BTC) is large
-    // A more practical limit might be related to total supply if needed.
-    // For now, let's use a generous limit like 15 digits for SATS string length.
-    return currentValue.replace('.', '').length < 15 || (currentValue.length === 15 && newDigit === '')
+    // SATS can be up to 15 digits - reasonable limit for large amounts
+    // Check if adding the new digit would exceed the limit
+    const newValue = currentValue + newDigit
+    return newValue.length <= 15
   }
 
   // For BTC, enforce 8 decimal places maximum

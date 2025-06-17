@@ -5,8 +5,65 @@ import { seedPhraseService } from '@/src/services/bitcoin/wallet/seedPhraseServi
 import { validateMnemonic } from '@/src/services/bitcoin/wallet/keyManagementService'
 import { deriveAddresses } from '@/src/services/bitcoin/wallet/addressDerivationService'
 import { getDefaultNetwork } from '@/src/services/bitcoin/network/bitcoinNetworkConfig'
-import { walletBalanceService } from '@/src/services/api/walletBalanceService'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import logger, { LogScope } from '@/src/utils/logger'
+import {
+  EsploraUTXO, 
+  ProcessedTransaction 
+} from '../types/blockchain.types'
+import {
+  getUtxos,
+  getTxs,
+} from '../services/bitcoin/blockchain'
+import type { EsploraTransaction } from '../types/blockchain.types'
+
+// Global reference to query client for transaction cache invalidation
+let globalQueryClient: any = null
+
+/**
+ * Set the query client for transaction cache invalidation
+ * This will be called from the app root layout
+ */
+export function setQueryClientForWalletStore(queryClient: any) {
+  globalQueryClient = queryClient
+}
+
+/**
+ * Invalidate transaction cache after wallet sync
+ */
+function invalidateTransactionCache(walletId?: string) {
+  if (!globalQueryClient) {
+    console.warn('[WalletStore] QueryClient not available for transaction cache invalidation')
+    return
+  }
+  
+  console.log('🔄 [WalletStore] Invalidating transaction cache after wallet sync')
+  
+  try {
+    // Import query keys dynamically to avoid circular dependency
+    import('../hooks/transaction/useTransactionHistory').then(module => {
+      const { TRANSACTION_QUERY_KEYS } = module
+      
+      // Invalidate all transaction-related queries
+      if (walletId) {
+        globalQueryClient.invalidateQueries({
+          queryKey : TRANSACTION_QUERY_KEYS.history(walletId)
+        })
+      }
+      
+      // Invalidate all transaction queries for good measure
+      globalQueryClient.invalidateQueries({
+        queryKey : TRANSACTION_QUERY_KEYS.list()
+      })
+      
+      console.log('✅ [WalletStore] Transaction cache invalidated')
+    }).catch(error => {
+      console.warn('[WalletStore] Failed to invalidate transaction cache:', error)
+    })
+  } catch (error) {
+    console.warn('[WalletStore] Error during transaction cache invalidation:', error)
+  }
+}
 
 // Define the wallet store state type
 interface WalletState {
@@ -18,7 +75,8 @@ interface WalletState {
     unconfirmed: number
     total: number
   }
-  transactions: any[] // Replace with proper transaction type
+  utxos: EsploraUTXO[]
+  transactions: ProcessedTransaction[]
   
   // Sync and loading states
   lastSyncTime: number
@@ -28,38 +86,23 @@ interface WalletState {
   
   // Actions
   initializeWallet: () => Promise<void>
-  refreshWalletData: (silent?: boolean) => Promise<void>
+  refreshWalletData: (silent?: boolean, addressToRefresh?: string) => Promise<void>
   importWallet: (seedPhrase: string) => Promise<boolean>
   clearWallet: () => Promise<void>
 }
 
-// Create basic storage for data (temporary implementation)
-// WARNING: No encryption - for development use only
+// Custom AsyncStorage wrapper to handle Zustand's persistence
 const simpleStorage = {
-  getItem : async (key: string): Promise<string | null> => {
-    try {
-      return await AsyncStorage.getItem(`wallet_${key}`)
-    } catch (error) {
-      console.error('Error retrieving from storage:', error)
-      return null
-    }
+  setItem : (name: string, value: string) => {
+    return AsyncStorage.setItem(name, value)
   },
-  
-  setItem : async (key: string, value: string): Promise<void> => {
-    try {
-      await AsyncStorage.setItem(`wallet_${key}`, value)
-    } catch (error) {
-      console.error('Error saving to storage:', error)
-    }
+  getItem : (name: string) => {
+    const value = AsyncStorage.getItem(name)
+    return value ?? null
   },
-  
-  removeItem : async (key: string): Promise<void> => {
-    try {
-      await AsyncStorage.removeItem(`wallet_${key}`)
-    } catch (error) {
-      console.error('Error removing from storage:', error)
-    }
-  }
+  removeItem : (name: string) => {
+    return AsyncStorage.removeItem(name)
+  },
 }
 
 // Create the wallet store with persistence
@@ -72,165 +115,228 @@ export const useWalletStore = create<WalletState>()(
       balances   : {
         confirmed   : 0,
         unconfirmed : 0,
-        total       : 0
+        total       : 0,
       },
+      utxos         : [],
       transactions  : [],
       lastSyncTime  : 0,
       isSyncing     : false,
       error         : null,
       isInitialized : false,
       
-      // Initialize wallet from storage
       initializeWallet : async () => {
+        const persistedWallet = get().wallet // From Zustand's persisted state (AsyncStorage)
+        let storedSeedPhrase: string | null = null
+
         try {
-          // Set initializing state
-          set({ isSyncing: true, error: null })
-          
-          // Check if we already have wallet data
-          const { wallet, seedPhrase } = get()
-          
-          if (wallet && seedPhrase) {
-            // We're already initialized, just refresh data
-            await get().refreshWalletData(true)
-            set({ isInitialized: true })
-            return
-          }
-          
-          // Try to retrieve seed phrase from storage
-          const storedSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
-          
+          storedSeedPhrase = await seedPhraseService.retrieveSeedPhrase()
+        } catch (e) {
+          logger.error(LogScope.WALLET, "Failed to retrieve seed phrase from secure storage", e)
+        }
+
+        if (persistedWallet && storedSeedPhrase) {
+          logger.wallet("Initializing with persisted wallet and stored seed phrase", persistedWallet)
+          set({
+            wallet        : persistedWallet,
+            seedPhrase    : storedSeedPhrase,
+            isInitialized : true,
+            isSyncing     : false,
+            error         : null,
+          })
+
+          get().refreshWalletData(true).catch(refreshError => {
+            logger.warn(LogScope.WALLET, 'Background refresh failed during initialization', refreshError)
+          })
+          return
+        }
+        
+        logger.init("Proceeding with full wallet initialization/setup")
+        set({ isSyncing: true, error: null })
+
+        try {
           if (!storedSeedPhrase) {
-            console.log('No seed phrase found in storage')
+            logger.init('No seed phrase found in secure storage. New user or cleared wallet')
             set({ 
-              isSyncing     : false, 
+              isSyncing     : false,
               isInitialized : true,
               wallet        : null,
               seedPhrase    : null,
               balances      : { confirmed: 0, unconfirmed: 0, total: 0 },
+              utxos         : [],
               transactions  : [],
-              lastSyncTime  : 0
+              lastSyncTime  : 0,
             })
             return
           }
-          
-          // Validate seed phrase
+
           if (!validateMnemonic(storedSeedPhrase)) {
-            throw new Error('Invalid seed phrase retrieved from storage')
+            throw new Error('Invalid seed phrase retrieved from secure storage')
           }
           
-          // Create wallet from seed phrase
           const network = getDefaultNetwork()
           const legacyAddresses = deriveAddresses(storedSeedPhrase, network, 'legacy', 0, 3)
           const segwitAddresses = deriveAddresses(storedSeedPhrase, network, 'segwit', 0, 3)
           const nativeSegwitAddresses = deriveAddresses(storedSeedPhrase, network, 'native_segwit', 0, 3)
           
-          // Create wallet object
           const walletData: BitcoinWallet = {
             id        : 'primary_wallet',
             network,
             addresses : {
               legacy       : legacyAddresses.map(addr => addr.address),
               segwit       : segwitAddresses.map(addr => addr.address),
-              nativeSegwit : nativeSegwitAddresses.map(addr => addr.address)
+              nativeSegwit : nativeSegwitAddresses.map(addr => addr.address),
             },
-            balances : {
-              confirmed   : 0,
-              unconfirmed : 0
-            }
+            balances : persistedWallet ? persistedWallet.balances : get().balances,
           }
           
-          // Update state with wallet data
           set({ 
             wallet        : walletData,
             seedPhrase    : storedSeedPhrase,
-            isInitialized : true 
+            isInitialized : true,
           })
           
-          // Fetch initial balances
           await get().refreshWalletData(false)
           
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error initializing wallet'
-          console.error('Error initializing wallet:', errorMessage)
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error during wallet initialization process'
+          logger.error(LogScope.WALLET, 'Error during wallet initialization process', error)
           set({ 
             error         : errorMessage,
             wallet        : null,
             seedPhrase    : null,
             balances      : { confirmed: 0, unconfirmed: 0, total: 0 },
+            utxos         : [],
             transactions  : [],
             lastSyncTime  : 0,
             isSyncing     : false,
-            isInitialized : true
+            isInitialized : true,
           })
         }
       },
       
-      // Refresh wallet data (balances, transactions)
-      refreshWalletData : async (silent = false) => {
+      // Refresh wallet data (balances, transactions, UTXOs) with transaction cache integration
+      refreshWalletData : async (silent = false, addressToRefresh?: string) => {
         const { wallet } = get()
-        if (!wallet) return
+        
+        const primaryAddress = addressToRefresh || (wallet?.addresses.nativeSegwit[0] || null)
+
+        if (!primaryAddress) {
+          logger.warn(LogScope.WALLET, 'No primary address available for refresh')
+          set({ error: silent ? get().error : 'No wallet address available to refresh data.', isSyncing: false })
+          return
+        }
         
         try {
-          // Only show loading state if not silent refresh
           if (!silent) {
             set({ isSyncing: true, error: null })
           }
           
-          // Get the primary receiving address
-          const address = wallet.addresses.nativeSegwit[0]
+          const fetchedUtxos: EsploraUTXO[] = await getUtxos(primaryAddress)
+          const fetchedTransactions: EsploraTransaction[] = await getTxs(primaryAddress)
           
-          // Fetch balance from service
-          const balanceData = await walletBalanceService.getAddressBalance(address)
-          
-          // Calculate total balance
-          const total = balanceData.confirmed + balanceData.unconfirmed
-          
-          // Only update if balance has changed to avoid unnecessary renders
-          const currentBalances = get().balances
-          const hasChanged = 
-            currentBalances.confirmed !== balanceData.confirmed || 
-            currentBalances.unconfirmed !== balanceData.unconfirmed
-          
-          if (hasChanged) {
-            // Update balances in store
-            set({ 
-              balances : {
-                confirmed   : balanceData.confirmed,
-                unconfirmed : balanceData.unconfirmed,
-                total
-              },
-              // Also update wallet object's balance
-              wallet : {
-                ...wallet,
-                balances : {
-                  confirmed   : balanceData.confirmed,
-                  unconfirmed : balanceData.unconfirmed
-                }
-              },
-              lastSyncTime : Date.now(),
+          const allWalletAddresses = wallet 
+            ? Object.values(wallet.addresses).flat()
+            : []
+
+          const processedTransactions: ProcessedTransaction[] = fetchedTransactions.map((tx: EsploraTransaction) => {
+            let netAmount = 0
+            let isSending = false
+            let isReceiving = false
+
+            tx.vin.forEach(input => {
+              if (input.prevout && input.prevout.scriptpubkey_address && allWalletAddresses.includes(input.prevout.scriptpubkey_address)) {
+                isSending = true
+                netAmount -= input.prevout.value
+              }
+            })
+
+            tx.vout.forEach(output => {
+              if (output.scriptpubkey_address && allWalletAddresses.includes(output.scriptpubkey_address)) {
+                isReceiving = true
+                netAmount += output.value
+              }
             })
             
-            console.log('Wallet balance updated:', balanceData)
-          } else {
-            console.log('Balance unchanged, skipping update')
-            // Still update sync time
-            set({ lastSyncTime: Date.now() })
+            let direction: 'sent' | 'received' | 'self'
+            if (isSending && isReceiving) {
+              direction = 'self'
+            } else if (isSending) {
+              direction = 'sent'
+              if (direction === 'sent') {
+                let amountSentToOthers = 0
+                tx.vout.forEach(output => {
+                  if (!(output.scriptpubkey_address && allWalletAddresses.includes(output.scriptpubkey_address))) {
+                    amountSentToOthers += output.value                 
+                  }
+                })
+                netAmount = -amountSentToOthers
+              }
+            } else if (isReceiving) {
+              direction = 'received'
+            } else {
+              direction = 'self' 
+              netAmount = 0
+            }
+
+            return {
+              txid        : tx.txid,
+              confirmed   : tx.status.confirmed,
+              blockHeight : tx.status.block_height,
+              blockTime   : tx.status.block_time,
+              fee         : tx.fee,
+              netAmount,
+              direction,
+            }
+          })
+
+          let confirmedBalance = 0
+          let unconfirmedBalance = 0
+          fetchedUtxos.forEach((utxo: EsploraUTXO) => {
+            if (utxo.status.confirmed) {
+              confirmedBalance += utxo.value
+            } else {
+              unconfirmedBalance += utxo.value
+            }
+          })
+          const totalBalance = confirmedBalance + unconfirmedBalance
+
+          const newBalances = {
+            confirmed   : confirmedBalance,
+            unconfirmed : unconfirmedBalance,
+            total       : totalBalance,
           }
+
+          set(state => ({
+            balances     : newBalances,
+            utxos        : fetchedUtxos,
+            transactions : processedTransactions,
+            lastSyncTime : Date.now(),
+            isSyncing    : false,
+            wallet       : state.wallet ? {
+              ...state.wallet,
+              balances : { 
+                confirmed   : newBalances.confirmed,
+                unconfirmed : newBalances.unconfirmed,
+              }
+            } : null,
+          }))
           
-          // TODO: Add transaction history fetching here
+          logger.walletSuccess(`Data refreshed for ${primaryAddress.slice(0, 8)}...${primaryAddress.slice(-4)}`)
+          
+          // Invalidate transaction cache after successful wallet sync
+          if (wallet?.id) {
+            invalidateTransactionCache(wallet.id)
+          }
           
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error refreshing wallet'
-          console.error('Error refreshing wallet:', errorMessage)
+          logger.error(LogScope.WALLET, `Error refreshing wallet data for address ${primaryAddress}`, error)
           
-          // Only set error state if not a silent refresh
           if (!silent) {
-            set({ error: errorMessage })
+            set({ error: errorMessage, isSyncing: false })
+          } else {
+            set({ isSyncing: false })
           }
-        } finally {
-          // Always update loading state to false, even when errors occur
-          // This was previously only done if (!silent)
-          set({ isSyncing: false })
         }
       },
       
@@ -282,7 +388,7 @@ export const useWalletStore = create<WalletState>()(
           return true
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error importing wallet'
-          console.error('Error importing wallet:', errorMessage)
+          logger.error(LogScope.WALLET, 'Error importing wallet', error)
           set({ 
             error     : errorMessage,
             isSyncing : false
@@ -306,6 +412,7 @@ export const useWalletStore = create<WalletState>()(
               unconfirmed : 0,
               total       : 0
             },
+            utxos         : [],
             transactions  : [],
             lastSyncTime  : 0,
             isSyncing     : false,
@@ -313,7 +420,7 @@ export const useWalletStore = create<WalletState>()(
             isInitialized : true // We still consider it initialized, just empty
           })
         } catch (error) {
-          console.error('Error clearing wallet:', error)
+          logger.error(LogScope.WALLET, 'Error clearing wallet', error)
           throw error
         }
       }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, TouchableOpacity, Dimensions, Alert } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
 import { useRouter } from 'expo-router'
 import { Stack } from 'expo-router'
 import { X } from 'lucide-react-native'
@@ -9,6 +10,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import QRCode from 'react-native-qrcode-svg'
 import { ThemedText } from '@/src/components/ui/Text'
 import { useSendStore } from '@/src/store/sendStore'
+import { useWalletAddress } from '@/src/store/walletStore'
+import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
 
 // Constants for QR frame layout
 const SCREEN_WIDTH = Dimensions.get('window').width
@@ -273,8 +276,33 @@ const ScannerMode: React.FC<ScannerModeProps> = ({ onScanSuccess }) => {
 
 // QR Code Display Mode Component
 const QRCodeMode: React.FC = () => {
-  // In a real app, this would come from the wallet or API
-  const walletAddress = "b3289asjklasdfasdfjasdffasdff7asduf89asdfas0×84" 
+  const walletAddress = useWalletAddress()
+  
+  // Show loading state if wallet address is not available yet
+  if (!walletAddress) {
+    return (
+      <View style={styles.qrCodeContainer}>
+        <View style={styles.qrCodeWrapper}>
+          <View style={styles.loadingPlaceholder}>
+            <ThemedText style={styles.loadingText}>
+              Loading wallet address...
+            </ThemedText>
+          </View>
+        </View>
+        
+        <View style={styles.addressContainer}>
+          <ThemedText style={styles.addressLabel}>
+            on-chain address:
+          </ThemedText>
+          <View style={styles.addressTouchable}>
+            <ThemedText style={styles.addressText}>
+              Wallet not loaded
+            </ThemedText>
+          </View>
+        </View>
+      </View>
+    )
+  }
   
   return (
     <View style={styles.qrCodeContainer}>
@@ -291,9 +319,20 @@ const QRCodeMode: React.FC = () => {
         <ThemedText style={styles.addressLabel}>
           on-chain address:
         </ThemedText>
-        <ThemedText style={styles.addressText}>
-          {walletAddress}
-        </ThemedText>
+        <TouchableOpacity 
+          onPress={async () => {
+            await Clipboard.setStringAsync(walletAddress)
+            Alert.alert('Copied!', 'Address copied to clipboard')
+          }}
+          style={styles.addressTouchable}
+        >
+          <ThemedText style={styles.addressText}>
+            {walletAddress}
+          </ThemedText>
+          <ThemedText style={styles.copyHint}>
+            Tap to copy
+          </ThemedText>
+        </TouchableOpacity>
       </View>
     </View>
   )
@@ -306,6 +345,9 @@ const QRMenuScreen: React.FC = () => {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { setAddress, setAmount, reset } = useSendStore()
+  
+  // Enable auto-sync to keep wallet updated when receiving testnet coins
+  useAutoWalletSync()
   
   const handleClose = () => {
     router.back()
@@ -645,6 +687,29 @@ const styles = StyleSheet.create({
     fontSize         : 14,
     textAlign        : 'center',
     marginHorizontal : 40,
+  },
+  loadingPlaceholder : {
+    width           : FRAME_WIDTH,
+    height          : FRAME_WIDTH,
+    backgroundColor : '#f0f0f0',
+    borderRadius    : 10,
+    alignItems      : 'center',
+    justifyContent  : 'center',
+  },
+  loadingText : {
+    fontSize : 16,
+    color    : '#666',
+  },
+  addressTouchable : {
+    alignItems   : 'center',
+    padding      : 8,
+    borderRadius : 8,
+  },
+  copyHint : {
+    fontSize  : 12,
+    color     : '#007AFF',
+    marginTop : 4,
+    fontStyle : 'italic',
   },
 })
 

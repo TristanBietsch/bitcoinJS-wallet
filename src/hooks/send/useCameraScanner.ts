@@ -3,7 +3,8 @@ import { Alert, BackHandler } from 'react-native'
 import { parseQRCode } from '@/src/utils/send/qrCodeParser'
 import { useSendStore } from '@/src/store/sendStore'
 import { useRouter } from 'expo-router'
-import { validateAddress } from '@/src/utils/validation'
+import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddress'
+import { bitcoinjsNetwork } from '@/src/config/env'
 
 export interface CameraScannerResult {
   address : string
@@ -17,6 +18,14 @@ export const useCameraScanner = () => {
   const hasNavigatedRef = useRef(false)
   const router = useRouter()
   const { setAddress, setAmount } = useSendStore()
+  
+  // Define handleClose before the useEffect that uses it
+  const handleClose = useCallback(() => {
+    if (hasNavigatedRef.current) return
+    
+    hasNavigatedRef.current = true
+    router.back()
+  }, [ router ])
   
   // Reset scanning state when component mounts
   useEffect(() => {
@@ -34,7 +43,7 @@ export const useCameraScanner = () => {
       setIsScanning(false)
       backHandler.remove()
     }
-  }, [])
+  }, [ handleClose ])
 
   // Process the scanned QR code data
   const handleQRCodeScanned = useCallback((data: string) => {
@@ -47,7 +56,7 @@ export const useCameraScanner = () => {
       const { address, amount } = parseQRCode(data)
       
       // Validate the address
-      const validationResult = validateAddress(address)
+      const validationResult = validateAndSanitizeAddress(address, bitcoinjsNetwork)
       
       if (!validationResult.isValid) {
         Alert.alert(
@@ -74,7 +83,8 @@ export const useCameraScanner = () => {
         router.replace('/send/send' as any)
       }, 100)
       
-    } catch (_error) {
+    } catch (error) {
+      console.error('QR code parsing error:', error)
       Alert.alert(
         'Error',
         'Failed to parse QR code. Please try again.',
@@ -93,14 +103,6 @@ export const useCameraScanner = () => {
       'Failed to access camera. Please check your camera permissions.',
       [ { text: 'OK', onPress: () => router.back() } ]
     )
-  }, [ router ])
-  
-  // Close the scanner and go back
-  const handleClose = useCallback(() => {
-    if (hasNavigatedRef.current) return
-    
-    hasNavigatedRef.current = true
-    router.back()
   }, [ router ])
 
   return {

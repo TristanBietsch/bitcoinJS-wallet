@@ -2,7 +2,6 @@ import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/src/components/ui/Text'
 import { CurrencyType } from '@/src/types/domain/finance'
-import { formatBitcoinAmount } from '@/src/utils/formatting/formatCurrencyValue'
 
 interface AmountDisplayProps {
   amount: string
@@ -14,13 +13,12 @@ export const AmountDisplay: React.FC<AmountDisplayProps> = ({
   amount,
   currency,
 }) => {
-  const formattedDisplayAmount = formatBitcoinAmount(amount, currency)
-
+  // Amount is already formatted by the hook, so just display it
   return (
     <View style={styles.amountContainer}>
       <View style={styles.amountDisplay}>
         <ThemedText style={styles.amountText}>
-          {formattedDisplayAmount} <ThemedText style={styles.currencyText}>{currency}</ThemedText>
+          {amount} <ThemedText style={styles.currencyText}>{currency}</ThemedText>
         </ThemedText>
       </View>
     </View>
