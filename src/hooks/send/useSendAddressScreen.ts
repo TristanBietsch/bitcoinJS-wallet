@@ -106,7 +106,14 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
   const loadFeeRates = useCallback(async () => {
     setIsLoadingFees(true)
     try {
+      console.log('🔄 [useSendAddressScreen] Fetching enhanced fee estimates...')
       const rates = await getEnhancedFeeEstimates()
+      console.log('✅ [useSendAddressScreen] Received fee rates:', {
+        economy : rates.economy,
+        normal  : rates.normal, 
+        fast    : rates.fast,
+        source  : rates.source
+      })
       
       // Convert to fee options format used by sendStore
       const options: FeeOption[] = [

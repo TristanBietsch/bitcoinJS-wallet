@@ -107,19 +107,27 @@ export default function SendAddressScreen() {
   const mappedSelectedSpeed: SpeedTier = selectedSpeed === 'normal' ? 'standard' : selectedSpeed as SpeedTier
   
   // Convert feeOptions from hook to speedOptions format
-  const speedOptions = feeOptions.map(option => ({
-    id : option.confirmationTime >= 144 ? 'economy' : 
-        option.confirmationTime >= 6 ? 'standard' : 'express',
-    label : option.confirmationTime >= 144 ? 'Economy' : 
-           option.confirmationTime >= 6 ? 'Standard' : 'Express',
-    fee : {
-      sats : Math.round(option.feeRate * 200) // Estimate with 200 vBytes
-    },
-    feeRate       : option.feeRate,
-    estimatedTime : option.confirmationTime >= 144 ? '~24 hours' :
-                   option.confirmationTime >= 6 ? '~1 hour' : '~10 minutes',
-    estimatedBlocks : option.confirmationTime
-  }))
+  const speedOptions = feeOptions.map(option => {
+    // Use more realistic transaction size estimation (1-2 inputs, 2 outputs)
+    const estimatedTxSize = 180 // More realistic average
+    const estimatedFee = Math.round(option.feeRate * estimatedTxSize)
+    
+    console.log(`💰 [SendAddressScreen] Fee calculation: ${option.feeRate} sat/vB × ${estimatedTxSize} vBytes = ${estimatedFee} sats`)
+    
+    return {
+      id : option.confirmationTime >= 144 ? 'economy' : 
+          option.confirmationTime >= 6 ? 'standard' : 'express',
+      label : option.confirmationTime >= 144 ? 'Economy' : 
+             option.confirmationTime >= 6 ? 'Standard' : 'Express',
+      fee : {
+        sats : estimatedFee
+      },
+      feeRate       : option.feeRate,
+      estimatedTime : option.confirmationTime >= 144 ? '~24 hours' :
+                     option.confirmationTime >= 6 ? '~1 hour' : '~10 minutes',
+      estimatedBlocks : option.confirmationTime
+    }
+  })
   
   // Create customFee object - use pendingInput when modal is open, otherwise use stored rate
   const customFee: CustomFee = {

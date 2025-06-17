@@ -76,16 +76,27 @@ export async function getTxs(address: string): Promise<EsploraTransaction[]> {
  * @returns A promise that resolves to a FeeRates object (slow, normal, fast).
  */
 export async function getFeeEstimates(): Promise<FeeRates> {
+  // Debug network configuration
+  const { BITCOIN_NETWORK, IS_TESTNET } = require('@/src/config/bitcoinNetwork')
+  console.log(`🌐 [BlockchainService] getFeeEstimates for ${BITCOIN_NETWORK} (testnet: ${IS_TESTNET})`)
+  
   try {
     // Use optimized client with 1-minute cache and safe defaults
+    console.log('🔗 [BlockchainService] Requesting fee estimates from optimized client...')
     const data = await optimizedClient.getFeeEstimates()
+    console.log('📡 [BlockchainService] Raw API response:', data)
+    
     const parsedEsploraFees = EsploraFeeEstimatesSchema.parse(data)
+    console.log('✅ [BlockchainService] Parsed fee data:', parsedEsploraFees)
 
     const feeRates: FeeRates = {
       fast   : parsedEsploraFees['1'] || parsedEsploraFees['2'] || parsedEsploraFees['3'] || 20,
       normal : parsedEsploraFees['6'] || parsedEsploraFees['3'] || parsedEsploraFees['10'] || parsedEsploraFees['12'] || 10,
       slow   : parsedEsploraFees['144'] || parsedEsploraFees['72'] || parsedEsploraFees['200'] || parsedEsploraFees['24'] || 2,
     }
+    
+    console.log('📊 [BlockchainService] Final fee rates:', feeRates)
+    
     if (feeRates.fast <= 0 || feeRates.normal <= 0 || feeRates.slow <= 0) {
         console.warn("Invalid fee rates from Mempool API, using defaults", feeRates, parsedEsploraFees)
         return { fast: 20, normal: 10, slow: 2 }
@@ -93,8 +104,16 @@ export async function getFeeEstimates(): Promise<FeeRates> {
     return feeRates
   } catch (error) {
     console.error(`Error in getFeeEstimates:`, error)
-    console.warn('Failed to fetch fee estimates, returning default rates.', error)
-    return { fast: 20, normal: 10, slow: 2 } // Default fallback
+    console.warn('Failed to fetch fee estimates, returning network-specific defaults.', error)
+    
+    // Import network config for appropriate fallbacks
+    const { IS_TESTNET } = require('@/src/config/bitcoinNetwork')
+    
+    if (IS_TESTNET) {
+      return { fast: 2, normal: 1, slow: 1 } // Testnet fallback rates
+    } else {
+      return { fast: 20, normal: 10, slow: 2 } // Mainnet fallback rates  
+    }
   }
 }
 

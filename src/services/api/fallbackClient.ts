@@ -274,12 +274,24 @@ class FallbackAPIClient {
       }
     }
     
-    // If all endpoints fail, return fallback data
-    console.warn('All fee endpoints failed, using fallback rates')
-    return { 
-      '1'   : 25,   // Fast: ~10 minutes 
-      '6'   : 10,   // Normal: ~1 hour
-      '144' : 2   // Slow: ~24 hours
+    // If all endpoints fail, return fallback data based on network
+    console.warn('All fee endpoints failed, using network-specific fallback rates')
+    
+    // Import network config to provide appropriate fallbacks
+    const { IS_TESTNET } = require('@/src/config/bitcoinNetwork')
+    
+    if (IS_TESTNET) {
+      return { 
+        '1'   : 2,   // Fast: ~10 minutes (testnet typically lower)
+        '6'   : 1,   // Normal: ~1 hour  
+        '144' : 1    // Slow: ~24 hours (minimum 1 sat/vB)
+      }
+    } else {
+      return { 
+        '1'   : 25,  // Fast: ~10 minutes (mainnet)
+        '6'   : 10,  // Normal: ~1 hour
+        '144' : 2    // Slow: ~24 hours
+      }
     }
   }
 
