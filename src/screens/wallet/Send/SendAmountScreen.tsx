@@ -11,14 +11,14 @@ import AmountEntrySection from '@/src/components/features/Send/Amount/AmountEntr
 import { ThemedText } from '@/src/components/ui/Text'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { useWalletStore } from '@/src/store/walletStore'
-import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
+
 import type { CurrencyType } from '@/src/types/domain/finance'
 
 export default function SendAmountScreen() {
   const router = useRouter()
   
   // Auto-sync wallet data
-  useAutoWalletSync()
+
   
   // Transaction store state and actions
   const {

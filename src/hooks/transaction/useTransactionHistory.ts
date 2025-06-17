@@ -20,7 +20,6 @@ import {
   getDisplayAddress 
 } from '../../services/bitcoin/transactionHistoryService'
 import type { Transaction } from '../../types/domain/transaction/transaction.types'
-import React from 'react'
 
 // Query keys for React Query caching
 export const TRANSACTION_QUERY_KEYS = {
@@ -87,10 +86,10 @@ export function useTransactionHistory(limit: number = 50) {
       return fetchTransactionHistory(wallet, limit)
     },
     enabled              : !!wallet, // Only fetch when wallet is available
-    staleTime            : PAGINATION_CONFIG.backgroundRefresh, // 5 minutes for regular history
-    gcTime               : 10 * 60 * 1000, // 10 minutes cache time
+    staleTime            : 10 * 60 * 1000, // 10 minutes (simplified)
+    gcTime               : 30 * 60 * 1000, // 30 minutes cache time
     refetchOnWindowFocus : false, // Don't refetch on window focus
-    refetchOnMount       : 'always', // Always refetch on mount for fresh data
+    refetchOnMount       : false, // Don't refetch on mount - use cached data
     retry                : 3, // Retry failed requests 3 times
     retryDelay           : (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   })
@@ -411,19 +410,7 @@ export function useTransactions(options: {
   // Cache management
   const cache = useTransactionCache()
   
-  // Background refresh effect
-  React.useEffect(() => {
-    if (!enableBackgroundRefresh) return
-    
-    const interval = setInterval(() => {
-      // Silently refresh in background
-      if (!history.isFetching) {
-        history.refresh()
-      }
-    }, PAGINATION_CONFIG.backgroundRefresh)
-    
-    return () => clearInterval(interval)
-  }, [ enableBackgroundRefresh, history ])
+  // Background refresh disabled - rely on manual refresh and cache invalidation instead
   
   return {
     // Data

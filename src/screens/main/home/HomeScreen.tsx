@@ -13,7 +13,7 @@ import { useReceiveStore } from '@/src/store/receiveStore'
 import { Colors } from '@/src/constants/colors'
 import AppHeader from '@/src/components/ui/Header/AppHeader'
 import { Scan } from 'lucide-react-native'
-import { useWalletBalance } from '@/src/hooks/wallet/useWalletBalance'
+import { useWalletStore } from '@/src/store/walletStore'
 import { ThemedText } from '@/src/components/ui/Text'
 import { SATS_PER_BTC } from '@/src/constants/currency'
 
@@ -21,21 +21,24 @@ const HomeScreen = () => {
   // State for selected currency format
   const [ currency, setCurrency ] = useState<CurrencyType>('SATS')
   
-  // Use the combined hook for wallet balance and price data
+  // Use wallet store directly for balance data
   const { 
-    satsAmount, 
-    btcAmount, 
-    isLoading: isDataLoading, // Combined loading from wallet and price
-    error: dataError,       // Combined error
-    refreshBalances: refreshAllData // Refetches both wallet and price
-  } = useWalletBalance()
+    balances, 
+    isSyncing, 
+    error: walletError, 
+    refreshWalletData 
+  } = useWalletStore()
+  
+  // Convert balances to display format
+  const satsAmount = balances.total
+  const btcAmount = balances.total / SATS_PER_BTC
   
   // Use fade animation hook - use the fadeAnim value directly but not the fadeTransition function
   const { fadeAnim } = useFadeAnimation()
   
-  // We use the combined isLoading and error from the hook
-  const isLoading = isDataLoading
-  const error = dataError
+  // Use wallet sync state
+  const isLoading = isSyncing
+  const error = walletError
   
   // Get access to store reset functions
   const resetSendStore = useSendStore(state => state.reset)
@@ -48,9 +51,9 @@ const HomeScreen = () => {
   
   useFocusEffect(
     React.useCallback(() => {
-      refreshAllData(true) // Use silent refresh to avoid UI flashing
+      refreshWalletData(true) // Use silent refresh to avoid UI flashing
       return () => {}
-    }, [ refreshAllData ])
+    }, [ refreshWalletData ])
   )
   
   // Handle currency change with animation
@@ -106,7 +109,7 @@ const HomeScreen = () => {
   
   // Handle manual balance refresh (with visible loading)
   const handleManualRefresh = () => {
-    refreshAllData(false) // Use visible refresh for manual updates
+    refreshWalletData(false) // Use visible refresh for manual updates
   }
 
   // Currency dropdown component

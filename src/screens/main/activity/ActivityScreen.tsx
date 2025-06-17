@@ -5,7 +5,7 @@ import { TransactionGroups } from '@/src/components/features/Transaction/List/Tr
 import { useTransactionNavigation } from '@/src/components/ui/Navigation/transactionNavigation'
 import { useGroupedTransactions } from '@/src/hooks/transaction/useGroupedTransactions'
 import { useTransactions } from '@/src/hooks/transaction/useTransactionHistory'
-import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
+
 import { usePendingTransactionsStore } from '@/src/store/pendingTransactionsStore'
 import { ThemedText } from '@/src/components/ui/Text'
 
@@ -13,8 +13,7 @@ export default function ActivityScreen() {
   const { navigateToTransactionDetails } = useTransactionNavigation()
   const { cleanupOldTransactions } = usePendingTransactionsStore()
   
-  // Auto-sync wallet data to ensure transactions are up to date
-  useAutoWalletSync()
+
   
   // Cleanup old pending transactions on mount
   React.useEffect(() => {
