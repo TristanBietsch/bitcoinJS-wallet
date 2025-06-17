@@ -10,7 +10,7 @@ import { useSendStore } from '@/src/store/sendStore'
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { SendTransactionService } from '@/src/services/sendTransactionService'
 import { validateBitcoinAddress } from '@/src/services/bitcoin/addressValidationService'
-import { convertUIToBitcoinParams } from '@/src/utils/send/transactionParams'
+import { convertUIToBitcoinParams } from '@/src/utils/transaction/transactionParams'
 import type { TransactionResult } from '@/src/types/transaction.types'
 import type { SendBTCError } from '@/src/types/errors.types'
 import {
