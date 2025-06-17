@@ -9,7 +9,7 @@ interface Transaction {
   date: Date;
   recipient?: string;
   sender?: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'sending' | 'pending' | 'completed' | 'failed';
 }
 
 interface TransactionItemProps {
@@ -57,6 +57,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, onPress 
           {sign}{amount} {currency}
         </Text>
         <Text style={[ styles.status, 
+          status === 'sending' && styles.sendingStatus,
           status === 'pending' && styles.pendingStatus,
           status === 'failed' && styles.failedStatus ]}>
           {status}
@@ -135,6 +136,9 @@ const styles = StyleSheet.create({
   status : {
     fontSize : 12,
     color    : '#4CAF50',
+  },
+  sendingStatus : {
+    color : '#2196F3',
   },
   pendingStatus : {
     color : '#FFA000',

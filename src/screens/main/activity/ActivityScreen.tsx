@@ -6,13 +6,20 @@ import { useTransactionNavigation } from '@/src/components/ui/Navigation/transac
 import { useGroupedTransactions } from '@/src/hooks/transaction/useGroupedTransactions'
 import { useTransactions } from '@/src/hooks/transaction/useTransactionHistory'
 import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
+import { usePendingTransactionsStore } from '@/src/store/pendingTransactionsStore'
 import { ThemedText } from '@/src/components/ui/Text'
 
 export default function ActivityScreen() {
   const { navigateToTransactionDetails } = useTransactionNavigation()
+  const { cleanupOldTransactions } = usePendingTransactionsStore()
   
   // Auto-sync wallet data to ensure transactions are up to date
   useAutoWalletSync()
+  
+  // Cleanup old pending transactions on mount
+  React.useEffect(() => {
+    cleanupOldTransactions()
+  }, [])
   
   // Fetch real transaction history using the unified hook
   const {
@@ -28,6 +35,17 @@ export default function ActivityScreen() {
   
   // Group transactions by time periods using existing hook (now works with real Transaction interface)
   const groupedTransactions = useGroupedTransactions(transactions)
+  
+  // Debug logging to track transaction updates
+  React.useEffect(() => {
+    console.log(`📱 [ActivityScreen] Transactions updated: ${transactions.length} total`)
+    if (transactions.length > 0) {
+      const sendingCount = transactions.filter(tx => tx.status === 'sending').length
+      const pendingCount = transactions.filter(tx => tx.status === 'pending').length
+      const completedCount = transactions.filter(tx => tx.status === 'completed').length
+      console.log(`📱 [ActivityScreen] Status breakdown: ${sendingCount} sending, ${pendingCount} pending, ${completedCount} completed`)
+    }
+  }, [ transactions ])
   
   // Loading state
   if (isLoading) {

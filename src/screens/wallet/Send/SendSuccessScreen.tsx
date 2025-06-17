@@ -20,14 +20,21 @@ export default function SendSuccessScreen() {
   
   const navigateToHome = () => {
     actions.reset()
-    router.replace('/(tabs)/home' as any)
+    router.replace('/' as any)
   }
   
   const navigateToDetails = () => {
     if (transactionId) {
+      console.log('🚀 [SendSuccessScreen] Navigating to details with params:', { 
+        id     : transactionId, 
+        source : 'send-success' 
+      })
       router.push({
         pathname : '/transaction/[id]',
-        params   : { id: transactionId }
+        params   : { 
+          id     : transactionId,
+          source : 'send-success'
+        }
       } as any)
     }
   }

@@ -11,7 +11,7 @@ interface Transaction {
   date: Date;
   recipient?: string;
   sender?: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'sending' | 'pending' | 'completed' | 'failed';
 }
 
 interface TransactionListProps {

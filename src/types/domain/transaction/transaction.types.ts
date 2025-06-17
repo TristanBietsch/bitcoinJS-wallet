@@ -10,7 +10,7 @@ export interface Transaction {
   date: Date;
   recipient?: string;
   sender?: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'sending' | 'pending' | 'completed' | 'failed';
   fee?: number;
   memo?: string;
   txid?: string; 

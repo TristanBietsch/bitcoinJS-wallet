@@ -108,17 +108,17 @@ export default function SendAddressScreen() {
   
   // Convert feeOptions from hook to speedOptions format
   const speedOptions = feeOptions.map(option => ({
-    id: option.confirmationTime >= 144 ? 'economy' : 
+    id : option.confirmationTime >= 144 ? 'economy' : 
         option.confirmationTime >= 6 ? 'standard' : 'express',
-    label: option.confirmationTime >= 144 ? 'Economy' : 
+    label : option.confirmationTime >= 144 ? 'Economy' : 
            option.confirmationTime >= 6 ? 'Standard' : 'Express',
-    fee: {
-      sats: Math.round(option.feeRate * 200) // Estimate with 200 vBytes
+    fee : {
+      sats : Math.round(option.feeRate * 200) // Estimate with 200 vBytes
     },
-    feeRate: option.feeRate,
-    estimatedTime: option.confirmationTime >= 144 ? '~24 hours' :
+    feeRate       : option.feeRate,
+    estimatedTime : option.confirmationTime >= 144 ? '~24 hours' :
                    option.confirmationTime >= 6 ? '~1 hour' : '~10 minutes',
-    estimatedBlocks: option.confirmationTime
+    estimatedBlocks : option.confirmationTime
   }))
   
   // Create customFee object - use pendingInput when modal is open, otherwise use stored rate
