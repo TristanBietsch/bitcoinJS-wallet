@@ -135,11 +135,13 @@ export class BitcoinAPIClient {
       throw new Error('Transaction hex is required')
     }
     
+    console.log(`🔄 [BitcoinAPI] Attempting to broadcast transaction: ${txHex.substring(0, 20)}... (${txHex.length} chars)`)
+    
     let lastError: Error | null = null
     
     for (const endpoint of ENDPOINTS) {
       try {
-        console.log(`🔄 [BitcoinAPI] Broadcasting via ${endpoint.name}`)
+        console.log(`🔄 [BitcoinAPI] Broadcasting via ${endpoint.name} to ${endpoint.baseUrl}/tx (${txHex.length / 2} bytes)`)
         
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), endpoint.timeout)
@@ -147,7 +149,9 @@ export class BitcoinAPIClient {
         const response = await fetch(`${endpoint.baseUrl}/tx`, {
           method  : 'POST',
           headers : {
-            'Content-Type' : 'text/plain',
+            'Content-Type'   : 'text/plain',
+            'Content-Length' : (txHex.length / 2).toString(),
+            'Accept'         : 'text/plain'
           },
           body   : txHex,
           signal : controller.signal
@@ -157,11 +161,18 @@ export class BitcoinAPIClient {
         
         if (!response.ok) {
           const errorText = await response.text()
+          console.warn(`❌ [BitcoinAPI] HTTP ${response.status} from ${endpoint.name}: ${errorText}`)
           throw new Error(`HTTP ${response.status}: ${errorText}`)
         }
         
         const txid = await response.text()
         console.log(`✅ [BitcoinAPI] Transaction broadcasted via ${endpoint.name}: ${txid}`)
+        
+        // Validate txid format (should be 64 hex characters)
+        if (!/^[a-fA-F0-9]{64}$/.test(txid)) {
+          console.warn(`⚠️ [BitcoinAPI] Invalid txid format received: ${txid}`)
+        }
+        
         return txid
         
       } catch (error) {

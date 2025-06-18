@@ -306,25 +306,40 @@ class FallbackAPIClient {
     const path = '/tx'
     const sortedEndpoints = [ ...BITCOIN_API_ENDPOINTS ].sort((a, b) => a.priority - b.priority)
     
+    logger.debug(LogScope.API, `Attempting to broadcast transaction: ${txHex.substring(0, 20)}...`)
+    
     for (const endpoint of sortedEndpoints) {
       try {
         const url = `${endpoint.baseUrl}${path}`
+        logger.debug(LogScope.API, `Broadcasting to ${url} with Content-Type: text/plain, Content-Length: ${txHex.length / 2} bytes (${txHex.length} hex chars)`)
+        
         const txid = await resilientClient.request<string>(
           'POST',
           url,
           txHex,
           { 
-            headers : { 'Content-Type': 'text/plain' },
+            headers : { 
+              'Content-Type'   : 'text/plain',
+              'Content-Length' : (txHex.length / 2).toString(),
+              'Accept'         : 'text/plain'
+            },
             timeout : endpoint.timeout 
           },
           RequestPriority.CRITICAL
         )
         
-        logger.debug(LogScope.API, `Transaction broadcast successful with ${endpoint.name}`)
+        logger.debug(LogScope.API, `Transaction broadcast successful with ${endpoint.name}: ${txid}`)
         return txid
         
       } catch (error) {
-        logger.warn(LogScope.API, `Broadcast failed with ${endpoint.name}`, error instanceof Error ? error.message : error)
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        logger.warn(LogScope.API, `Broadcast failed with ${endpoint.name}: ${errorMsg}`)
+        
+        // Log more details for debugging
+        if (error instanceof Error && 'response' in error) {
+          const axiosError = error as any
+          logger.warn(LogScope.API, `HTTP Status: ${axiosError.response?.status}, Response: ${axiosError.response?.data}`)
+        }
       }
     }
     
