@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { optimizedClient } from '@/src/services/api/optimizedClient'
+import { BitcoinAPIClient } from '@/src/services/api/bitcoinClient'
 import type {
   EsploraUTXO,
   EsploraTransaction,
@@ -7,8 +7,7 @@ import type {
 } from '@/src/types/blockchain.types'
 import {
   EsploraUTXOSchema,
-  EsploraTransactionSchema,
-  EsploraFeeEstimatesSchema
+  EsploraTransactionSchema
 } from '@/src/types/blockchain.types'
 
 /**
@@ -21,8 +20,8 @@ import {
 export async function getUtxos(address: string): Promise<EsploraUTXO[]> {
   if (!address) throw new Error('Address is required to fetch UTXOs')
   try {
-    // Use optimized client with 3-minute cache and predictive loading
-    const data = await optimizedClient.getUtxos(address)
+    // Use simplified Bitcoin API client
+    const data = await BitcoinAPIClient.getUtxos(address)
     return z.array(EsploraUTXOSchema).parse(data)
   } catch (error) {
     console.error(`Error in getUtxos for ${address}:`, error)
@@ -61,8 +60,8 @@ export async function getBalance(address: string): Promise<number> {
 export async function getTxs(address: string): Promise<EsploraTransaction[]> {
   if (!address) throw new Error('Address is required to fetch transaction history')
   try {
-    // Use optimized client with 10-minute cache
-    const data = await optimizedClient.getTransactions(address)
+    // Use simplified Bitcoin API client
+    const data = await BitcoinAPIClient.getTransactions(address)
     return z.array(EsploraTransactionSchema).parse(data)
   } catch (error) {
     console.error(`Error in getTxs for ${address}:`, error)
@@ -81,24 +80,24 @@ export async function getFeeEstimates(): Promise<FeeRates> {
   console.log(`🌐 [BlockchainService] getFeeEstimates for ${BITCOIN_NETWORK} (testnet: ${IS_TESTNET})`)
   
   try {
-    // Use optimized client with 1-minute cache and safe defaults
-    console.log('🔗 [BlockchainService] Requesting fee estimates from optimized client...')
-    const data = await optimizedClient.getFeeEstimates()
+    // Use simplified Bitcoin API client
+    console.log('🔗 [BlockchainService] Requesting fee estimates from BitcoinAPIClient...')
+    const data = await BitcoinAPIClient.getFeeEstimates()
     console.log('📡 [BlockchainService] Raw API response:', data)
     
-    const parsedEsploraFees = EsploraFeeEstimatesSchema.parse(data)
-    console.log('✅ [BlockchainService] Parsed fee data:', parsedEsploraFees)
+    // BitcoinAPIClient now returns normalized Mempool format
+    console.log('✅ [BlockchainService] Received normalized fee data:', data)
 
     const feeRates: FeeRates = {
-      fast   : parsedEsploraFees['1'] || parsedEsploraFees['2'] || parsedEsploraFees['3'] || 20,
-      normal : parsedEsploraFees['6'] || parsedEsploraFees['3'] || parsedEsploraFees['10'] || parsedEsploraFees['12'] || 10,
-      slow   : parsedEsploraFees['144'] || parsedEsploraFees['72'] || parsedEsploraFees['200'] || parsedEsploraFees['24'] || 2,
+      fast   : data.fastestFee || data.halfHourFee || 20,
+      normal : data.halfHourFee || data.hourFee || 10, 
+      slow   : data.hourFee || data.economyFee || 2,
     }
     
     console.log('📊 [BlockchainService] Final fee rates:', feeRates)
     
     if (feeRates.fast <= 0 || feeRates.normal <= 0 || feeRates.slow <= 0) {
-        console.warn("Invalid fee rates from Mempool API, using defaults", feeRates, parsedEsploraFees)
+        console.warn("Invalid fee rates from Bitcoin API, using defaults", feeRates, data)
         return { fast: 20, normal: 10, slow: 2 }
     }
     return feeRates
@@ -126,8 +125,8 @@ export async function getFeeEstimates(): Promise<FeeRates> {
 export async function broadcastTx(txHex: string): Promise<string> {
   if (!txHex) throw new Error('Transaction hex is required to broadcast')
   try {
-    // Use optimized client which tries all endpoints
-    const txid = await optimizedClient.broadcastTransaction(txHex)
+    // Use simplified Bitcoin API client
+    const txid = await BitcoinAPIClient.broadcastTransaction(txHex)
     if (typeof txid !== 'string' || txid.length !== 64) {
         throw new Error ('Invalid txid received from broadcast')
     }
@@ -148,8 +147,8 @@ export async function broadcastTx(txHex: string): Promise<string> {
 export async function getTransactionDetails(txid: string): Promise<EsploraTransaction> {
   if (!txid) throw new Error('Transaction ID is required to fetch details')
   try {
-    // Use optimized client with 1-hour cache
-    const data = await optimizedClient.getTransactionDetails(txid)
+    // Use simplified Bitcoin API client
+    const data = await BitcoinAPIClient.getTransactionDetails(txid)
     return EsploraTransactionSchema.parse(data)
   } catch (error) {
     console.error(`Error in getTransactionDetails for ${txid}:`, error)
@@ -158,54 +157,10 @@ export async function getTransactionDetails(txid: string): Promise<EsploraTransa
 }
 
 /**
- * Warm up cache for wallet addresses
- * Call this when wallet loads to preload data
- */
-export async function warmUpWalletCache(addresses: string[]): Promise<void> {
-  try {
-    await optimizedClient.warmUpCache(addresses)
-    console.log(`Warmed up cache for ${addresses.length} addresses`)
-  } catch (error) {
-    console.warn('Failed to warm up wallet cache:', error)
-  }
-}
-
-/**
- * Check health of all API systems
- */
-export async function getSystemHealth(): Promise<{
-  endpoints: Record<string, boolean>
-  circuits: Record<string, any>
-  cache: any
-}> {
-  try {
-    return await optimizedClient.getSystemHealth()
-  } catch (error) {
-    console.warn('System health check failed:', error)
-    return {
-      endpoints : {},
-      circuits  : {},
-      cache     : {}
-    }
-  }
-}
-
-/**
- * Get cache statistics for monitoring
- */
-export function getCacheStats(): {
-  size: number
-  entries: string[]
-  accessPatterns: number
-  preloadQueue: number
-  hitRate: number
-} {
-  return optimizedClient.getCacheStats()
-}
-
-/**
- * Clear all cached data (useful for troubleshooting)
- */
-export function clearCache(): void {
-  optimizedClient.clearCache()
-} 
+ * Note: Cache management is now handled by React Query
+ * These functions were removed as they're no longer needed with BitcoinAPIClient
+ * 
+ * For cache warming, use React Query's prefetchQuery
+ * For cache clearing, use React Query's invalidateQueries
+ * For health monitoring, check individual endpoint responses
+ */ 

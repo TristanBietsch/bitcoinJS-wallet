@@ -114,17 +114,69 @@ export class BitcoinAPIClient {
    * Get current fee estimates
    */
   static async getFeeEstimates(): Promise<any> {
-    try {
-      return await this.makeRequest('/fees/recommended')
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      console.warn(`[BitcoinAPI] Fee estimates failed: ${errorMsg}, using defaults`)
-      // Return sensible defaults based on network
-      const isTestnet = CURRENT_NETWORK !== 'mainnet'
-      return isTestnet
-        ? { fastestFee: 2, halfHourFee: 1, hourFee: 1 }
-        : { fastestFee: 25, halfHourFee: 15, hourFee: 10 }
+    let lastError: Error | null = null
+    
+    // Try different endpoints since APIs use different paths
+    const feeEndpoints = [
+      '/v1/fees/recommended', // Mempool.space format
+      '/fee-estimates'        // Blockstream.info format
+    ]
+    
+    for (const endpoint of ENDPOINTS) {
+      for (const feePath of feeEndpoints) {
+        try {
+          console.log(`🔄 [BitcoinAPI] Trying fee estimates from ${endpoint.name}${feePath}`)
+          
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), endpoint.timeout)
+          
+          const response = await fetch(`${endpoint.baseUrl}${feePath}`, {
+            method  : 'GET',
+            headers : {
+              'Accept' : 'application/json'
+            },
+            signal : controller.signal
+          })
+          
+          clearTimeout(timeoutId)
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+          
+          const data = await response.json()
+          console.log(`✅ [BitcoinAPI] Fee estimates success from ${endpoint.name}${feePath}:`, data)
+          
+          // Normalize response format if needed
+          if (feePath === '/fee-estimates') {
+            // Convert Blockstream format to Mempool format
+            return {
+              fastestFee  : data['1'] || data['2'] || data['3'] || 25,
+              halfHourFee : data['6'] || data['10'] || data['12'] || 15, 
+              hourFee     : data['144'] || data['72'] || data['24'] || 10,
+              economyFee  : data['144'] || data['504'] || data['1008'] || 5,
+              minimumFee  : 1
+            }
+          }
+          
+          return data
+          
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.warn(`❌ [BitcoinAPI] ${endpoint.name}${feePath} failed: ${errorMsg}`)
+          lastError = error instanceof Error ? error : new Error(String(error))
+        }
+      }
     }
+    
+    console.warn(`🚨 [BitcoinAPI] All fee estimate endpoints failed, using defaults`)
+    console.warn(`Last error:`, lastError?.message)
+    
+    // Return sensible defaults based on network
+    const isTestnet = CURRENT_NETWORK !== 'mainnet'
+    return isTestnet
+      ? { fastestFee: 2, halfHourFee: 1, hourFee: 1, economyFee: 1, minimumFee: 1 }
+      : { fastestFee: 25, halfHourFee: 15, hourFee: 10, economyFee: 5, minimumFee: 1 }
   }
   
   /**
