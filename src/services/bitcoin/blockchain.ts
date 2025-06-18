@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BitcoinAPIClient } from '@/src/services/api/bitcoinClient'
+import BitcoinAPIClient from '@/src/services/api/bitcoinApi'
 import type {
   EsploraUTXO,
   EsploraTransaction,

@@ -4,7 +4,7 @@
  */
 
 import { validateTransactionHex, logTransactionAnalysis } from '../bitcoin/transactionValidator'
-import { BitcoinAPIClient } from '@/src/services/api/bitcoinClient'
+import BitcoinAPIClient from '@/src/services/api/bitcoinApi'
 
 /**
  * Test the failing transaction from the user's report
