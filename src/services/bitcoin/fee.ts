@@ -56,32 +56,32 @@ export class FeeService {
     
     if (IS_TESTNET) {
       return {
-        economy: 1,
-        slow: 1, 
-        normal: 1,
-        fast: 2,
-        source: 'fallback',
-        lastUpdated: Date.now(),
-        confirmationTargets: {
-          economy: 144,  // ~24 hours
-          slow: 72,      // ~12 hours  
-          normal: 6,     // ~1 hour
-          fast: 1,       // next block
+        economy             : 1,
+        slow                : 1, 
+        normal              : 1,
+        fast                : 2,
+        source              : 'fallback',
+        lastUpdated         : Date.now(),
+        confirmationTargets : {
+          economy : 144,  // ~24 hours
+          slow    : 72,      // ~12 hours  
+          normal  : 6,     // ~1 hour
+          fast    : 1,       // next block
         }
       }
     } else {
       return {
-        economy: 1,
-        slow: 3,
-        normal: 10,
-        fast: 25,
-        source: 'fallback',
-        lastUpdated: Date.now(),
-        confirmationTargets: {
-          economy: 144,  // ~24 hours
-          slow: 72,      // ~12 hours
-          normal: 6,     // ~1 hour
-          fast: 1,       // next block
+        economy             : 1,
+        slow                : 3,
+        normal              : 10,
+        fast                : 25,
+        source              : 'fallback',
+        lastUpdated         : Date.now(),
+        confirmationTargets : {
+          economy : 144,  // ~24 hours
+          slow    : 72,      // ~12 hours
+          normal  : 6,     // ~1 hour
+          fast    : 1,       // next block
         }
       }
     }
@@ -132,32 +132,32 @@ export class FeeService {
       console.log('🌐 [FeeService] Fetching rates from blockchain service...')
       const blockchainRates = await getBlockchainFeeEstimates()
       console.log('📊 [FeeService] Raw rates from API:', {
-        fast: blockchainRates.fast,
-        normal: blockchainRates.normal,
-        slow: blockchainRates.slow
+        fast   : blockchainRates.fast,
+        normal : blockchainRates.normal,
+        slow   : blockchainRates.slow
       })
       
       const enhancedRates: EnhancedFeeRates = {
-        economy: Math.max(1, Math.min(blockchainRates.slow, 2)), // Cap economy at 2 sats/vB
-        slow: blockchainRates.slow,
-        normal: blockchainRates.normal,
-        fast: blockchainRates.fast,
-        source: 'mempool',
-        lastUpdated: now,
-        confirmationTargets: {
-          economy: 144,
-          slow: 72,
-          normal: 6,
-          fast: 1,
+        economy             : Math.max(1, Math.min(blockchainRates.slow, 2)), // Cap economy at 2 sats/vB
+        slow                : blockchainRates.slow,
+        normal              : blockchainRates.normal,
+        fast                : blockchainRates.fast,
+        source              : 'mempool',
+        lastUpdated         : now,
+        confirmationTargets : {
+          economy : 144,
+          slow    : 72,
+          normal  : 6,
+          fast    : 1,
         }
       }
       
       console.log('✅ [FeeService] Enhanced rates:', {
-        economy: enhancedRates.economy,
-        slow: enhancedRates.slow,
-        normal: enhancedRates.normal,
-        fast: enhancedRates.fast,
-        source: enhancedRates.source
+        economy : enhancedRates.economy,
+        slow    : enhancedRates.slow,
+        normal  : enhancedRates.normal,
+        fast    : enhancedRates.fast,
+        source  : enhancedRates.source
       })
 
       // Validate rates are reasonable
@@ -291,32 +291,32 @@ export class FeeService {
     
     const options: FeeOption[] = [
       {
-        name: 'Economy',
-        feeRate: rates.economy,
-        totalFee: this.estimateTransactionFee(txSizeVBytes, rates.economy),
-        estimatedBlocks: rates.confirmationTargets.economy,
-        estimatedTime: '~24 hours'
+        name            : 'Economy',
+        feeRate         : rates.economy,
+        totalFee        : this.estimateTransactionFee(txSizeVBytes, rates.economy),
+        estimatedBlocks : rates.confirmationTargets.economy,
+        estimatedTime   : '~24 hours'
       },
       {
-        name: 'Slow',
-        feeRate: rates.slow,
-        totalFee: this.estimateTransactionFee(txSizeVBytes, rates.slow),
-        estimatedBlocks: rates.confirmationTargets.slow,
-        estimatedTime: '~12 hours'
+        name            : 'Slow',
+        feeRate         : rates.slow,
+        totalFee        : this.estimateTransactionFee(txSizeVBytes, rates.slow),
+        estimatedBlocks : rates.confirmationTargets.slow,
+        estimatedTime   : '~12 hours'
       },
       {
-        name: 'Normal',
-        feeRate: rates.normal,
-        totalFee: this.estimateTransactionFee(txSizeVBytes, rates.normal),
-        estimatedBlocks: rates.confirmationTargets.normal,
-        estimatedTime: '~1 hour'
+        name            : 'Normal',
+        feeRate         : rates.normal,
+        totalFee        : this.estimateTransactionFee(txSizeVBytes, rates.normal),
+        estimatedBlocks : rates.confirmationTargets.normal,
+        estimatedTime   : '~1 hour'
       },
       {
-        name: 'Fast',
-        feeRate: rates.fast,
-        totalFee: this.estimateTransactionFee(txSizeVBytes, rates.fast),
-        estimatedBlocks: rates.confirmationTargets.fast,
-        estimatedTime: '~10 minutes'
+        name            : 'Fast',
+        feeRate         : rates.fast,
+        totalFee        : this.estimateTransactionFee(txSizeVBytes, rates.fast),
+        estimatedBlocks : rates.confirmationTargets.fast,
+        estimatedTime   : '~10 minutes'
       }
     ]
     
@@ -381,16 +381,16 @@ export class FeeService {
 
     if (feePercentage > maxFeePercentage) {
       return { 
-        isValid: false, 
-        message: `Fee is ${feePercentage.toFixed(1)}% of send amount (max recommended: ${maxFeePercentage}%)` 
+        isValid : false, 
+        message : `Fee is ${feePercentage.toFixed(1)}% of send amount (max recommended: ${maxFeePercentage}%)` 
       }
     }
 
     // Warn for high fees but don't block
     if (feePercentage > 5) {
       return { 
-        isValid: true, 
-        message: `Fee is ${feePercentage.toFixed(1)}% of send amount - consider if this is acceptable` 
+        isValid : true, 
+        message : `Fee is ${feePercentage.toFixed(1)}% of send amount - consider if this is acceptable` 
       }
     }
 
@@ -431,7 +431,7 @@ export class FeeService {
     return {
       sendAmount,
       feeAmount,
-      totalCost: sendAmount + feeAmount,
+      totalCost : sendAmount + feeAmount,
       feeRate,
       estimatedSize
     }

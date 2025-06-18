@@ -6,7 +6,7 @@ import * as bitcoin from 'bitcoinjs-lib'
 import { BIP32Factory } from 'bip32'
 import { getEccLib } from './config/eccProvider'
 import { CURRENT_NETWORK } from '@/src/config/env'
-import { IS_MAINNET, IS_REGTEST, IS_TESTNET, BITCOIN_NETWORK, DEFAULT_DERIVATION_PATH } from '@/src/config/bitcoinNetwork'
+import { IS_MAINNET, IS_REGTEST, IS_TESTNET, BITCOIN_NETWORK } from '@/src/config/bitcoinNetwork'
 import { AddressValidationResult } from '@/src/types/api'
 import { BitcoinAddressError } from './errors/rpcErrors'
 import { callRpc } from './rpc/rpcClient'
@@ -46,10 +46,10 @@ export class AddressService {
   static validateBitcoinAddress(address: string): ExtendedAddressValidation {
     if (!address || typeof address !== 'string') {
       return {
-        isValid: false,
-        addressType: null,
-        network: null,
-        error: 'Address is required'
+        isValid     : false,
+        addressType : null,
+        network     : null,
+        error       : 'Address is required'
       }
     }
 
@@ -58,10 +58,10 @@ export class AddressService {
     
     if (trimmedAddress.length === 0) {
       return {
-        isValid: false,
-        addressType: null,
-        network: null,
-        error: 'Address cannot be empty'
+        isValid     : false,
+        addressType : null,
+        network     : null,
+        error       : 'Address cannot be empty'
       }
     }
 
@@ -70,9 +70,9 @@ export class AddressService {
       const networks = [
         { name: 'mainnet' as const, config: bitcoin.networks.bitcoin },
         { name: 'testnet' as const, config: bitcoin.networks.testnet },
-        { name: 'regtest' as const, config: {
+        { name   : 'regtest' as const, config : {
           ...bitcoin.networks.testnet,
-          bech32: 'bcrt'
+          bech32 : 'bcrt'
         }}
       ]
 
@@ -93,11 +93,11 @@ export class AddressService {
           }
 
           return {
-            isValid: true,
+            isValid          : true,
             addressType,
-            network: networkName,
-            error: null,
-            sanitizedAddress: trimmedAddress
+            network          : networkName,
+            error            : null,
+            sanitizedAddress : trimmedAddress
           }
         } catch {
           // Try next network
@@ -106,17 +106,17 @@ export class AddressService {
       }
 
       return {
-        isValid: false,
-        addressType: null,
-        network: null,
-        error: 'Invalid address format for any known network'
+        isValid     : false,
+        addressType : null,
+        network     : null,
+        error       : 'Invalid address format for any known network'
       }
     } catch (error) {
       return {
-        isValid: false,
-        addressType: null,
-        network: null,
-        error: `Address validation error: ${error instanceof Error ? error.message : String(error)}`
+        isValid     : false,
+        addressType : null,
+        network     : null,
+        error       : `Address validation error: ${error instanceof Error ? error.message : String(error)}`
       }
     }
   }
@@ -126,13 +126,13 @@ export class AddressService {
    */
   static async validateAddress(address: string): Promise<AddressValidationResult> {
     try {
-      return await callRpc<AddressValidationResult>('validateaddress', [address])
+      return await callRpc<AddressValidationResult>('validateaddress', [ address ])
     } catch (error) {
       console.error('RPC address validation error:', error)
       return {
-        isvalid: false,
-        address: address,
-        error: error instanceof Error ? error.message : String(error)
+        isvalid : false,
+        address : address,
+        error   : error instanceof Error ? error.message : String(error)
       } as AddressValidationResult
     }
   }
@@ -200,7 +200,7 @@ export class AddressService {
         ? 'p2sh-segwit'
         : addressType
         
-      return await callRpc<string>('getnewaddress', [label, finalAddressType])
+      return await callRpc<string>('getnewaddress', [ label, finalAddressType ])
     } catch (error) {
       console.error('Failed to generate new address:', error)
       throw new Error(`Failed to generate new address: ${error instanceof Error ? error.message : String(error)}`)
@@ -219,7 +219,7 @@ export class AddressService {
       case 'regtest':
         return {
           ...bitcoin.networks.testnet,
-          bech32: 'bcrt'
+          bech32 : 'bcrt'
         }
       default:
         return bitcoin.networks.testnet
@@ -247,14 +247,14 @@ export class AddressService {
       switch (addressType) {
         case 'legacy':
           return bitcoin.payments.p2pkh({ 
-            pubkey: hdKey.publicKey, 
+            pubkey : hdKey.publicKey, 
             network 
           }).address!
           
         case 'segwit':
           return bitcoin.payments.p2sh({
-            redeem: bitcoin.payments.p2wpkh({ 
-              pubkey: hdKey.publicKey, 
+            redeem : bitcoin.payments.p2wpkh({ 
+              pubkey : hdKey.publicKey, 
               network 
             }),
             network
@@ -262,7 +262,7 @@ export class AddressService {
           
         case 'native_segwit':
           return bitcoin.payments.p2wpkh({ 
-            pubkey: hdKey.publicKey, 
+            pubkey : hdKey.publicKey, 
             network 
           }).address!
           
@@ -297,8 +297,8 @@ export class AddressService {
       addresses.push({
         address,
         addressType,
-        derivationPath: path,
-        index: i
+        derivationPath : path,
+        index          : i
       })
     }
 
@@ -366,7 +366,7 @@ export class AddressService {
     }
 
     const withoutScheme = uri.substring(8)
-    const [address, queryString] = withoutScheme.split('?')
+    const [ address, queryString ] = withoutScheme.split('?')
     
     const result: any = { address }
     
@@ -411,9 +411,9 @@ export class AddressService {
   } {
     if (!address) {
       return {
-        isValid: false,
-        sanitizedAddress: '',
-        error: 'Address is required'
+        isValid          : false,
+        sanitizedAddress : '',
+        error            : 'Address is required'
       }
     }
 
@@ -424,15 +424,15 @@ export class AddressService {
         const validation = this.validateBitcoinAddress(parsed.address)
         
         return {
-          isValid: validation.isValid,
-          sanitizedAddress: parsed.address,
-          error: validation.error
+          isValid          : validation.isValid,
+          sanitizedAddress : parsed.address,
+          error            : validation.error
         }
       } catch (error) {
         return {
-          isValid: false,
-          sanitizedAddress: address,
-          error: error instanceof Error ? error.message : 'Invalid Bitcoin URI'
+          isValid          : false,
+          sanitizedAddress : address,
+          error            : error instanceof Error ? error.message : 'Invalid Bitcoin URI'
         }
       }
     }
@@ -441,9 +441,9 @@ export class AddressService {
     const validation = this.validateBitcoinAddress(address)
     
     return {
-      isValid: validation.isValid,
-      sanitizedAddress: validation.sanitizedAddress || address,
-      error: validation.error
+      isValid          : validation.isValid,
+      sanitizedAddress : validation.sanitizedAddress || address,
+      error            : validation.error
     }
   }
 }

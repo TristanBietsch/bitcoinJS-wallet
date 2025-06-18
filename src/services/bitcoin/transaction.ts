@@ -86,7 +86,7 @@ export class TransactionService {
     feeRate: number
   ): { selectedUTXOs: NormalizedUTXO[]; totalInput: number; estimatedFee: number } {
     // Sort UTXOs by value (largest first for efficiency)
-    const sortedUTXOs = [...utxos].sort((a, b) => b.value - a.value)
+    const sortedUTXOs = [ ...utxos ].sort((a, b) => b.value - a.value)
     
     const selectedUTXOs: NormalizedUTXO[] = []
     let totalInput = 0
@@ -116,10 +116,10 @@ export class TransactionService {
     const { inputs, outputs, feeRate, network, changeAddress } = params
     
     console.log('🔨 [TxBuilder] Building transaction with:', {
-      utxoCount: inputs.length,
-      outputCount: outputs.length,
+      utxoCount   : inputs.length,
+      outputCount : outputs.length,
       feeRate,
-      network: network.bech32,
+      network     : network.bech32,
       changeAddress
     })
 
@@ -140,17 +140,17 @@ export class TransactionService {
       console.log(`Adding input: ${utxo.txid}:${utxo.vout} (${utxo.value} sats)`)
       
       psbt.addInput({
-        hash: utxo.txid,
-        index: utxo.vout,
-        witnessUtxo: {
-          script: this.validateAddressAndCreateScript(utxo.address || '', network),
-          value: utxo.value
+        hash        : utxo.txid,
+        index       : utxo.vout,
+        witnessUtxo : {
+          script : this.validateAddressAndCreateScript(utxo.address || '', network),
+          value  : utxo.value
         },
-        bip32Derivation: [{
-          masterFingerprint: PLACEHOLDER_MASTER_FINGERPRINT,
-          path: `m/44'/0'/0'/0/${utxo.addressIndex || 0}`,
-          pubkey: Buffer.alloc(33) // Placeholder
-        }]
+        bip32Derivation : [ {
+          masterFingerprint : PLACEHOLDER_MASTER_FINGERPRINT,
+          path              : `m/44'/0'/0'/0/${utxo.addressIndex || 0}`,
+          pubkey            : Buffer.alloc(33) // Placeholder
+        } ]
       })
     }
     
@@ -159,8 +159,8 @@ export class TransactionService {
       console.log(`Adding output: ${output.address} (${output.value} sats)`)
       
       psbt.addOutput({
-        address: output.address,
-        value: output.value
+        address : output.address,
+        value   : output.value
       })
     }
     
@@ -168,15 +168,15 @@ export class TransactionService {
     if (change > DUST_THRESHOLD) {
       console.log(`Adding change output: ${changeAddress} (${change} sats)`)
       psbt.addOutput({
-        address: changeAddress,
-        value: change
+        address : changeAddress,
+        value   : change
       })
     }
     
     const feeDetails: TransactionFeeDetails = {
       feeRate,
-      estimatedWeight: estimateTxVirtualBytes(selectedUTXOs.length, outputs.length + (change > DUST_THRESHOLD ? 1 : 0)),
-      calculatedFee: estimatedFee
+      estimatedWeight : estimateTxVirtualBytes(selectedUTXOs.length, outputs.length + (change > DUST_THRESHOLD ? 1 : 0)),
+      calculatedFee   : estimatedFee
     }
     
     console.log('✅ [TxBuilder] Transaction built successfully:', feeDetails)
@@ -221,7 +221,7 @@ export class TransactionService {
         // Ensure keyPair has Buffer publicKey for compatibility
         const signer = {
           ...keyPair,
-          publicKey: Buffer.from(keyPair.publicKey)
+          publicKey : Buffer.from(keyPair.publicKey)
         }
         psbt.signInput(index, signer as any)
         console.log(`✅ [TxSigner] Successfully signed input ${index}`)
@@ -350,18 +350,18 @@ export class TransactionService {
       
       // 1. Build the transaction
       const { psbt, feeDetails } = this.buildTransaction({
-        inputs: params.inputs,
-        outputs: params.outputs,
-        feeRate: params.feeRate,
-        network: params.network,
-        changeAddress: params.changeAddress
+        inputs        : params.inputs,
+        outputs       : params.outputs,
+        feeRate       : params.feeRate,
+        network       : params.network,
+        changeAddress : params.changeAddress
       })
       
       // 2. Sign the transaction
       const txHex = await this.signTransaction({
         psbt,
-        mnemonic: params.mnemonic,
-        network: params.network
+        mnemonic : params.mnemonic,
+        network  : params.network
       })
       
       // 3. Broadcast the transaction

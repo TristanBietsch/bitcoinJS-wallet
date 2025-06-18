@@ -37,16 +37,16 @@ function getNetworkPath(): string {
  */
 const ENDPOINTS: APIEndpoint[] = [
   {
-    name: 'mempool-primary',
-    baseUrl: `https://mempool.space${getNetworkPath()}/api`,
-    timeout: 15000,
-    priority: 1
+    name     : 'mempool-primary',
+    baseUrl  : `https://mempool.space${getNetworkPath()}/api`,
+    timeout  : 15000,
+    priority : 1
   },
   {
-    name: 'blockstream-fallback', 
-    baseUrl: `https://blockstream.info${getNetworkPath()}/api`,
-    timeout: 15000,
-    priority: 2
+    name     : 'blockstream-fallback', 
+    baseUrl  : `https://blockstream.info${getNetworkPath()}/api`,
+    timeout  : 15000,
+    priority : 2
   }
 ]
 
@@ -97,10 +97,10 @@ export class BitcoinAPIClient {
     
     if (!circuit) {
       circuit = {
-        failures: 0,
-        lastFailureTime: now,
-        isOpen: false,
-        nextAttemptTime: now
+        failures        : 0,
+        lastFailureTime : now,
+        isOpen          : false,
+        nextAttemptTime : now
       }
       this.circuitBreakers.set(domain, circuit)
     }
@@ -150,7 +150,7 @@ export class BitcoinAPIClient {
   private setCachedData(key: string, data: any): void {
     this.cache.set(key, {
       data,
-      timestamp: Date.now()
+      timestamp : Date.now()
     })
   }
 
@@ -220,7 +220,7 @@ export class BitcoinAPIClient {
     let lastError: Error | null = null
     
     // Sort endpoints by priority
-    const sortedEndpoints = [...ENDPOINTS].sort((a, b) => a.priority - b.priority)
+    const sortedEndpoints = [ ...ENDPOINTS ].sort((a, b) => a.priority - b.priority)
     
     for (const endpoint of sortedEndpoints) {
       const domain = this.getDomain(endpoint.baseUrl)
@@ -239,12 +239,12 @@ export class BitcoinAPIClient {
         
         const response = await fetch(`${endpoint.baseUrl}${path}`, {
           method,
-          headers: {
-            'Accept': method === 'GET' ? 'application/json' : 'text/plain',
+          headers : {
+            'Accept' : method === 'GET' ? 'application/json' : 'text/plain',
             ...headers
           },
           body,
-          signal: controller.signal
+          signal : controller.signal
         })
         
         clearTimeout(timeoutId)
@@ -289,8 +289,8 @@ export class BitcoinAPIClient {
     
     const client = new BitcoinAPIClient()
     return client.makeRequest(`/address/${address}/utxo`, {
-      cacheKey: `utxos:${address}`,
-      cacheTtl: 120000 // 2 minutes
+      cacheKey : `utxos:${address}`,
+      cacheTtl : 120000 // 2 minutes
     })
   }
   
@@ -304,8 +304,8 @@ export class BitcoinAPIClient {
     
     const client = new BitcoinAPIClient()
     return client.makeRequest(`/address/${address}/txs`, {
-      cacheKey: `txs:${address}`,
-      cacheTtl: 300000 // 5 minutes
+      cacheKey : `txs:${address}`,
+      cacheTtl : 300000 // 5 minutes
     })
   }
   
@@ -319,8 +319,8 @@ export class BitcoinAPIClient {
     
     const client = new BitcoinAPIClient()
     return client.makeRequest(`/tx/${txid}`, {
-      cacheKey: `tx:${txid}`,
-      cacheTtl: 600000 // 10 minutes
+      cacheKey : `tx:${txid}`,
+      cacheTtl : 600000 // 10 minutes
     })
   }
   
@@ -348,8 +348,8 @@ export class BitcoinAPIClient {
       for (const feePath of feeEndpoints) {
         try {
           const response = await client.executeRequest(feePath, {
-            method: 'GET',
-            headers: {}
+            method  : 'GET',
+            headers : {}
           })
           
           // Normalize response format
@@ -358,11 +358,11 @@ export class BitcoinAPIClient {
             // Convert Blockstream format to Mempool format
             const blockstreamData = response as Record<string, number>
             feeData = {
-              fastestFee: blockstreamData['1'] || blockstreamData['2'] || blockstreamData['3'] || 25,
-              halfHourFee: blockstreamData['6'] || blockstreamData['10'] || blockstreamData['12'] || 15,
-              hourFee: blockstreamData['144'] || blockstreamData['72'] || blockstreamData['24'] || 10,
-              economyFee: blockstreamData['144'] || blockstreamData['504'] || blockstreamData['1008'] || 5,
-              minimumFee: 1
+              fastestFee  : blockstreamData['1'] || blockstreamData['2'] || blockstreamData['3'] || 25,
+              halfHourFee : blockstreamData['6'] || blockstreamData['10'] || blockstreamData['12'] || 15,
+              hourFee     : blockstreamData['144'] || blockstreamData['72'] || blockstreamData['24'] || 10,
+              economyFee  : blockstreamData['144'] || blockstreamData['504'] || blockstreamData['1008'] || 5,
+              minimumFee  : 1
             }
           }
           
@@ -400,11 +400,11 @@ export class BitcoinAPIClient {
     
     const client = new BitcoinAPIClient()
     const txid = await client.makeRequest<string>('/tx', {
-      method: 'POST',
-      body: txHex,
-      headers: {
-        'Content-Type': 'text/plain',
-        'Content-Length': (txHex.length / 2).toString()
+      method  : 'POST',
+      body    : txHex,
+      headers : {
+        'Content-Type'   : 'text/plain',
+        'Content-Length' : (txHex.length / 2).toString()
       }
     })
     
@@ -427,8 +427,8 @@ export class BitcoinAPIClient {
     const healthChecks = ENDPOINTS.map(async endpoint => {
       try {
         await client.executeRequest('/blocks/tip/height', {
-          method: 'GET',
-          headers: {}
+          method  : 'GET',
+          headers : {}
         })
         results[endpoint.name] = true
       } catch {
@@ -460,18 +460,18 @@ export class BitcoinAPIClient {
     const client = new BitcoinAPIClient()
     
     const circuits: Record<string, any> = {}
-    for (const [domain, circuit] of client.circuitBreakers.entries()) {
+    for (const [ domain, circuit ] of client.circuitBreakers.entries()) {
       circuits[domain] = {
-        isOpen: circuit.isOpen,
-        failures: circuit.failures,
-        nextAttemptTime: circuit.nextAttemptTime
+        isOpen          : circuit.isOpen,
+        failures        : circuit.failures,
+        nextAttemptTime : circuit.nextAttemptTime
       }
     }
     
     return {
-      cache: {
-        size: client.cache.size,
-        entries: Array.from(client.cache.keys())
+      cache : {
+        size    : client.cache.size,
+        entries : Array.from(client.cache.keys())
       },
       circuits
     }

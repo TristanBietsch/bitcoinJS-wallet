@@ -186,7 +186,7 @@ When adding new features, please ensure you include appropriate tests to maintai
 We welcome contributions to Nummus Wallet! Please read our contribution guidelines before submitting a pull request.
 
 
-## Contact
+## Contact Me
 
 - Twitter: [@NummusBTC](https://twitter.com/NummusBTC)
 - Twitch: [tristanBietsch](https://www.twitch.tv/tristanBietsch)

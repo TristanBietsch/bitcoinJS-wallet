@@ -23,14 +23,14 @@ const isDevelopment = __DEV__
 
 // Network configuration
 const networkConfig = {
-  mainnet: bitcoin.networks.bitcoin,
-  testnet: bitcoin.networks.testnet,
-  regtest: {
+  mainnet : bitcoin.networks.bitcoin,
+  testnet : bitcoin.networks.testnet,
+  regtest : {
     ...bitcoin.networks.testnet,
-    bech32: 'bcrt',
-    bip32: {
-      public: 0x043587cf,
-      private: 0x04358394
+    bech32 : 'bcrt',
+    bip32  : {
+      public  : 0x043587cf,
+      private : 0x04358394
     }
   }
 }
@@ -190,12 +190,12 @@ export class WalletService {
 
     return {
       path,
-      network: BITCOIN_NETWORK as BitcoinNetworkType,
-      publicKey: Buffer.from(child.publicKey),
-      privateKey: child.privateKey ? Buffer.from(child.privateKey) : null,
-      wif: child.toWIF(),
-      address: undefined, // Set by caller based on address type
-      hdPath: path
+      network    : BITCOIN_NETWORK as BitcoinNetworkType,
+      publicKey  : Buffer.from(child.publicKey),
+      privateKey : child.privateKey ? Buffer.from(child.privateKey) : null,
+      wif        : child.toWIF(),
+      address    : undefined, // Set by caller based on address type
+      hdPath     : path
     }
   }
 
@@ -238,16 +238,16 @@ export class WalletService {
       const keyPair = await this.generateKeyPairFromMnemonic(mnemonic)
       
       return {
-        id: 'main-wallet',
+        id        : 'main-wallet',
         network,
-        addresses: {
-          legacy: [],
-          segwit: [],
-          nativeSegwit: []
+        addresses : {
+          legacy       : [],
+          segwit       : [],
+          nativeSegwit : []
         },
-        balances: {
-          confirmed: 0,
-          unconfirmed: 0
+        balances : {
+          confirmed   : 0,
+          unconfirmed : 0
         }
       }
     } catch (error) {
@@ -264,7 +264,7 @@ export class WalletService {
         ? Math.max(3, minConfirmations) 
         : minConfirmations
       
-      return await callRpc<number>('getbalance', ['*', requiredConfirmations])
+      return await callRpc<number>('getbalance', [ '*', requiredConfirmations ])
     } catch (error) {
       console.error('Failed to get wallet balance:', error)
       throw new BitcoinRpcError(
@@ -287,7 +287,7 @@ export class WalletService {
         ? 'p2sh-segwit' // More compatible
         : addressType
         
-      return await callRpc<string>('getnewaddress', [label, finalAddressType])
+      return await callRpc<string>('getnewaddress', [ label, finalAddressType ])
     } catch (error) {
       console.error('Failed to generate new address:', error)
       throw new BitcoinRpcError(
@@ -352,7 +352,7 @@ export class WalletService {
    */
   static async getTransaction(txid: string): Promise<BitcoinTransaction> {
     try {
-      return await callRpc<BitcoinTransaction>('gettransaction', [txid])
+      return await callRpc<BitcoinTransaction>('gettransaction', [ txid ])
     } catch (error) {
       console.error(`Failed to get transaction ${txid}:`, error)
       throw new BitcoinRpcError(
