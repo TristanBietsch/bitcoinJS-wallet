@@ -176,7 +176,7 @@ const RecoveryScreen = () => {
 
   return (
     <SimpleScreenLayout 
-      title="Recovery Phrase"
+      title=""
       onBackPress={handleClose}
     >
       {renderContent()}
