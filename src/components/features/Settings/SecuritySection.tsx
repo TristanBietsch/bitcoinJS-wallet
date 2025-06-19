@@ -21,7 +21,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({
   return (
     <SettingsSection title="Security">
       {/* PIN Code Toggle */}
-      {/* <SettingsRow
+      <SettingsRow
         icon={<Shield size={22} color="#000" />}
         title="PIN Code"
         rightElement={
@@ -32,15 +32,15 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({
             thumbColor="#FFFFFF"
           />
         }
-      /> */}
+      />
 
       {/* Change PIN Code */}
-      {/* <SettingsRow
+      <SettingsRow
         icon={<RefreshCw size={22} color="#000" />}
         title="Change PIN Code"
         rightElement={<ChevronRight size={22} color="#C7C7CC" />}
         onPress={handlePinCodeChange}
-      /> */}
+      />
 
       {/* Recovery Phrase */}
       <SettingsRow

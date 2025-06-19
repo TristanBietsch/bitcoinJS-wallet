@@ -343,10 +343,16 @@ export class BitcoinAPIClient {
     ]
     
     let lastError: Error | null = null
+    let lastEndpointTried = ''
     
     for (const endpoint of ENDPOINTS) {
       for (const feePath of feeEndpoints) {
+        const currentEndpoint = `${endpoint.name}${feePath}`
+        lastEndpointTried = currentEndpoint
+        
         try {
+          logger.debug(LogScope.API, `Trying fee endpoint: ${currentEndpoint}`)
+          
           const response = await client.executeRequest(feePath, {
             method  : 'GET',
             headers : {}
@@ -368,16 +374,19 @@ export class BitcoinAPIClient {
           
           // Cache the result
           client.setCachedData('fee-estimates', feeData)
+          logger.success(LogScope.API, `Fee estimates retrieved from ${currentEndpoint}`)
           return feeData
           
         } catch (error) {
-          lastError = error instanceof Error ? error : new Error(String(error))
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          logger.warn(LogScope.API, `Fee endpoint ${currentEndpoint} failed: ${errorMsg}`)
+          lastError = error instanceof Error ? error : new Error(errorMsg)
         }
       }
     }
     
     // All fee endpoints failed, return network-appropriate defaults
-    logger.warn(LogScope.API, 'All fee estimate endpoints failed, using defaults')
+    logger.error(LogScope.API, `All fee estimate endpoints failed. Last error from ${lastEndpointTried}: ${lastError?.message || 'Unknown error'}`)
     
     const isTestnet = CURRENT_NETWORK !== 'mainnet'
     const defaultFees = isTestnet

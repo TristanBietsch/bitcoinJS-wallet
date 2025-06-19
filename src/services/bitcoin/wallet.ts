@@ -234,17 +234,64 @@ export class WalletService {
       // Store the seed phrase
       await this.storeSeedPhrase(mnemonic)
 
-      // Generate addresses (simplified - would derive multiple addresses in practice)
+      // Generate key pair and derive addresses
       const keyPair = await this.generateKeyPairFromMnemonic(mnemonic)
       
+      // Derive addresses for different types
+      const addresses = {
+        legacy       : [] as string[],
+        segwit       : [] as string[],
+        nativeSegwit : [] as string[]
+      }
+      
+      // Generate a few addresses for each type using the key pair
+      if (keyPair.publicKey) {
+        try {
+          // Generate P2WPKH (native segwit) address
+          const p2wpkh = bitcoin.payments.p2wpkh({ 
+            pubkey : keyPair.publicKey, 
+            network 
+          })
+          if (p2wpkh.address) {
+            addresses.nativeSegwit.push(p2wpkh.address)
+          }
+          
+          // Generate P2SH-P2WPKH (segwit) address
+          const p2sh = bitcoin.payments.p2sh({
+            redeem : bitcoin.payments.p2wpkh({ 
+              pubkey : keyPair.publicKey, 
+              network 
+            }),
+            network
+          })
+          if (p2sh.address) {
+            addresses.segwit.push(p2sh.address)
+          }
+          
+          // Generate P2PKH (legacy) address
+          const p2pkh = bitcoin.payments.p2pkh({ 
+            pubkey : keyPair.publicKey, 
+            network 
+          })
+          if (p2pkh.address) {
+            addresses.legacy.push(p2pkh.address)
+          }
+          
+          console.log('✅ [Wallet] Successfully derived addresses:', {
+            legacy       : addresses.legacy.length,
+            segwit       : addresses.segwit.length,
+            nativeSegwit : addresses.nativeSegwit.length
+          })
+          
+        } catch (addressError) {
+          console.warn('⚠️ [Wallet] Failed to derive some addresses:', addressError)
+        }
+      }
+      
       return {
-        id        : 'main-wallet',
+        id       : 'main-wallet',
         network,
-        addresses : {
-          legacy       : [],
-          segwit       : [],
-          nativeSegwit : []
-        },
+        addresses,
         balances : {
           confirmed   : 0,
           unconfirmed : 0

@@ -18,7 +18,7 @@ export default function ActivityScreen() {
   // Cleanup old pending transactions on mount
   React.useEffect(() => {
     cleanupOldTransactions()
-  }, [])
+  }, [ cleanupOldTransactions ])
   
   // Fetch real transaction history using the unified hook
   const {

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
 import { validateBitcoinAddress } from '@/src/services/bitcoin/addressValidationService'
@@ -47,7 +47,9 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
   const address = sendStore.address || ''
   const selectedSpeed = (sendStore.speed || 'normal') as 'economy' | 'normal' | 'express' | 'custom'
   const customFeeRate = sendStore.customFee?.feeRate || 1
-  const feeOptions = sendStore.feeOptions || []
+  
+  // Memoize fee options to prevent unnecessary re-renders
+  const feeOptions = useMemo(() => sendStore.feeOptions || [], [ sendStore.feeOptions ])
   
   // Validate address
   const isValidAddress = (() => {
@@ -70,7 +72,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
     } else {
       setAddressError(null)
     }
-  }, [])
+  }, [ sendStore ])
   
   // Set selected speed
   const setSelectedSpeed = useCallback((speed: 'economy' | 'normal' | 'express' | 'custom') => {
@@ -89,7 +91,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
         sendStore.setSelectedFeeOption(option)
       }
     }
-  }, [ feeOptions ])
+  }, [ feeOptions, sendStore ])
   
   // Set custom fee rate
   const setCustomFeeRate = useCallback((rate: number) => {
@@ -100,7 +102,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
         confirmationTime : 6  // Default estimate
       })
     }
-  }, [])
+  }, [ sendStore ])
   
   // Load fee rates
   const loadFeeRates = useCallback(async () => {
@@ -159,7 +161,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
     } finally {
       setIsLoadingFees(false)
     }
-  }, [ selectedSpeed ])
+  }, [ selectedSpeed, sendStore ])
   
   // Handle continue
   const handleContinue = useCallback(() => {
@@ -180,7 +182,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
   // Load fee rates on mount
   useEffect(() => {
     loadFeeRates()
-  }, [])
+  }, [ loadFeeRates ])
   
   return {
     // Address state

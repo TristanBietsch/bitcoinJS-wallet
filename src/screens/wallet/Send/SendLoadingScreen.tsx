@@ -56,7 +56,9 @@ export default function SendLoadingScreen() {
       clearTimeout(timer)
       hasExecuted = true // Prevent execution if component unmounts
     }
-  }, []) // Empty dependency array - run only once on mount
+    // We only want this to run once on mount, so we disable the exhaustive-deps rule
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array is intentional here
 
   // Get subtitle based on current state
   const getSubtitle = () => {

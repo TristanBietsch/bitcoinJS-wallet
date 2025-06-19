@@ -309,11 +309,28 @@ export class TransactionService {
   ): Promise<BitcoinTransaction[]> {
     try {
       // This would integrate with wallet service for transaction history
-      // For now, return empty array as placeholder
-      console.log('📋 [Transaction] Getting transaction history...')
-      return []
+      // For now, return empty array as placeholder but log the pagination parameters
+      console.log(`📋 [Transaction] Getting transaction history with pagination: count=${count}, skip=${skip}`)
+      
+      // TODO: Implement actual transaction history retrieval
+      // This would typically:
+      // 1. Connect to wallet service or blockchain API
+      // 2. Fetch transactions with proper pagination
+      // 3. Apply skip offset and count limit
+      // 4. Sort by timestamp descending
+      
+      // Placeholder implementation that respects the parameters
+      const allTransactions: BitcoinTransaction[] = [] // Would fetch from actual source
+      
+      // Apply pagination logic
+      const paginatedTransactions = allTransactions
+        .slice(skip, skip + count)
+        .sort((a, b) => b.time - a.time)
+      
+      console.log(`📋 [Transaction] Returning ${paginatedTransactions.length} transactions (requested ${count}, skipped ${skip})`)
+      return paginatedTransactions
     } catch (error) {
-      console.error('Failed to get transaction history:', error)
+      console.error(`Failed to get transaction history (count: ${count}, skip: ${skip}):`, error)
       return []
     }
   }

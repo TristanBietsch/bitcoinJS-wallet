@@ -172,7 +172,7 @@ export function useTransaction(): UseTransactionReturn {
       
       // Validate using store's validation
       return txStore.isValidTransaction()
-    }, [])
+    }, [ sendStore, sendTransactionStore ])
   }
   
   // Fee utilities
@@ -197,7 +197,7 @@ export function useTransaction(): UseTransactionReturn {
     
     getEstimatedFee : useCallback(() => {
       return sendTransactionStore.derived.estimatedFee
-    }, []),
+    }, [ sendTransactionStore ]),
     
     getFeeRate : useCallback(() => {
       const params = convertUIToBitcoinParams()
