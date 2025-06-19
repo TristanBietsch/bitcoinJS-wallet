@@ -30,7 +30,8 @@ const HIDDEN_NAV_ROUTES = [
   '/settings',
   '/support',
   '/main/menu',
-  '/main/qr'
+  '/main/qr',
+  '/main/settings/recovery'
 ]
 
 const LOCK_TIMEOUT = 5 * 60 * 1000 // 5 minutes in milliseconds

@@ -230,11 +230,13 @@ const styles = StyleSheet.create({
   },
   seedPhraseContainer : {
     flex            : 1,
-    backgroundColor : Colors.light.cardBackground,
+    backgroundColor : Colors.light.offWhite,
     borderRadius    : 16,
     padding         : 20,
     marginBottom    : 20,
     minHeight       : 200,
+    borderWidth     : 1,
+    borderColor     : Colors.light.subtleBorder,
   },
   hiddenContainer : {
     flex           : 1,
