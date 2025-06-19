@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, Alert } from 'react-native'
+import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native'
 import { Key, AlertTriangle, Eye, EyeOff } from 'lucide-react-native'
 import SimpleScreenLayout from '@/src/components/layout/SimpleScreenLayout'
 import { ThemedText } from '@/src/components/ui/Text'
@@ -137,12 +137,16 @@ const RecoveryScreen = () => {
               startFromOne={true}
             />
           ) : (
-            <View style={styles.hiddenContainer}>
+            <TouchableOpacity 
+              style={styles.hiddenContainer}
+              onPress={handleRevealPhrase}
+              activeOpacity={0.7}
+            >
               <Eye size={48} color={Colors.light.textSecondary} />
               <ThemedText style={styles.hiddenText}>
                 Tap "Reveal Phrase" to view your recovery words
               </ThemedText>
-            </View>
+            </TouchableOpacity>
           )}
         </View>
 
