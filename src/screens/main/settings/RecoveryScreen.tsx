@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native'
-import { Key, AlertTriangle, Eye, EyeOff } from 'lucide-react-native'
+import { Key, AlertTriangle, Eye } from 'lucide-react-native'
 import SimpleScreenLayout from '@/src/components/layout/SimpleScreenLayout'
 import { ThemedText } from '@/src/components/ui/Text'
 import SeedPhraseDisplay from '@/src/components/features/Wallet/SeedPhrase/SeedPhraseDisplay'
@@ -142,7 +142,7 @@ const RecoveryScreen = () => {
               onPress={handleRevealPhrase}
               activeOpacity={0.7}
             >
-              <Eye size={48} color={Colors.light.textSecondary} />
+              <Eye size={48} color={Colors.light.icon} />
               <ThemedText style={styles.hiddenText}>
                 Tap "Reveal Phrase" to view your recovery words
               </ThemedText>
@@ -155,8 +155,7 @@ const RecoveryScreen = () => {
           <PrimaryActionButton
             label={isVisible ? "Hide Phrase" : "Reveal Phrase"}
             onPress={handleRevealPhrase}
-            style={isVisible ? styles.actionButton : [ styles.actionButton, styles.revealButton ]}
-            icon={isVisible ? <EyeOff size={20} color="white" /> : <Eye size={20} color="white" />}
+            style={isVisible ? styles.actionButton : StyleSheet.flatten([ styles.actionButton, styles.revealButton ])}
           />
 
           {isVisible && (
@@ -209,23 +208,25 @@ const styles = StyleSheet.create({
   },
   subtitle : {
     fontSize   : 16,
-    color      : Colors.light.textSecondary,
+    color      : Colors.light.icon,
     textAlign  : 'center',
     lineHeight : 22,
   },
   warningContainer : {
     flexDirection   : 'row',
     alignItems      : 'flex-start',
-    backgroundColor : Colors.light.warningBackground,
+    backgroundColor : Colors.light.offWhite,
     padding         : 16,
     borderRadius    : 12,
     marginBottom    : 30,
     gap             : 12,
+    borderWidth     : 1,
+    borderColor     : Colors.light.buttons.warning,
   },
   warningText : {
     flex       : 1,
     fontSize   : 14,
-    color      : Colors.light.warning,
+    color      : Colors.light.buttons.warning,
     lineHeight : 20,
   },
   seedPhraseContainer : {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   },
   hiddenText : {
     fontSize   : 16,
-    color      : Colors.light.textSecondary,
+    color      : Colors.light.icon,
     textAlign  : 'center',
     lineHeight : 22,
   },
@@ -261,30 +262,30 @@ const styles = StyleSheet.create({
     gap            : 8,
   },
   revealButton : {
-    backgroundColor : Colors.light.primary,
+    backgroundColor : Colors.light.buttons.primary,
   },
   copyButton : {
-    backgroundColor   : Colors.light.success,
+    backgroundColor   : Colors.light.buttons.success,
     paddingVertical   : 16,
     paddingHorizontal : 24,
     borderRadius      : 12,
   },
   loadingText : {
     fontSize : 16,
-    color    : Colors.light.textSecondary,
+    color    : Colors.light.icon,
   },
   errorIcon : {
     marginBottom : 16,
   },
   errorText : {
     fontSize     : 16,
-    color        : Colors.light.error,
+    color        : Colors.light.errorRed,
     textAlign    : 'center',
     marginBottom : 20,
     lineHeight   : 22,
   },
   retryButton : {
-    backgroundColor   : Colors.light.primary,
+    backgroundColor   : Colors.light.buttons.primary,
     paddingHorizontal : 24,
   },
 })
