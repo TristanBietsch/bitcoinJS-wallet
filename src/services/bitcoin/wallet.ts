@@ -1,6 +1,8 @@
 /**
  * Consolidated Bitcoin Wallet Service
  * Combines functionality from wallet/, seedPhraseService, keyManagementService, etc.
+ * 
+ * SECURITY UPDATE: Now uses secure session management instead of global variables
  */
 import * as bitcoin from 'bitcoinjs-lib'
 import * as bip39 from 'bip39'
@@ -12,7 +14,7 @@ import { BITCOIN_NETWORK, BitcoinNetworkType, DEFAULT_DERIVATION_PATH } from '@/
 import { BitcoinTransaction, Utxo, WalletInfo } from '@/src/types/api'
 import { BitcoinAddressError, BitcoinRpcError } from './errors/rpcErrors'
 import { callRpc } from './rpc/rpcClient'
-// We'll implement address validation inline since we're consolidating services
+import { SecureMemoryManager } from '@/src/utils/security/secureMemoryManager'
 
 // Initialize the BIP32 factory
 const bip32 = BIP32Factory(ecc)
@@ -62,21 +64,78 @@ export interface BitcoinWallet {
   }
 }
 
+// Security audit data structure to track operations
+interface SecurityAuditLog {
+  timestamp: number
+  operation: string
+  riskLevel: 'low' | 'medium' | 'high' | 'critical'
+  details: string
+}
+
 /**
- * Consolidated Wallet Service
+ * Consolidated Wallet Service - Now with Enhanced Security (Testnet Ready)
  */
 export class WalletService {
-  // Temporary storage for development mode only
-  private static _tempSeedPhrase = ''
+  
+  // SECURITY: No more global memory variables!
+  // All sensitive data now managed through SecureMemoryManager
+  
+  // Security audit log
+  private static securityAuditLog: SecurityAuditLog[] = []
+  
+  /**
+   * SECURITY AUDIT METHODS
+   */
+  
+  /**
+   * Log security events for audit purposes
+   */
+  private static logSecurityEvent(
+    operation: string,
+    riskLevel: SecurityAuditLog['riskLevel'],
+    details: string
+  ): void {
+    const auditEntry: SecurityAuditLog = {
+      timestamp : Date.now(),
+      operation,
+      riskLevel,
+      details
+    }
+    
+    this.securityAuditLog.push(auditEntry)
+    
+    // Keep only last 100 audit entries
+    if (this.securityAuditLog.length > 100) {
+      this.securityAuditLog.shift()
+    }
+    
+    // Log critical events to console (without sensitive data)
+    if (riskLevel === 'critical' || riskLevel === 'high') {
+      console.warn(`🔒 [SECURITY AUDIT] ${operation}: ${riskLevel.toUpperCase()} - ${details}`)
+    }
+  }
+  
+  /**
+   * Get security audit log (for debugging/monitoring)
+   */
+  static getSecurityAuditLog(): SecurityAuditLog[] {
+    return [ ...this.securityAuditLog ]
+  }
 
   /**
-   * SEED PHRASE MANAGEMENT
+   * SEED PHRASE MANAGEMENT - SECURE VERSION (TESTNET READY)
    */
 
   /**
    * Generate a new BIP39 mnemonic seed phrase
    */
   static generateSeedPhrase(wordCount: WordCount = 12): string {
+    this.logSecurityEvent(
+      'generateSeedPhrase',
+      'medium',
+      `Generated new ${wordCount}-word seed phrase`
+    )
+    
     const entropyBits = wordCount === 24 ? 256 : 128
     return bip39.generateMnemonic(entropyBits)
   }
@@ -86,9 +145,21 @@ export class WalletService {
    */
   static validateMnemonic(mnemonic: string): boolean {
     try {
-      return bip39.validateMnemonic(mnemonic)
+      const isValid = bip39.validateMnemonic(mnemonic)
+      
+      this.logSecurityEvent(
+        'validateMnemonic',
+        'low',
+        `Mnemonic validation: ${isValid ? 'valid' : 'invalid'}`
+      )
+      
+      return isValid
     } catch (error) {
-      console.error('Error validating mnemonic:', error)
+      this.logSecurityEvent(
+        'validateMnemonic',
+        'medium',
+        `Mnemonic validation error: ${error instanceof Error ? error.message : String(error)}`
+      )
       return false
     }
   }
@@ -98,71 +169,237 @@ export class WalletService {
    */
   static async mnemonicToSeed(mnemonic: string, passphrase: string = ''): Promise<Buffer> {
     if (!this.validateMnemonic(mnemonic)) {
+      this.logSecurityEvent(
+        'mnemonicToSeed',
+        'high',
+        'Attempted to convert invalid mnemonic to seed'
+      )
       throw new Error('Invalid mnemonic phrase')
     }
+    
+    this.logSecurityEvent(
+      'mnemonicToSeed',
+      'medium',
+      'Converting mnemonic to seed buffer'
+    )
+    
     return bip39.mnemonicToSeed(mnemonic, passphrase)
   }
 
   /**
-   * Store seed phrase securely
+   * Store seed phrase securely using session management
+   * SECURITY: Replaces insecure global variable storage
    */
   static async storeSeedPhrase(mnemonic: string): Promise<void> {
     if (!this.validateMnemonic(mnemonic)) {
+      this.logSecurityEvent(
+        'storeSeedPhrase',
+        'critical',
+        'Attempted to store invalid seed phrase'
+      )
       throw new Error('Invalid seed phrase provided')
     }
 
     try {
       if (isDevelopment) {
-        // Development fallback
-        try {
-          await SecureStore.setItemAsync(SECURE_SEED_PHRASE_KEY, mnemonic)
-        } catch (storageError) {
-          console.warn('SecureStore failed in development, using temporary storage:', storageError)
-          this._tempSeedPhrase = mnemonic
-        }
+        // Development mode: Store in secure session with extended timeout
+        console.warn('⚠️ [DEVELOPMENT] Storing seed phrase in secure session for development')
+        
+        const sessionId = SecureMemoryManager.createSession(mnemonic, {
+          timeoutMs : 30 * 60 * 1000 // 30 minutes in development
+        })
+        
+        // Store session ID for later retrieval
+        await SecureStore.setItemAsync(`${SECURE_SEED_PHRASE_KEY}_session`, sessionId)
+        
+        this.logSecurityEvent(
+          'storeSeedPhrase',
+          'medium',
+          'Stored seed phrase in development secure session'
+        )
+        return
       } else {
+        // Production: Store with basic protection (ready for future encryption)
+        // For testnet launch, we'll use SecureStore with a marker for future encryption
+        const storageMetadata = {
+          version     : '1.0',
+          stored      : Date.now(),
+          encrypted   : false, // Ready for future encryption
+          testnetMode : true
+        }
+        
+        await SecureStore.setItemAsync(`${SECURE_SEED_PHRASE_KEY}_meta`, JSON.stringify(storageMetadata))
         await SecureStore.setItemAsync(SECURE_SEED_PHRASE_KEY, mnemonic)
+        
+        this.logSecurityEvent(
+          'storeSeedPhrase',
+          'medium',
+          'Stored seed phrase in production secure storage (testnet mode)'
+        )
       }
+      
     } catch (error) {
+      this.logSecurityEvent(
+        'storeSeedPhrase',
+        'critical',
+        `Failed to store seed phrase: ${error instanceof Error ? error.message : String(error)}`
+      )
       throw new Error(`Failed to store seed phrase: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
   /**
    * Retrieve stored seed phrase
+   * SECURITY: Replaces insecure global variable access
    */
   static async getSeedPhrase(): Promise<string | null> {
     try {
-      if (isDevelopment && this._tempSeedPhrase) {
-        return this._tempSeedPhrase
+      // SECURITY: Check for development session first
+      if (isDevelopment) {
+        try {
+          const sessionId = await SecureStore.getItemAsync(`${SECURE_SEED_PHRASE_KEY}_session`)
+          if (sessionId) {
+            const sessionData = SecureMemoryManager.accessSession<string>(sessionId)
+            if (sessionData) {
+              this.logSecurityEvent(
+                'getSeedPhrase',
+                'medium',
+                'Retrieved seed phrase from development secure session'
+              )
+              return sessionData
+            }
+          }
+        } catch (_sessionError) {
+          // Continue to production storage
+        }
       }
-      return await SecureStore.getItemAsync(SECURE_SEED_PHRASE_KEY)
+      
+      // Check for production storage with metadata
+      const metadataJson = await SecureStore.getItemAsync(`${SECURE_SEED_PHRASE_KEY}_meta`)
+      if (metadataJson) {
+        const metadata = JSON.parse(metadataJson)
+        
+        // Get seed phrase from secure storage
+        const seedPhrase = await SecureStore.getItemAsync(SECURE_SEED_PHRASE_KEY)
+        if (seedPhrase) {
+          this.logSecurityEvent(
+            'getSeedPhrase',
+            'medium',
+            `Successfully retrieved seed phrase (version: ${metadata.version}, testnet: ${metadata.testnetMode})`
+          )
+          return seedPhrase
+        }
+      }
+      
+      // Fallback to legacy storage (for existing users)
+      const legacySeed = await SecureStore.getItemAsync(SECURE_SEED_PHRASE_KEY)
+      if (legacySeed) {
+        this.logSecurityEvent(
+          'getSeedPhrase',
+          'high',
+          'Retrieved legacy seed phrase - consider migrating to new format'
+        )
+        
+        // Auto-migrate to new format
+        await this.storeSeedPhrase(legacySeed)
+        
+        this.logSecurityEvent(
+          'getSeedPhrase',
+          'medium',
+          'Auto-migrated legacy seed phrase to new storage format'
+        )
+        
+        return legacySeed
+      }
+      
+      this.logSecurityEvent(
+        'getSeedPhrase',
+        'low',
+        'No seed phrase found in storage'
+      )
+      
+      return null
     } catch (error) {
-      console.error('Failed to retrieve seed phrase:', error)
+      this.logSecurityEvent(
+        'getSeedPhrase',
+        'high',
+        `Failed to retrieve seed phrase: ${error instanceof Error ? error.message : String(error)}`
+      )
       return null
     }
   }
 
   /**
-   * Delete stored seed phrase
+   * Delete stored seed phrase and clear all sessions
+   * SECURITY: Secure cleanup of all sensitive data
    */
   static async deleteSeedPhrase(): Promise<void> {
     try {
+      // Clear development session if exists
       if (isDevelopment) {
-        this._tempSeedPhrase = ''
+        try {
+          const sessionId = await SecureStore.getItemAsync(`${SECURE_SEED_PHRASE_KEY}_session`)
+          if (sessionId) {
+            SecureMemoryManager.clearSession(sessionId)
+            await SecureStore.deleteItemAsync(`${SECURE_SEED_PHRASE_KEY}_session`)
+          }
+        } catch (_sessionError) {
+          // Continue with other cleanup
+        }
       }
+      
+      // Delete production storage and metadata
       await SecureStore.deleteItemAsync(SECURE_SEED_PHRASE_KEY)
+      await SecureStore.deleteItemAsync(`${SECURE_SEED_PHRASE_KEY}_meta`)
+      
+      // Clear all secure sessions related to seed phrases
+      SecureMemoryManager.clearAllSessions()
+      
+      this.logSecurityEvent(
+        'deleteSeedPhrase',
+        'medium',
+        'Successfully deleted all seed phrase data and cleared sessions'
+      )
+      
     } catch (error) {
-      console.error('Failed to delete seed phrase:', error)
+      this.logSecurityEvent(
+        'deleteSeedPhrase',
+        'high',
+        `Failed to delete seed phrase: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
   /**
-   * Check if seed phrase exists
+   * Check if seed phrase exists (without accessing it)
    */
   static async hasSeedPhrase(): Promise<boolean> {
-    const seedPhrase = await this.getSeedPhrase()
-    return seedPhrase !== null && seedPhrase.length > 0
+    try {
+      // Check production storage
+      const hasMetadata = await SecureStore.getItemAsync(`${SECURE_SEED_PHRASE_KEY}_meta`)
+      if (hasMetadata) {
+        return true
+      }
+      
+      // Check development session
+      if (isDevelopment) {
+        const sessionId = await SecureStore.getItemAsync(`${SECURE_SEED_PHRASE_KEY}_session`)
+        if (sessionId && SecureMemoryManager.isSessionValid(sessionId)) {
+          return true
+        }
+      }
+      
+      // Check legacy storage
+      const legacySeed = await SecureStore.getItemAsync(SECURE_SEED_PHRASE_KEY)
+      return legacySeed !== null && legacySeed.length > 0
+    } catch (error) {
+      this.logSecurityEvent(
+        'hasSeedPhrase',
+        'low',
+        `Error checking seed phrase existence: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
+    }
   }
 
   /**
@@ -482,7 +719,6 @@ export class WalletService {
    */
   static async clearWalletData(): Promise<void> {
     await this.deleteSeedPhrase()
-    this._tempSeedPhrase = ''
   }
 }
 

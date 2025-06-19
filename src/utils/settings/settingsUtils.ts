@@ -11,20 +11,14 @@ export const toggleSetting = (
   setter(value)
 }
 
-/**
- * Handle PIN code change flow
- * This is a placeholder for future implementation
- */
-export const handlePinCodeChange = (): void => {
-  // In the future, will trigger PIN code change flow
-  console.log('PIN code change triggered')
-}
+
+
+import { router } from 'expo-router'
 
 /**
  * Handle recovery phrase display
- * This is a placeholder for future implementation 
+ * Navigate to the recovery phrase screen
  */
 export const handleRecoveryPhrase = (): void => {
-  // In the future, will handle recovery phrase display with authentication
-  console.log('Recovery phrase display triggered')
+  router.push('/main/settings/recovery')
 } 
