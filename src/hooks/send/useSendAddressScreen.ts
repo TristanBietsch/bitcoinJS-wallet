@@ -144,12 +144,13 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
         timestamp : rates.lastUpdated
       })
       
-      // If a speed is selected, update the fee option
-      if (selectedSpeed !== 'custom') {
+      // Get current selected speed and update fee option if needed
+      const currentSpeed = sendStore.speed || 'normal'
+      if (currentSpeed !== 'custom') {
         const option = options.find((opt: FeeOption) => {
-          if (selectedSpeed === 'economy' && opt.confirmationTime >= 144) return true
-          if (selectedSpeed === 'normal' && opt.confirmationTime >= 6 && opt.confirmationTime < 144) return true
-          if (selectedSpeed === 'express' && opt.confirmationTime < 6) return true
+          if (currentSpeed === 'economy' && opt.confirmationTime >= 144) return true
+          if (currentSpeed === 'normal' && opt.confirmationTime >= 6 && opt.confirmationTime < 144) return true
+          if (currentSpeed === 'express' && opt.confirmationTime < 6) return true
           return false
         })
         if (option) {
@@ -161,7 +162,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
     } finally {
       setIsLoadingFees(false)
     }
-  }, [ selectedSpeed, sendStore ])
+  }, [ sendStore ])
   
   // Handle continue
   const handleContinue = useCallback(() => {
@@ -179,10 +180,11 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
     router.push('/send/amount' as any)
   }, [ isValidAddress, selectedSpeed, customFeeRate, router ])
   
-  // Load fee rates on mount
+  // Load fee rates on mount only
   useEffect(() => {
     loadFeeRates()
-  }, [ loadFeeRates ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array - run only once on mount
   
   return {
     // Address state
