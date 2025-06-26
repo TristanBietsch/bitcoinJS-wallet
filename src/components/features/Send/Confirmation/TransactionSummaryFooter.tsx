@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native'
 import { TransactionConfirmationDetails } from '@/src/components/features/Send/Confirmation/TransactionConfirmationDetails'
 import { SendButton } from '@/src/components/ui/Button/SendButton'
 import { CurrencyType } from '@/src/types/domain/finance'
-import { TransactionFee } from '@/src/utils/transactions/feeCalculator'
+import { TransactionFee } from '@/src/utils/transaction/feeCalculator'
 
 interface TransactionSummaryFooterProps {
   amount: number

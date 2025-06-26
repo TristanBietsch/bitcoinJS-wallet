@@ -5,4 +5,8 @@ export * from './feeCalculator'
 export * from './qrCodeParser'
 
 // Export from transaction speed options
-export * from './transactionSpeed' 
+export * from './speedOptions'
+export * from './transactionSpeed'
+
+// Export from transaction parameters
+export * from './transactionParams' 

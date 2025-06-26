@@ -1,4 +1,4 @@
-import { MenuItemData } from "@/src/components/features/Menu/MenuItemList"
+import { MenuItemData } from '@/src/components/features/Menu/MenuItemList'
 
 /**
  * Main menu items for the app

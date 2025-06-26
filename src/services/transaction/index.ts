@@ -1,1 +1,1 @@
-export { transactionService } from './transaction.service' 
+export { transactionService } from './transactionService' 

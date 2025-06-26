@@ -6,7 +6,7 @@ import { useWalletStore } from '@/src/store/walletStore'
 import { setOnboardingComplete } from '@/src/utils/storage'
 import OnboardingContainer from '@/src/components/layout/OnboardingContainer'
 import StatusIcon from '@/src/components/ui/Feedback/StatusIcon'
-import ConfettiAnimation from '@/src/components/ui/Animation/ConfettiAnimation'
+import ConfettiAnimation from '@/src/components/ui/animations/ConfettiAnimation'
 import OnboardingButton from '@/src/components/ui/Button/OnboardingButton'
 
 interface SuccessImportProps {

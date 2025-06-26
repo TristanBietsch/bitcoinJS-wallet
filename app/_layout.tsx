@@ -30,17 +30,22 @@ const HIDDEN_NAV_ROUTES = [
   '/settings',
   '/support',
   '/main/menu',
-  '/main/qr'
+  '/main/qr',
+  '/main/settings/recovery'
 ]
 
 const LOCK_TIMEOUT = 5 * 60 * 1000 // 5 minutes in milliseconds
 
-// Create a client for React Query
+// Create a client for React Query with simplified configuration
 const queryClient = new QueryClient({
   defaultOptions : {
     queries : {
-      staleTime : 1000 * 60 * 5, // 5 minutes
-      retry     : 2,
+      staleTime            : 1000 * 60 * 10, // 10 minutes (longer to reduce API calls)
+      gcTime               : 1000 * 60 * 30, // 30 minutes cache retention
+      refetchOnMount       : false, // Don't refetch on component mount
+      refetchOnWindowFocus : false, // Don't refetch on window focus
+      refetchOnReconnect   : true,  // Only refetch on network reconnect
+      retry                : 2,     // Keep reasonable retry count
     },
   },
 })

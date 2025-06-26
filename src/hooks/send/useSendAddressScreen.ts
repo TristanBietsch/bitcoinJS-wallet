@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'expo-router'
 import { useSendStore } from '@/src/store/sendStore'
 import { validateBitcoinAddress } from '@/src/services/bitcoin/addressValidationService'
@@ -47,7 +47,9 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
   const address = sendStore.address || ''
   const selectedSpeed = (sendStore.speed || 'normal') as 'economy' | 'normal' | 'express' | 'custom'
   const customFeeRate = sendStore.customFee?.feeRate || 1
-  const feeOptions = sendStore.feeOptions || []
+  
+  // Memoize fee options to prevent unnecessary re-renders
+  const feeOptions = useMemo(() => sendStore.feeOptions || [], [ sendStore.feeOptions ])
   
   // Validate address
   const isValidAddress = (() => {
@@ -70,7 +72,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
     } else {
       setAddressError(null)
     }
-  }, [])
+  }, [ sendStore ])
   
   // Set selected speed
   const setSelectedSpeed = useCallback((speed: 'economy' | 'normal' | 'express' | 'custom') => {
@@ -89,7 +91,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
         sendStore.setSelectedFeeOption(option)
       }
     }
-  }, [ feeOptions ])
+  }, [ feeOptions, sendStore ])
   
   // Set custom fee rate
   const setCustomFeeRate = useCallback((rate: number) => {
@@ -100,13 +102,20 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
         confirmationTime : 6  // Default estimate
       })
     }
-  }, [])
+  }, [ sendStore ])
   
   // Load fee rates
   const loadFeeRates = useCallback(async () => {
     setIsLoadingFees(true)
     try {
+      console.log('🔄 [useSendAddressScreen] Fetching enhanced fee estimates...')
       const rates = await getEnhancedFeeEstimates()
+      console.log('✅ [useSendAddressScreen] Received fee rates:', {
+        economy : rates.economy,
+        normal  : rates.normal, 
+        fast    : rates.fast,
+        source  : rates.source
+      })
       
       // Convert to fee options format used by sendStore
       const options: FeeOption[] = [
@@ -135,12 +144,13 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
         timestamp : rates.lastUpdated
       })
       
-      // If a speed is selected, update the fee option
-      if (selectedSpeed !== 'custom') {
+      // Get current selected speed and update fee option if needed
+      const currentSpeed = sendStore.speed || 'normal'
+      if (currentSpeed !== 'custom') {
         const option = options.find((opt: FeeOption) => {
-          if (selectedSpeed === 'economy' && opt.confirmationTime >= 144) return true
-          if (selectedSpeed === 'normal' && opt.confirmationTime >= 6 && opt.confirmationTime < 144) return true
-          if (selectedSpeed === 'express' && opt.confirmationTime < 6) return true
+          if (currentSpeed === 'economy' && opt.confirmationTime >= 144) return true
+          if (currentSpeed === 'normal' && opt.confirmationTime >= 6 && opt.confirmationTime < 144) return true
+          if (currentSpeed === 'express' && opt.confirmationTime < 6) return true
           return false
         })
         if (option) {
@@ -152,7 +162,7 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
     } finally {
       setIsLoadingFees(false)
     }
-  }, [ selectedSpeed ])
+  }, [ sendStore ])
   
   // Handle continue
   const handleContinue = useCallback(() => {
@@ -170,10 +180,11 @@ export function useSendAddressScreen(): UseSendAddressScreenReturn {
     router.push('/send/amount' as any)
   }, [ isValidAddress, selectedSpeed, customFeeRate, router ])
   
-  // Load fee rates on mount
+  // Load fee rates on mount only
   useEffect(() => {
     loadFeeRates()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array - run only once on mount
   
   return {
     // Address state

@@ -9,7 +9,7 @@ import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { useWalletStore } from '@/src/store/walletStore'
 import { SendTransactionService } from '@/src/services/sendTransactionService'
 import { transactionStyles } from '@/src/constants/transactionStyles'
-import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
+
 import { ThemedText } from '@/src/components/ui/Text'
 import { useRouter } from 'expo-router'
 
@@ -23,8 +23,7 @@ export default function SendConfirmScreen() {
   const [ isValidating, setIsValidating ] = useState(false)
   const [ isLoadingTransaction, setIsLoadingTransaction ] = useState(true)
   const [ loadingError, setLoadingError ] = useState<string | null>(null)
-  
-  useAutoWalletSync()
+
   
   // Use only the transaction store like SendAmountScreen does
   const {

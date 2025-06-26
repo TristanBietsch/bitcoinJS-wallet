@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 
@@ -106,29 +106,37 @@ export default function SendAddressScreen() {
   // Map hook data to component expectations
   const mappedSelectedSpeed: SpeedTier = selectedSpeed === 'normal' ? 'standard' : selectedSpeed as SpeedTier
   
-  // Convert feeOptions from hook to speedOptions format
-  const speedOptions = feeOptions.map(option => ({
-    id: option.confirmationTime >= 144 ? 'economy' : 
-        option.confirmationTime >= 6 ? 'standard' : 'express',
-    label: option.confirmationTime >= 144 ? 'Economy' : 
-           option.confirmationTime >= 6 ? 'Standard' : 'Express',
-    fee: {
-      sats: Math.round(option.feeRate * 200) // Estimate with 200 vBytes
-    },
-    feeRate: option.feeRate,
-    estimatedTime: option.confirmationTime >= 144 ? '~24 hours' :
-                   option.confirmationTime >= 6 ? '~1 hour' : '~10 minutes',
-    estimatedBlocks: option.confirmationTime
-  }))
+  // Memoize speedOptions calculation to prevent infinite re-renders
+  const speedOptions = useMemo(() => {
+    return feeOptions.map(option => {
+      // Use more realistic transaction size estimation (1-2 inputs, 2 outputs)
+      const estimatedTxSize = 180 // More realistic average
+      const estimatedFee = Math.round(option.feeRate * estimatedTxSize)
+      
+      return {
+        id : option.confirmationTime >= 144 ? 'economy' : 
+            option.confirmationTime >= 6 ? 'standard' : 'express',
+        label : option.confirmationTime >= 144 ? 'Economy' : 
+               option.confirmationTime >= 6 ? 'Standard' : 'Express',
+        fee : {
+          sats : estimatedFee
+        },
+        feeRate       : option.feeRate,
+        estimatedTime : option.confirmationTime >= 144 ? '~24 hours' :
+                       option.confirmationTime >= 6 ? '~1 hour' : '~10 minutes',
+        estimatedBlocks : option.confirmationTime
+      }
+    })
+  }, [ feeOptions ]) // Only recalculate when feeOptions change
   
-  // Create customFee object - use pendingInput when modal is open, otherwise use stored rate
-  const customFee: CustomFee = {
+  // Memoize customFee object to prevent infinite re-renders
+  const customFee: CustomFee = useMemo(() => ({
     totalSats : showCustomFeeModal 
       ? (pendingInput ? parseFloat(pendingInput) || 0 : 0)
       : customFeeRate, // Display the actual fee rate as sat/vB when modal is closed
     confirmationTime : 60,
     feeRate          : customFeeRate
-  }
+  }), [ showCustomFeeModal, pendingInput, customFeeRate ])
   
   // Input validation - check if pendingInput is a valid number > 0
   const isInputValid = !pendingInput || (parseFloat(pendingInput) > 0 && !isNaN(parseFloat(pendingInput)))

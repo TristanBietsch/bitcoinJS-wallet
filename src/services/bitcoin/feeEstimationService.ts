@@ -23,19 +23,40 @@ let cachedFeeRates: EnhancedFeeRates | null = null
 let lastFetchTime = 0
 const CACHE_DURATION = 60000 // 1 minute cache
 
-// Fallback fee rates (conservative estimates)
-const FALLBACK_RATES: EnhancedFeeRates = {
-  economy             : 1,
-  slow                : 3,
-  normal              : 10,
-  fast                : 25,
-  source              : 'fallback',
-  lastUpdated         : Date.now(),
-  confirmationTargets : {
-    economy : 144,  // ~24 hours
-    slow    : 72,   // ~12 hours
-    normal  : 6,    // ~1 hour
-    fast    : 1,    // next block
+// Get network-appropriate fallback rates
+function getNetworkFallbackRates(): EnhancedFeeRates {
+  const { IS_TESTNET } = require('@/src/config/bitcoinNetwork')
+  
+  if (IS_TESTNET) {
+    return {
+      economy             : 1,
+      slow                : 1, 
+      normal              : 1,
+      fast                : 2,
+      source              : 'fallback',
+      lastUpdated         : Date.now(),
+      confirmationTargets : {
+        economy : 144,  // ~24 hours
+        slow    : 72,   // ~12 hours  
+        normal  : 6,    // ~1 hour
+        fast    : 1,    // next block
+      }
+    }
+  } else {
+    return {
+      economy             : 1,
+      slow                : 3,
+      normal              : 10,
+      fast                : 25,
+      source              : 'fallback',
+      lastUpdated         : Date.now(),
+      confirmationTargets : {
+        economy : 144,  // ~24 hours
+        slow    : 72,   // ~12 hours
+        normal  : 6,    // ~1 hour
+        fast    : 1,    // next block
+      }
+    }
   }
 }
 
@@ -45,14 +66,25 @@ const FALLBACK_RATES: EnhancedFeeRates = {
 export async function getEnhancedFeeEstimates(): Promise<EnhancedFeeRates> {
   const now = Date.now()
   
+  // Debug network configuration
+  const { BITCOIN_NETWORK, IS_TESTNET } = require('@/src/config/bitcoinNetwork')
+  console.log(`🔧 [FeeEstimationService] Network: ${BITCOIN_NETWORK} (testnet: ${IS_TESTNET})`)
+  
   // Return cached rates if still valid
   if (cachedFeeRates && (now - lastFetchTime) < CACHE_DURATION) {
+    console.log('💾 [FeeEstimationService] Using cached rates')
     return cachedFeeRates
   }
 
   try {
     // Primary: Mempool API
+    console.log('🌐 [FeeEstimationService] Fetching rates from blockchain service...')
     const mempoolRates = await getFeeEstimates()
+    console.log('📊 [FeeEstimationService] Raw rates from API:', {
+      fast   : mempoolRates.fast,
+      normal : mempoolRates.normal,
+      slow   : mempoolRates.slow
+    })
     
     const enhancedRates: EnhancedFeeRates = {
       economy             : Math.max(1, Math.min(mempoolRates.slow, 2)), // Cap economy at 2 sats/vB
@@ -68,6 +100,14 @@ export async function getEnhancedFeeEstimates(): Promise<EnhancedFeeRates> {
         fast    : 1,
       }
     }
+    
+    console.log('✅ [FeeEstimationService] Enhanced rates:', {
+      economy : enhancedRates.economy,
+      slow    : enhancedRates.slow,
+      normal  : enhancedRates.normal,
+      fast    : enhancedRates.fast,
+      source  : enhancedRates.source
+    })
 
     // Validate rates are reasonable
     if (validateFeeRates(enhancedRates)) {
@@ -113,10 +153,8 @@ function validateFeeRates(rates: EnhancedFeeRates): boolean {
  * Returns fallback fee rates with current timestamp
  */
 function getFallbackRates(): EnhancedFeeRates {
-  return {
-    ...FALLBACK_RATES,
-    lastUpdated : Date.now()
-  }
+  console.warn('Using network-appropriate fallback fee rates')
+  return getNetworkFallbackRates()
 }
 
 /**

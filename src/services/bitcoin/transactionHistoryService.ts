@@ -8,6 +8,7 @@
  */
 
 import { getTxs, getTransactionDetails } from './blockchain'
+import { usePendingTransactionsStore } from '../../store/pendingTransactionsStore'
 import type { EsploraTransaction } from '../../types/blockchain.types'
 import type { Transaction } from '../../types/domain/transaction/transaction.types'
 import type { BitcoinWallet } from './wallet/bitcoinWalletService'
@@ -61,7 +62,7 @@ function calculateNetAmount(
   )
   
   if (isWalletTransaction) {
-    // This is a send transaction - calculate amount sent to external addresses
+    // This is a send transaction - calculate total impact on wallet (amount + fee)
     let amountSentToExternals = 0
     let recipientAddress: string | undefined
     
@@ -78,8 +79,13 @@ function calculateNetAmount(
       }
     })
     
+    // For send transactions, show total impact (amount sent + fee)
+    const totalImpact = amountSentToExternals + transaction.fee
+    
+    console.log(`💰 [TransactionHistoryService] Send transaction ${transaction.txid?.slice(0, 8)}: ${amountSentToExternals} sats sent + ${transaction.fee} fee = ${totalImpact} total impact`)
+    
     return {
-      amount: amountSentToExternals,
+      amount : totalImpact,
       recipientAddress
     }
   } else {
@@ -94,8 +100,8 @@ function calculateNetAmount(
     })
     
     return {
-      amount: amountReceived,
-      recipientAddress: undefined
+      amount           : amountReceived,
+      recipientAddress : undefined
     }
   }
 }
@@ -112,11 +118,11 @@ function transformTransaction(
   
   // Create the base transaction with proper handling of unconfirmed transactions
   const transaction: Transaction = {
-    id            : esploraTransaction.txid,
+    id       : esploraTransaction.txid,
     type,
     amount, // Already in sats
-    currency      : 'sats',
-    date          : esploraTransaction.status.block_time 
+    currency : 'sats',
+    date     : esploraTransaction.status.block_time 
       ? new Date(esploraTransaction.status.block_time * 1000) 
       : new Date(), // Use current time for unconfirmed transactions
     status        : esploraTransaction.status.confirmed ? 'completed' : 'pending',
@@ -177,9 +183,33 @@ export async function fetchTransactionHistory(
     // Transform to UI format
     const uiTransactions = paginatedTransactions.map(tx => transformTransaction(tx, allAddresses))
     
-    console.log(`✅ [TransactionHistoryService] Found ${uiTransactions.length} transactions (page ${Math.floor(offset / limit) + 1})`)
+    // Get pending transactions and merge with API transactions
+    const pendingStore = usePendingTransactionsStore.getState()
+    const pendingTransactions = pendingStore.pendingTransactions
     
-    return uiTransactions
+    console.log(`🔗 [TransactionHistoryService] Merging ${uiTransactions.length} API + ${pendingTransactions.length} pending transactions`)
+    
+    // Remove pending transactions that are now in API data (deduplicate)
+    const filteredPendingTransactions = pendingTransactions.filter(pending => 
+      !uiTransactions.some(apiTx => apiTx.txid === pending.txid)
+    )
+    
+    // Auto-cleanup: remove pending transactions that appear in API (they're now confirmed/pending in mempool)
+    filteredPendingTransactions.forEach(pending => {
+      if (uiTransactions.some(apiTx => apiTx.txid === pending.txid)) {
+        pendingStore.removePendingTransaction(pending.txid!)
+      }
+    })
+    
+    // Merge pending transactions at the top (most recent first)
+    const mergedTransactions = [
+      ...filteredPendingTransactions, // Pending transactions first
+      ...uiTransactions // Then API transactions
+    ]
+    
+    console.log(`✅ [TransactionHistoryService] Found ${uiTransactions.length} API + ${filteredPendingTransactions.length} pending transactions`)
+    
+    return mergedTransactions
     
   } catch (error) {
     console.error('Failed to fetch transaction history:', error)

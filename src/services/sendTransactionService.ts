@@ -1,5 +1,6 @@
 import { useSendTransactionStore } from '@/src/store/sendTransactionStore'
 import { useWalletStore } from '@/src/store/walletStore'
+import { usePendingTransactionsStore } from '@/src/store/pendingTransactionsStore'
 import { signTransaction } from '@/src/services/bitcoin/txSigner'
 import { bitcoinjsNetwork } from '@/src/config/env'
 import { fetchWalletUtxos, enrichUtxosWithPublicKeys, filterUtxosByConfirmation } from '@/src/services/bitcoin/wallet/walletUtxoService'
@@ -31,6 +32,32 @@ export function setQueryClientForTransactionService(client: any) {
  * Optimized for integration with the unified useTransaction hook
  */
 export class SendTransactionService {
+  
+  /**
+   * Adds transaction to pending store for immediate UI updates
+   */
+  private static addToPendingStore(txid: string, sendStore: any, _walletStore: any) {
+    const pendingStore = usePendingTransactionsStore.getState()
+    
+    // Create pending transaction from send store data
+    const pendingTransaction = {
+      id            : txid,
+      txid          : txid,
+      type          : 'send' as const,
+      amount        : sendStore.derived.totalSats, // Show total impact (amount + fee)
+      currency      : 'sats' as const,
+      date          : new Date(),
+      status        : 'sending' as const,
+      fee           : sendStore.derived.estimatedFee,
+      recipient     : sendStore.inputs.recipientAddress,
+      total         : sendStore.derived.totalSats,
+      confirmations : 0 as const,
+    }
+    
+    pendingStore.addPendingTransaction(pendingTransaction)
+    console.log(`🚀 [SendTransactionService] Added transaction to pending store: ${txid}`)
+    console.log(`💰 [SendTransactionService] Pending transaction: ${sendStore.derived.amountSats} sats sent + ${sendStore.derived.estimatedFee} fee = ${sendStore.derived.totalSats} total impact`)
+  }
   
   /**
    * Invalidates transaction cache after successful transaction
@@ -327,7 +354,10 @@ export class SendTransactionService {
       
       console.log(`✅ [SendTransactionService] Transaction broadcasted successfully: ${txid}`)
       
-      // Step 4: Invalidate transaction cache for immediate UI updates
+      // Step 4: Add to pending transactions store for immediate UI updates
+      this.addToPendingStore(txid, sendStore, walletStore)
+      
+      // Step 5: Invalidate transaction cache for immediate UI updates
       this.invalidateTransactionCache(txid)
       
       // Return standardized result

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Alert, BackHandler } from 'react-native'
-import { parseQRCode } from '@/src/utils/send/qrCodeParser'
+import { parseQRCode } from '@/src/utils/transaction/qrCodeParser'
 import { useSendStore } from '@/src/store/sendStore'
 import { useRouter } from 'expo-router'
 import { validateAndSanitizeAddress } from '@/src/utils/validation/validateAddress'

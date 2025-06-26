@@ -5,7 +5,7 @@ import { ExternalLink } from 'lucide-react-native'
 import { formatConfirmationValue } from '@/src/utils/formatting/formatCurrencyValue'
 import { formatAddressIntoLines } from '@/src/utils/formatting/formatAddress'
 import { CurrencyType } from '@/src/types/domain/finance'
-import { TransactionFee } from '@/src/utils/transactions/feeCalculator'
+import { TransactionFee } from '@/src/utils/transaction/feeCalculator'
 import { transactionStyles } from '@/src/constants/transactionStyles'
 
 type TransactionConfirmationDetailsProps = {

@@ -11,7 +11,7 @@ import QRCode from 'react-native-qrcode-svg'
 import { ThemedText } from '@/src/components/ui/Text'
 import { useSendStore } from '@/src/store/sendStore'
 import { useWalletAddress } from '@/src/store/walletStore'
-import { useAutoWalletSync } from '@/src/hooks/wallet/useAutoWalletSync'
+
 
 // Constants for QR frame layout
 const SCREEN_WIDTH = Dimensions.get('window').width
@@ -346,8 +346,7 @@ const QRMenuScreen: React.FC = () => {
   const insets = useSafeAreaInsets()
   const { setAddress, setAmount, reset } = useSendStore()
   
-  // Enable auto-sync to keep wallet updated when receiving testnet coins
-  useAutoWalletSync()
+
   
   const handleClose = () => {
     router.back()

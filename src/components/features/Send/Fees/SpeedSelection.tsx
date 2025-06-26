@@ -5,7 +5,7 @@ import { ChevronRight, AlertCircle, RefreshCw } from 'lucide-react-native'
 import { SpeedOptionButton } from '@/src/components/features/Send/Fees/SpeedOptionButton'
 import { SpeedInfoModal } from '@/src/components/features/Send/Fees/SpeedInfoModal'
 import { CustomFeeModal } from '@/src/components/features/Send/Fees/CustomFeeModal'
-import { getSpeedOptions } from '@/src/utils/send/speedOptions'
+import { getSpeedOptions } from '@/src/utils/transaction/speedOptions'
 
 import { SpeedTier, CustomFee, SpeedOption } from '@/src/types/domain/transaction'
 

@@ -11,6 +11,7 @@
 
 import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { useWalletStore } from '../../store/walletStore'
+import { usePendingTransactionsStore } from '../../store/pendingTransactionsStore'
 import { 
   fetchTransactionHistory, 
   fetchTransactionDetails,
@@ -19,7 +20,6 @@ import {
   getDisplayAddress 
 } from '../../services/bitcoin/transactionHistoryService'
 import type { Transaction } from '../../types/domain/transaction/transaction.types'
-import React from 'react'
 
 // Query keys for React Query caching
 export const TRANSACTION_QUERY_KEYS = {
@@ -39,9 +39,9 @@ const PAGINATION_CONFIG = {
 
 // Error recovery configuration
 const ERROR_RECOVERY_CONFIG = {
-  maxRetries       : 5,    // Maximum retry attempts
-  baseRetryDelay   : 1000, // Base delay between retries (ms)
-  maxRetryDelay    : 30000, // Maximum delay between retries (ms)
+  maxRetries        : 5,    // Maximum retry attempts
+  baseRetryDelay    : 1000, // Base delay between retries (ms)
+  maxRetryDelay     : 30000, // Maximum delay between retries (ms)
   offlineRetryDelay : 60000, // Delay when offline (1 minute)
 }
 
@@ -69,21 +69,27 @@ function createEnhancedRetryDelay(attemptIndex: number, error: any) {
 export function useTransactionHistory(limit: number = 50) {
   const { wallet } = useWalletStore()
   const queryClient = useQueryClient()
+  const { pendingTransactions } = usePendingTransactionsStore()
   
   const query = useQuery({
-    queryKey : wallet ? TRANSACTION_QUERY_KEYS.history(wallet.id) : [ 'transactions', 'no-wallet' ],
-    queryFn  : async (): Promise<Transaction[]> => {
+    queryKey : wallet ? [
+      ...TRANSACTION_QUERY_KEYS.history(wallet.id), 
+      'pending-count', 
+      pendingTransactions.length
+    ] : [ 'transactions', 'no-wallet' ],
+    queryFn : async (): Promise<Transaction[]> => {
       if (!wallet) {
         return []
       }
       
+      console.log(`🔄 [useTransactionHistory] Fetching transactions (pending: ${pendingTransactions.length})`)
       return fetchTransactionHistory(wallet, limit)
     },
     enabled              : !!wallet, // Only fetch when wallet is available
-    staleTime            : PAGINATION_CONFIG.backgroundRefresh, // 5 minutes for regular history
-    gcTime               : 10 * 60 * 1000, // 10 minutes cache time
+    staleTime            : 10 * 60 * 1000, // 10 minutes (simplified)
+    gcTime               : 30 * 60 * 1000, // 30 minutes cache time
     refetchOnWindowFocus : false, // Don't refetch on window focus
-    refetchOnMount       : 'always', // Always refetch on mount for fresh data
+    refetchOnMount       : false, // Don't refetch on mount - use cached data
     retry                : 3, // Retry failed requests 3 times
     retryDelay           : (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   })
@@ -138,10 +144,15 @@ export function useTransactionHistory(limit: number = 50) {
  */
 export function useInfiniteTransactionHistory() {
   const { wallet } = useWalletStore()
+  const { pendingTransactions } = usePendingTransactionsStore()
   
   const query = useInfiniteQuery({
-    queryKey : wallet ? TRANSACTION_QUERY_KEYS.paged(wallet.id) : [ 'transactions', 'paged', 'no-wallet' ],
-    queryFn  : async ({ pageParam }: { pageParam: number }): Promise<{
+    queryKey : wallet ? [
+      ...TRANSACTION_QUERY_KEYS.paged(wallet.id), 
+      'pending-count', 
+      pendingTransactions.length
+    ] : [ 'transactions', 'paged', 'no-wallet' ],
+    queryFn : async ({ pageParam }: { pageParam: number }): Promise<{
       transactions: Transaction[]
       nextPage?: number
       hasMore: boolean
@@ -166,15 +177,15 @@ export function useInfiniteTransactionHistory() {
         hasMore
       }
     },
-    initialPageParam    : 0,
-    enabled             : !!wallet,
-    getNextPageParam    : (lastPage: any) => lastPage.nextPage,
-    staleTime           : PAGINATION_CONFIG.staleTime,
-    gcTime              : 15 * 60 * 1000, // 15 minutes cache time for pages
-    maxPages            : PAGINATION_CONFIG.maxPages,
+    initialPageParam     : 0,
+    enabled              : !!wallet,
+    getNextPageParam     : (lastPage: any) => lastPage.nextPage,
+    staleTime            : PAGINATION_CONFIG.staleTime,
+    gcTime               : 15 * 60 * 1000, // 15 minutes cache time for pages
+    maxPages             : PAGINATION_CONFIG.maxPages,
     refetchOnWindowFocus : false,
-    retry               : ERROR_RECOVERY_CONFIG.maxRetries,
-    retryDelay          : createEnhancedRetryDelay,
+    retry                : ERROR_RECOVERY_CONFIG.maxRetries,
+    retryDelay           : createEnhancedRetryDelay,
   })
   
   // Flatten all pages into single transaction array
@@ -186,7 +197,7 @@ export function useInfiniteTransactionHistory() {
     pages        : query.data?.pages || [],
     
     // Pagination state
-    hasNextPage  : query.hasNextPage,
+    hasNextPage        : query.hasNextPage,
     isFetchingNextPage : query.isFetchingNextPage,
     
     // Loading states
@@ -323,7 +334,7 @@ export function useTransactionCache() {
           }
         },
         initialPageParam : currentPage + 1,
-        staleTime : PAGINATION_CONFIG.staleTime,
+        staleTime        : PAGINATION_CONFIG.staleTime,
       })
     }
   }
@@ -337,10 +348,10 @@ export function useTransactionCache() {
     
     // Performance stats
     cacheStats : {
-      totalQueries     : queryClient.getQueryCache().getAll().length,
+      totalQueries       : queryClient.getQueryCache().getAll().length,
       transactionQueries : queryClient.getQueryCache().getAll()
         .filter(q => q.queryKey[0] === 'transactions').length,
-      cacheSize        : queryClient.getQueryCache().getAll()
+      cacheSize : queryClient.getQueryCache().getAll()
         .reduce((size, q) => size + JSON.stringify(q.state.data || '').length, 0)
     }
   }
@@ -371,25 +382,25 @@ export function useTransactions(options: {
   
   // Select the appropriate history based on infinite scroll setting
   const history = enableInfiniteScroll ? {
-    transactions : infiniteHistory.transactions,
-    isLoading    : infiniteHistory.isLoading,
-    isFetching   : infiniteHistory.isFetching,
-    isRefreshing : infiniteHistory.isRefreshing,
-    error        : infiniteHistory.error,
-    isError      : infiniteHistory.isError,
-    isSuccess    : infiniteHistory.isSuccess,
-    refresh      : infiniteHistory.refresh,
-    lastUpdated  : infiniteHistory.lastUpdated,
-    fetchStatus  : 'idle' as const,
+    transactions       : infiniteHistory.transactions,
+    isLoading          : infiniteHistory.isLoading,
+    isFetching         : infiniteHistory.isFetching,
+    isRefreshing       : infiniteHistory.isRefreshing,
+    error              : infiniteHistory.error,
+    isError            : infiniteHistory.isError,
+    isSuccess          : infiniteHistory.isSuccess,
+    refresh            : infiniteHistory.refresh,
+    lastUpdated        : infiniteHistory.lastUpdated,
+    fetchStatus        : 'idle' as const,
     // Infinite scroll specific
-    hasNextPage  : infiniteHistory.hasNextPage,
-    fetchNextPage : infiniteHistory.fetchNextPage,
+    hasNextPage        : infiniteHistory.hasNextPage,
+    fetchNextPage      : infiniteHistory.fetchNextPage,
     isFetchingNextPage : infiniteHistory.isFetchingNextPage,
   } : {
     ...regularHistory,
     // Infinite scroll placeholders
-    hasNextPage  : false,
-    fetchNextPage : () => Promise.resolve(),
+    hasNextPage        : false,
+    fetchNextPage      : () => Promise.resolve(),
     isFetchingNextPage : false,
   }
   
@@ -399,19 +410,7 @@ export function useTransactions(options: {
   // Cache management
   const cache = useTransactionCache()
   
-  // Background refresh effect
-  React.useEffect(() => {
-    if (!enableBackgroundRefresh) return
-    
-    const interval = setInterval(() => {
-      // Silently refresh in background
-      if (!history.isFetching) {
-        history.refresh()
-      }
-    }, PAGINATION_CONFIG.backgroundRefresh)
-    
-    return () => clearInterval(interval)
-  }, [enableBackgroundRefresh, history])
+  // Background refresh disabled - rely on manual refresh and cache invalidation instead
   
   return {
     // Data

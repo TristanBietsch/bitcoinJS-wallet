@@ -61,6 +61,9 @@ TODO.md
 # Cursor
 .cursor/*
 .cursorrules
+.claude/*
+REFACTOR_ROADMAP.md
+claude.md
 
 # Gitignore
 .gitignore

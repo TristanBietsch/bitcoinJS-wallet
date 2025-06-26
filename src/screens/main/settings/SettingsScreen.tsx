@@ -9,8 +9,6 @@ import useSettingsState from '@/src/hooks/settings/useSettingsState'
 const SettingsScreen = () => {
   const { handleClose } = useMenuNavigation()
   const { 
-    pinEnabled, 
-    setPinEnabled, 
     analyticsOptOut, 
     setAnalyticsOptOut 
   } = useSettingsState()
@@ -21,10 +19,7 @@ const SettingsScreen = () => {
       onBackPress={handleClose}
     >
       <View style={styles.container}>
-        <SecuritySection 
-          pinEnabled={pinEnabled}
-          setPinEnabled={setPinEnabled}
-        />
+        <SecuritySection />
         
         <PrivacySection
           analyticsOptOut={analyticsOptOut}
