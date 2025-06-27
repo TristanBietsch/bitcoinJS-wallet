@@ -1,19 +1,14 @@
 import React from 'react'
 import { usePathname, useRouter } from 'expo-router'
-import { CreditCard, Home, Clock } from 'lucide-react-native'
+import { Home, Clock } from 'lucide-react-native'
 import { Pressable, StyleSheet, View, Text } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 // Define valid route paths
-type ValidRoutes = '/' | '/waitlist' | '/activity'
+type ValidRoutes = '/' | '/activity'
 
 // Define tabs configuration
 const TABS = [
-  {
-    path  : '/waitlist' as ValidRoutes,
-    title : 'Card',
-    icon  : CreditCard,
-  },
   {
     path  : '/' as ValidRoutes,
     title : 'Home',
