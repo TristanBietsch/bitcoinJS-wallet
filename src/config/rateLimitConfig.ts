@@ -26,13 +26,6 @@ export const PRODUCTION_RATE_LIMITS: DomainConfig = {
     queueLimit        : 30            // Queue up to 30 requests
   },
   
-  // Supabase backend - Higher limits for our own backend
-  'supabase' : {
-    requestsPerSecond : 5,     // 5 requests per second
-    burstLimit        : 10,           // Allow burst of 10 requests
-    queueLimit        : 50            // Queue up to 50 requests
-  },
-  
   // Analytics services - Lower priority, more restrictive
   'analytics' : {
     requestsPerSecond : 1,     // 1 request per second
@@ -65,12 +58,6 @@ export const DEVELOPMENT_RATE_LIMITS: DomainConfig = {
     queueLimit        : 100
   },
   
-  'supabase' : {
-    requestsPerSecond : 20,
-    burstLimit        : 50,
-    queueLimit        : 200
-  },
-  
   'analytics' : {
     requestsPerSecond : 10,
     burstLimit        : 20,
@@ -101,12 +88,6 @@ export const EMERGENCY_RATE_LIMITS: DomainConfig = {
     queueLimit        : 10
   },
   
-  'supabase' : {
-    requestsPerSecond : 1,
-    burstLimit        : 2,
-    queueLimit        : 20
-  },
-  
   'analytics' : {
     requestsPerSecond : 0.2,   // 1 request every 5 seconds
     burstLimit        : 1,
@@ -134,9 +115,6 @@ export function extractDomain(url: string): string {
     }
     if (hostname.includes('mempool.space')) {
       return 'mempool.space'
-    }
-    if (hostname.includes('supabase')) {
-      return 'supabase'
     }
     
     // For analytics or other services, you might want to add more specific mappings

@@ -15,8 +15,6 @@ const TEST_ENV_PATH = '../tests/.env.test'
 // Export safe values - in a real app you wouldn't have these defaults
 export const ENV_VARS = {
   // Must use process.env - react native at runtime will provide these
-  SUPABASE_URL   : process.env.SUPABASE_URL,
-  SUPABASE_KEY   : process.env.SUPABASE_KEY,
   RESEND_API_KEY : process.env.RESEND_API_KEY,
   NODE_ENV       : process.env.NODE_ENV || 'development',
 }

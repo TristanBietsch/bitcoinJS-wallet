@@ -44,9 +44,6 @@ if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
 }
 
 const ENV = {
-  SUPABASE_URL : process.env.SUPABASE_URL || '',
-  SUPABASE_KEY : process.env.SUPABASE_KEY || '',
-  
   NODE_ENV : process.env.NODE_ENV || 'development',
   
   IS_DEV : __DEV__
@@ -54,8 +51,6 @@ const ENV = {
 
 if (__DEV__) {
   logger.init('Environment configuration loaded')
-  logger.init(`- Supabase URL: ${ENV.SUPABASE_URL ? 'Set' : 'Not set'}`)
-  logger.init(`- Supabase Key: ${ENV.SUPABASE_KEY ? 'Set' : 'Not set'}`)
   logger.init(`- Is Dev: ${ENV.IS_DEV}`)
 }
 
