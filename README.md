@@ -1,9 +1,6 @@
 
 
-[▶ Watch the demo on YouTube](https://www.youtube.com/watch?v=YURGi_GPb98&t=731s)
-[▶ Watch the demo on YouTube](https://www.youtube.com/watch?v=YURGi_GPb98&t=731s)
-[▶ Watch the demo on YouTube](https://www.youtube.com/watch?v=YURGi_GPb98&t=731s)
-[▶ Watch the demo on YouTube](https://www.youtube.com/watch?v=YURGi_GPb98&t=731s)
+[▶ Watch the demo on YouTube](https://www.youtube.com/watch?v=YURGi_GPb98&t=731s) 👈
 
 # Bitcoin Wallet
 
